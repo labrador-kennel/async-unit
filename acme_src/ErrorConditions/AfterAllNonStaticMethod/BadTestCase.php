@@ -6,7 +6,7 @@ use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
 use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class BadTestCase implements TestCase {
+class BadTestCase extends TestCase {
 
     #[AfterAll]
     public function badAfterAllMustBeStatic() {

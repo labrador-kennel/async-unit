@@ -6,7 +6,7 @@ use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
 use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class MyTestCase implements TestCase {
+class MyTestCase extends TestCase {
 
     private static array $classData = [];
     private array $objectData = [];

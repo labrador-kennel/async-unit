@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncTesting\Internal;
+
 use Amp\Loop;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncTesting\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
-use Cspray\Labrador\AsyncTesting\Internal\Parser;
+use Cspray\Labrador\AsyncTesting\EventNames;
 use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
-use PHPUnit\Framework\Test;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
@@ -24,7 +24,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     private TestSuiteRunner $testSuiteRunner;
 
     public function setUp() : void {
-        $this->acmeSrcDir = dirname(__DIR__, 1) . '/acme_src';
+        $this->acmeSrcDir = dirname(__DIR__, 2) . '/acme_src';
         $this->parser = new Parser();
         $this->emitter = new AmpEventEmitter();
         $this->testSuiteRunner = new TestSuiteRunner($this->emitter);

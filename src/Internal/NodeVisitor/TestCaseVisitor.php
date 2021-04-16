@@ -47,7 +47,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
                 // case where the #[Test] method may not implement the correct interface
                 if (!$this->isClassTestCase($node->getAttribute('parent'))) {
                     $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[Test] but this class does not implement "%s".',
+                        'Failure compiling "%s". The method "%s" is marked as #[Test] but this class does not extend "%s".',
                         $testCaseName,
                         $node->name->toString(),
                         TestCase::class
@@ -61,7 +61,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
                 $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
                 if (!$this->isClassTestCase($node->getAttribute('parent'))) {
                     $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[BeforeAll] but this class does not implement "%s".',
+                        'Failure compiling "%s". The method "%s" is marked as #[BeforeAll] but this class does not extend "%s".',
                         $testCaseName,
                         $node->name->toString(),
                         TestCase::class
@@ -83,7 +83,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
                 $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
                 if (!$this->isClassTestCase($node->getAttribute('parent'))) {
                     $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[BeforeEach] but this class does not implement "%s".',
+                        'Failure compiling "%s". The method "%s" is marked as #[BeforeEach] but this class does not extend "%s".',
                         $testCaseName,
                         $node->name->toString(),
                         TestCase::class
@@ -97,7 +97,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
                 $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
                 if (!$this->isClassTestCase($node->getAttribute('parent'))) {
                     $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[AfterAll] but this class does not implement "%s".',
+                        'Failure compiling "%s". The method "%s" is marked as #[AfterAll] but this class does not extend "%s".',
                         $testCaseName,
                         $node->name->toString(),
                         TestCase::class
@@ -119,7 +119,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
                 $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
                 if (!$this->isClassTestCase($node->getAttribute('parent'))) {
                     $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[AfterEach] but this class does not implement "%s".',
+                        'Failure compiling "%s". The method "%s" is marked as #[AfterEach] but this class does not extend "%s".',
                         $testCaseName,
                         $node->name->toString(),
                         TestCase::class
@@ -147,12 +147,7 @@ class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
     }
 
     private function isClassTestCase(Node\Stmt\Class_ $class) : bool {
-        foreach ($class->implements as $implement) {
-            if ($implement->toString() === TestCase::class) {
-                return true;
-            }
-        }
-        return false;
+        return !is_null($class->extends) && $class->extends->toString() === TestCase::class;
     }
 
 

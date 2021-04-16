@@ -5,7 +5,7 @@ namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\HasNotTestCase
 use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class MyTestCase implements TestCase {
+class MyTestCase extends TestCase {
 
     public function getName() {
         return self::class;

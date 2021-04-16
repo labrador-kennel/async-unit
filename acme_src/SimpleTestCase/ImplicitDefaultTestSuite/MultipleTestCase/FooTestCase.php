@@ -6,7 +6,7 @@ use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 use function Amp\call;
 
-class FooTestCase implements TestCase {
+class FooTestCase extends TestCase {
 
     private int $testCounter = 0;
 

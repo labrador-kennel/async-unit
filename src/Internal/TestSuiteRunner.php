@@ -1,12 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncTesting\Internal;
 
-use Amp\Coroutine;
 use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncTesting\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncTesting\Exception\Exception;
 use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncTesting\Internal\Model\TestSuiteModel;
 use ReflectionClass;
