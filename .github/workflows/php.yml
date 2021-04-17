@@ -1,0 +1,24 @@
+name: 'Unit Tests'
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Composer 8
+        uses: php-actions/composer@v5
+        with:
+          php_version: 8
+      - name: PHP 8 tests
+        uses: php-actions/phpunit@v2
+        with:
+          version: 9
+          php_version: 8
