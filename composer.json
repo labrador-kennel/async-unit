@@ -4,7 +4,8 @@
   "require": {
     "amphp/amp": "^2",
     "nikic/php-parser": "^4.10",
-    "cspray/labrador-async-event": "^2.3"
+    "cspray/labrador-async-event": "^2.3",
+    "cspray/labrador": "^3.2.0-alpha2"
   },
   "autoload": {
     "psr-4": {
