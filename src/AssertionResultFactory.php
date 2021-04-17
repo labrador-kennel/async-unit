@@ -6,10 +6,30 @@ final class AssertionResultFactory {
 
     private function __construct() {}
 
-    public static function invalidAssertion(string $message) : AssertionResult {
-        return new class($message) implements AssertionResult {
+    public static function validAssertion() : AssertionResult {
+        return new class implements AssertionResult {
 
-            public function __construct(private string $message) {}
+            public function isSuccessful() : bool {
+                return true;
+            }
+
+            public function getErrorMessage() : ?string {
+                return null;
+            }
+
+            public function getComparisonDisplay() : ?AssertionComparisonDisplay {
+                return null;
+            }
+        };
+    }
+
+    public static function invalidAssertion(string $message, AssertionComparisonDisplay $comparisonDisplay) : AssertionResult {
+        return new class($message, $comparisonDisplay) implements AssertionResult {
+
+            public function __construct(
+                private string $message,
+                private AssertionComparisonDisplay $comparisonDisplay
+            ) {}
 
             public function isSuccessful() : bool {
                 return false;
@@ -19,12 +39,8 @@ final class AssertionResultFactory {
                 return $this->message;
             }
 
-            public function getBacktrace() : array {
-                // TODO: Implement getBacktrace() method.
-            }
-
             public function getComparisonDisplay() : ?AssertionComparisonDisplay {
-                // TODO: Implement getComparisonDisplay() method.
+                return $this->comparisonDisplay;
             }
         };
     }

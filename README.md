@@ -47,23 +47,44 @@ find yourself writing a lot of asynchronous code please give this library a look
 
 ## User Guide
 
-At the current moment there is only limited capacity to run, through not well-defined boilerplate, the following 
-test suite. The attributes should be explicit in how this test would work.
+At the current moment there is only limited capacity to run, through not well-defined boilerplate, a test suite that 
+looks like the following. The attributes should be explicit in how this test would work.
 
 ```php
 <?php
 
-use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
+use Amp\Promise;use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
 use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncTesting\Attribute\BeforeEach;use Cspray\Labrador\AsyncTesting\Attribute\Test;
+use Cspray\Labrador\AsyncTesting\TestCase;use function Amp\call;
 
-class ExampleTestCase implements TestCase {
+function whatMakesMeHappyProgramming() : string {
+    return "Unit Testing \o/";
+}
+
+function whatElseMakesMeHappyProgramming() : Promise {
+    return call(function() {
+        return "Async & Unit Testing! \o/";
+    });
+}
+
+class ExampleTestCase extends TestCase {
 
     #[BeforeAll]
     public static function beforeTestCaseRan() {
     
     }
+    
+    #[BeforeEach]
+    public function beforeEachTest() {
+    
+    }
+    
+    #[BeforeEach]
+    public function yesYouCanDoThisButBeCarefulDoingThisTooMuch() {    
+    }
+    
+    // There is a corresponding AfterEach that comes with the same warnings
     
     #[AfterAll]
     public static function afterTestCaseRan() {
@@ -72,93 +93,137 @@ class ExampleTestCase implements TestCase {
 
     #[Test]
     public function ensureSomething() {
-        // oops we don't have an assertion api yet!
+        $this->assert()->stringEqual("Unit Testing \o/", whatMakesMeHappyProgramming());
+    }
+    
+    #[Test]
+    public function ensureSomethingAsync() {
+        yield $this->asyncAssert()->stringEqual("Async & Unit Testing! \o/", whatElseMakesMeHappyProgramming());
     }
 
 }
 ```
 
-Before it is all said and done we want to support everything currently listed in the Roadmap. Specifically we want to 
-be able to achieve the following as our first MVP.
+The rest of this User Guide details how to use this library to achieve async test nirvana! This guide does not teach 
+the basics of unit testing or TDD in general. For that I really recommend you checkout PHPUnit's documentation. This 
+guide is specifically targeted to developers with experience unit testing and are having pain points with testing 
+asynchronous code in the existing unit testing ecosystem.
 
-### Sharing a database pool
+### The TestCase
+
+This is the object you'll be extending and interacting with the most and conceptually should feel really familiar to 
+you if you've used PHPUnit. The TestCase from the end user's perspective is...
+
+- A collection of _tests_ that are methods annotated with a `#[Test]` Attribute.
+- An optional collection of _hooks_ that are methods annotated with a series of Attribute detailing when the method should be invoked
+- Access to the Assertions API which we'll document more below
+- Additional functionality is also expected to be added to the TestCase as the framework matures
+
+Extending the TestCase binds you to a contract with how you're going to interact with the object. Your tests MUST 
+adhere to the following rules.
+
+- You MUST extend TestCase or tests will not run. In fact, an annotated `#[Test]` that does not extend TestCase is a compilation error.
+- Your TestCase MUST NOT have a constructor of any kind. We expect specific arguments to be passed to the TestCase. If 
+  you need to do some form of setup procedures you should utilize one of the available hooks.
+- Your TestCase MUST have at least 1 method annotated with `#[Test]`. 
+
+As Protocols are implemented more thoroughly additional checks or rules will be added to the use of this TestCase. Don't 
+worry, we intend for this to be fairly transparent and to primarily serve as a way of warning you when you've 
+misconfigured your attributes. Let's take a look at Protocols next, while they are mostly theory at this point they will 
+be an important part of the framework as the static analyzer matures.
+
+### Protocols
+
+Generally, my designs tend to include a lot of granular interfaces that define boundaries of concerns and default 
+implementations of those interfaces. For obvious reasons I can't provide an interface for your tests! But, we do execute 
+methods on your TestCase that you implement and sometimes assumptions are made about those method signatures. To properly 
+communicate what those assumptions are each scenario that has you placing an Attribute on a TestCase is also defined, 
+or will be defined, by a Protocol. So, what is a Protocol?
+
+A Protocol is the method signature that defines any method on a TestCase defined with 1 or more Attributes. For example, 
+here's the `TestProtocol` that defines the method signature for methods annotated with `#[Test]`. Remember, that in this 
+context the _name_ of the method does not matter and is simply a placeholder. The pieces that are important are your 
+expected arguments and return types.
 
 ```php
-<?php
 
-use Cspray\Labrador\AsyncTesting\TestCase;
-use Cspray\Labrador\AsyncTesting\TestSuite;
+namespace Cspray\Labrador\AsyncTesting\Protocol;
 
-// Maybe have a #[DefaultSuite] capability if you want to provide 1 TestSuite without marking every TestCase
-class DatabaseTestSuite extends AbstractTestSuite implements TestSuite {
+use Amp\Promise;
+use Cspray\Labrador\AsyncTesting\Attribute\ProtocolRequiresAttribute;
+use Cspray\Labrador\AsyncTesting\Attribute\Protocol;
+use Cspray\Labrador\AsyncTesting\Attribute\Test;
 
-    #[BeforeTestCases]
-    public function connectToDatabase() {
-        $pool = yield getTestConfiguredPool();
-        $this->set('dbPool', $pool);
-    }
+#[Protocol]
+#[ProtocolRequiresAttribute(Test::class)]
+interface TestProtocol {
 
-    #[AfterTestCases]
-    public function closeDatabaseConnection() {
-        $this->get('dbPool')->close();
-    }
+    public function test() : Promise|Generator|null 
 
-}
-
-#[ForSuite(DatabaseTestSuite::class)]
-class RepoTest extends AbstractTestCase implements TestCase {
-
-    #[BeforeEach]
-    public function loadFixture() {
-        // yield some promises here to  store some data
-        // implement a strategy to make sure database stays cleared out
-    }
-    
-    #[Test]
-    public function ensureRepoCount() {
-        // $this->testSuite->get('dbPool') is the same $pool from above... shared across all TestCases used in this TestSuite
-    }
-
-}
-
-#[ForSuite(DatabaseTestSuite::class)]
-class AnotherDbTest extends AbstractTestCase implements TestCase {
-
-    #[BeforeEach]
-    public function loadFixture() {
-        // yield some promises here to  store some data
-        // implement a strategy to make sure database stays cleared out
-    }
-    
-    #[Test]
-    public function ensureRepoDeletion() {
-        // $this->testSuite->get('dbPool') is the same $pool from above... shared across all TestCases used in this TestSuite
-    }
-}
-
-// There's no #[ForSuite] attribute here
-class NoDbTest extends AbstractTestCase implements TestCase {
-
-    #[Test]
-    public function ensureSomething() {
-        // throws an exception... when you don't specify an explicit TestSuite you run on
-        // an implicit TestSuite that has no state assigned to it
-        $this->testSuite->get('dbPool');
-    }
 }
 ```
 
-The point of this objective is to share the same database connection across many tests and have the Event Loop be in complete 
-control of our test suite running. Testing webserver integrations would also be a good target for this type of architecture.
+You would not generally implement this interface but use it as a guide for how to implement your `#[Test]` methods. To 
+maximize what you can get out of this framework you should review the defined Protocols and ensure your implementations 
+adhere to them. Violations of these Protocols will result in compilation errors as the framework matures.
+
+## Assertions
+
+Assertions play a big part in how a unit testing framework feels and we face a problem where we need to support the 
+general use case of asserting values that do not require resolution as well as asserting values that are resolved on the 
+Loop. The provided Assertions API is intended to make dealing with this problem explicit, type-safe, and straight-forward 
+for consumers. For now, it is the only supported way for making assertions within your TestCase. As the framework matures 
+we expect to provide more support for other Assertion libraries. In the time being we need to ensure we provide a coherent 
+Assertions API that treats asynchronous code as a first class citizen.
+
+### The Basics
+
+In your `#[Test]` you have access to 2 methods that provide access to an `AssertionContext` and an `AsyncAssertionContext`. 
+These methods allow us to keep track of how many assertions your test has made and provides an easy to use API, whether 
+you're dealing with values that need to be resolved on the Loop or not. First, let's take a look at using the `AssertionContext`.
+
+```php
+$this->assert()->stringEquals("foo", "foo");
+```
+
+Pretty simple, huh? There's a third parameter on `stringEquals()` that allows you to customize the error message displayed. 
+If the strings are not equal to one another a `TestFailedException` will be thrown and no more assertions will be made. 
+This is an asynchronous library though, what do you do if you need to test something that needs to resolve on the Loop? 
+Use `asyncAssert()`!
+
+```php
+
+use Amp\Delayed;
+
+function getAsyncFoo() : Generator {
+    yield new Delayed(100);
+    return "foo";
+}
+
+yield $this->asyncAssert()->stringEquals("foo", getAsyncFoo());
+```
+
+This example looks pretty similar to the previous one with a couple key differences.
+
+- We `yield` the result of the call to `stringEquals()`
+- We pass the `Promise` directly as the `$actual` value and do not resolve it
+
+This test will resolve the Generator on the Loop and then compare the 2 values with one another. When calling the 
+`asyncAssert()` API it is expected that the `$actual` parameter will always adhere to the following type union
+`Promise|Generator|Coroutine`.
+
+### Assertions list
+
+> This list only includes Assertions that are implemented and tested. More Assertions are on the way!
+
+|Description|`assert()`|`asyncAssert()`|
+|---|---|
+|Confirm that 2 strings are equal to one another|`stringEquals(string $expected, string $actual, string $message = null)`|`stringEquals(string $expected, Promise|Generator|Coroutine $actual)`|
+
+### Creating your own Assertions
+
+> More details to come as the Assertions API matures!
 
 ## Roadmap
 
-- Async Assertion API
-- Explicit evented system for detailing what has happened running TestSuites 
-- Explicit TestSuite
-- Assertion results printer
-- Data providers
-- Exception expectation
-- Randomize test running
-- PHPUnit Assertion wrapper (?)
-- CLI tool
+To see the planned future for Async Testing please checkout the Projects and Issues created in this repo.

@@ -4,7 +4,10 @@ namespace Cspray\Labrador\AsyncTesting\Internal;
 
 use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncTesting\AssertionContext;
+use Cspray\Labrador\AsyncTesting\AssertionContextFacade;
+use Cspray\Labrador\AsyncTesting\AsyncAssertionContext;
+use Cspray\Labrador\AsyncTesting\Internal\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncTesting\Internal\Model\TestSuiteModel;
 use ReflectionClass;
@@ -27,7 +30,19 @@ class TestSuiteRunner {
                     }
 
                     foreach ($testCaseModel->getTestMethodModels() as $testMethodModel) {
-                        $testCaseObject = $reflectionClass->newInstance();
+                        $testCaseObject = $reflectionClass->newInstanceWithoutConstructor();
+                        $testCaseConstructor = $reflectionClass->getConstructor();
+                        $testCaseConstructor->setAccessible(true);
+
+                        $reflectedAssertionContext = $this->getReflectionClass(AssertionContext::class);
+                        $reflectedAsyncAssertionContext = $this->getReflectionClass(AsyncAssertionContext::class);
+
+                        $assertionContextFacade = new AssertionContextFacade(
+                            $reflectedAssertionContext->newInstanceWithoutConstructor(),
+                            $reflectedAsyncAssertionContext->newInstanceWithoutConstructor()
+                        );
+
+                        $testCaseConstructor->invoke($testCaseObject, $assertionContextFacade);
                         foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
                             $reflectionMethod = $reflectionClass->getMethod($beforeEachMethodModel->getMethod());
                             yield call(fn() => $reflectionMethod->invoke($testCaseObject));
