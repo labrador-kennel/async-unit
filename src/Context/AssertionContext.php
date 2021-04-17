@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncTesting\Context;
 
 use Cspray\Labrador\AsyncTesting\Assertion\AssertStringEquals;
+use Cspray\Labrador\AsyncTesting\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
 
 /**
@@ -16,6 +17,8 @@ final class AssertionContext {
 
     private int $count = 0;
 
+    private ?AssertionComparisonDisplay $lastFailedAssertionDisplay = null;
+
     private function __construct() {}
 
     public function getAssertionCount() : int {
@@ -27,8 +30,13 @@ final class AssertionContext {
         $assertString = new AssertStringEquals($expected);
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
-            throw new TestFailedException(sprintf('%s%s%s', $results->getErrorMessage(), PHP_EOL, $results->getComparisonDisplay()->toString()));
+            $this->lastFailedAssertionDisplay = $results->getComparisonDisplay();
+            throw new TestFailedException(sprintf('%s%s%s', $results->getErrorMessage(), PHP_EOL, $this->lastFailedAssertionDisplay->toString()));
         }
+    }
+
+    public function getFailedAssertionComparisonDisplay() : ?AssertionComparisonDisplay {
+        return $this->lastFailedAssertionDisplay;
     }
 
 }

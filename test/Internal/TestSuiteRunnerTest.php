@@ -334,4 +334,33 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
     }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteTestFailedExceptionThrowingTest() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/TestFailedExceptionThrowingTest';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+            /** @var TestInvokedEvent $testInvokedEvent */
+            $testInvokedEvent = $state->events[0];
+            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(InvokedTestCaseTestModel::class, $testInvokedEvent->getTarget());
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
+            $this->assertSame('ensureSomethingFails', $testInvokedEvent->getTarget()->getMethod());
+
+            $this->assertNotNull($testInvokedEvent->getTarget()->getFailureException());
+            $expectedMsg = 'Something barfed';
+            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getFailureException()->getMessage());
+            $this->assertSame(0, $testInvokedEvent->getTarget()->getFailureException()->getCode());
+            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getFile());
+        });
+    }
 }

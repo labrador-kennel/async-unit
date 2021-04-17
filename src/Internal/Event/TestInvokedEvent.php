@@ -12,6 +12,7 @@ use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
  */
 class TestInvokedEvent extends StandardEvent implements Event {
 
+
     public function __construct(InvokedTestCaseTestModel $target, array $data = []) {
         parent::__construct(InternalEventNames::TEST_INVOKED, $target, $data);
     }

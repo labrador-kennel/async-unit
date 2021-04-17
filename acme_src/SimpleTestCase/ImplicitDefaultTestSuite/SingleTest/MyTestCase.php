@@ -16,6 +16,7 @@ class MyTestCase extends TestCase {
     public function ensureSomethingHappens() : Generator {
         yield new Delayed(10);
         $this->testInvoked = true;
+        $this->assert()->stringEquals('foo', 'foo');
     }
 
     public function getTestInvoked() : bool {

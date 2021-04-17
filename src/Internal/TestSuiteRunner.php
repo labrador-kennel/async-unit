@@ -50,7 +50,9 @@ class TestSuiteRunner {
                     }
 
                     foreach ($testCaseModel->getTestMethodModels() as $testMethodModel) {
-                        $testCaseObject = $this->invokeTestCaseConstructor($testCaseClass);
+                        /** @var AssertionContext $assertionContext */
+                        /** @var AsyncAssertionContext $asyncAssertionContext */
+                        [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass);
                         foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
                             try {
                                 yield call([$testCaseObject, $beforeEachMethodModel->getMethod()]);
@@ -71,6 +73,16 @@ class TestSuiteRunner {
                         $failureException = null;
                         try {
                             yield call(fn() => $testCaseObject->$testCaseMethod());
+                            if ($assertionContext->getAssertionCount() === 0 && $asyncAssertionContext->getAssertionCount() === 0) {
+                                $msg = sprintf(
+                                    'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
+                                    $testCaseClass,
+                                    $testCaseMethod
+                                );
+                                throw new TestFailedException($msg);
+                            }
+                        } catch (TestFailedException $exception) {
+                            $failureException = $exception;
                         } catch (Throwable $throwable) {
                             $msg = sprintf(
                                 'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
@@ -85,7 +97,8 @@ class TestSuiteRunner {
                             $invokedModel = new InvokedTestCaseTestModel(
                                 $testCaseObject,
                                 $testMethodModel->getMethod(),
-                                $failureException
+                                $failureException,
+                                $assertionContext->getFailedAssertionComparisonDisplay()
                             );
                         }
 
@@ -140,7 +153,7 @@ class TestSuiteRunner {
         return $this->reflectionCache[$class];
     }
 
-    private function invokeTestCaseConstructor(string $testCaseClass) : TestCase {
+    private function invokeTestCaseConstructor(string $testCaseClass) : array {
         /** @var TestCase $testCaseObject */
         $reflectionClass = $this->getReflectionClass($testCaseClass);
         $testCaseObject = $reflectionClass->newInstanceWithoutConstructor();
@@ -148,12 +161,14 @@ class TestSuiteRunner {
         $reflectedAsyncAssertionContext = $this->getReflectionClass(AsyncAssertionContext::class);
         $testCaseConstructor = $reflectionClass->getConstructor();
         $testCaseConstructor->setAccessible(true);
+        $assertionContext = $reflectedAssertionContext->newInstanceWithoutConstructor();
+        $asyncAssertionContext = $reflectedAsyncAssertionContext->newInstanceWithoutConstructor();
         $testCaseConstructor->invoke(
             $testCaseObject,
-            $reflectedAssertionContext->newInstanceWithoutConstructor(),
-            $reflectedAsyncAssertionContext->newInstanceWithoutConstructor()
+            $assertionContext,
+            $asyncAssertionContext
         );
-        return $testCaseObject;
+        return [$testCaseObject, $assertionContext, $asyncAssertionContext];
     }
 
 }
