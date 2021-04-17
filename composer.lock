@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "98b934d1fc15f8f173e269f59f90e4e9",
+    "content-hash": "b001f14b1a67b92e3499ac7b61ebb32c",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -292,16 +292,16 @@
         },
         {
             "name": "cspray/labrador",
-            "version": "3.2.0-alpha2",
+            "version": "3.2.0-alpha3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/labrador-kennel/core.git",
-                "reference": "47069b05fe6acc66970c8814b332cc3a5acb2fd0"
+                "reference": "8755b61423e669278491605da470a48afc955d9d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/labrador-kennel/core/zipball/47069b05fe6acc66970c8814b332cc3a5acb2fd0",
-                "reference": "47069b05fe6acc66970c8814b332cc3a5acb2fd0",
+                "url": "https://api.github.com/repos/labrador-kennel/core/zipball/8755b61423e669278491605da470a48afc955d9d",
+                "reference": "8755b61423e669278491605da470a48afc955d9d",
                 "shasum": ""
             },
             "require": {
@@ -348,9 +348,9 @@
             ],
             "support": {
                 "issues": "https://github.com/labrador-kennel/core/issues",
-                "source": "https://github.com/labrador-kennel/core/tree/3.2.0-alpha2"
+                "source": "https://github.com/labrador-kennel/core/tree/3.2.0-alpha3"
             },
-            "time": "2021-03-28T22:22:51+00:00"
+            "time": "2021-04-17T22:28:05+00:00"
         },
         {
             "name": "cspray/labrador-async-event",
@@ -818,6 +818,122 @@
                 "source": "https://github.com/rdlowrey/auryn/tree/v1.4.4"
             },
             "time": "2021-03-04T20:26:52+00:00"
+        },
+        {
+            "name": "sebastianfeldmann/cli",
+            "version": "3.3.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianfeldmann/cli.git",
+                "reference": "490a6ba01d62e56d597b4d3377024feb87871f6f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianfeldmann/cli/zipball/490a6ba01d62e56d597b4d3377024feb87871f6f",
+                "reference": "490a6ba01d62e56d597b4d3377024feb87871f6f",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "require-dev": {
+                "symfony/process": "^4.3 | ^5.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.4.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SebastianFeldmann\\Cli\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Feldmann",
+                    "email": "sf@sebastian-feldmann.info"
+                }
+            ],
+            "description": "PHP cli helper classes",
+            "homepage": "https://github.com/sebastianfeldmann/cli",
+            "keywords": [
+                "cli"
+            ],
+            "support": {
+                "issues": "https://github.com/sebastianfeldmann/cli/issues",
+                "source": "https://github.com/sebastianfeldmann/cli/tree/3.3.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/sebastianfeldmann",
+                    "type": "github"
+                }
+            ],
+            "time": "2020-12-08T09:20:06+00:00"
+        },
+        {
+            "name": "sebastianfeldmann/git",
+            "version": "3.7.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/sebastianfeldmann/git.git",
+                "reference": "ca827dc741a90043ee46e59a96b1ca88b9ed5264"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/sebastianfeldmann/git/zipball/ca827dc741a90043ee46e59a96b1ca88b9ed5264",
+                "reference": "ca827dc741a90043ee46e59a96b1ca88b9ed5264",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-xml": "*",
+                "php": ">=7.2",
+                "sebastianfeldmann/cli": "^3.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "4.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "SebastianFeldmann\\Git\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Sebastian Feldmann",
+                    "email": "sf@sebastian-feldmann.info"
+                }
+            ],
+            "description": "PHP git wrapper",
+            "homepage": "https://github.com/sebastianfeldmann/git",
+            "keywords": [
+                "git"
+            ],
+            "support": {
+                "issues": "https://github.com/sebastianfeldmann/git/issues",
+                "source": "https://github.com/sebastianfeldmann/git/tree/3.7.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/sebastianfeldmann",
+                    "type": "github"
+                }
+            ],
+            "time": "2021-04-10T08:31:02+00:00"
         },
         {
             "name": "symfony/console",
