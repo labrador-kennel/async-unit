@@ -151,9 +151,18 @@ class ParserTest extends PHPUnitTestCase {
         $testSuite = $testSuites[0];
 
         $this->assertCount(3, $testSuite->getTestCaseModels());
-        $barTestCase = $testSuite->getTestCaseModels()[0];
-        $bazTestCase = $testSuite->getTestCaseModels()[1];
-        $fooTestCase = $testSuite->getTestCaseModels()[2];
+        $getTestCase = function(string $className) use($testSuite) {
+            foreach ($testSuite->getTestCaseModels() as $testCaseModel) {
+                if ($testCaseModel->getTestCaseClass() === $className) {
+                    return $testCaseModel;
+                }
+            }
+            return null;
+        };
+
+        $barTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase');
+        $bazTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase');
+        $fooTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase');
 
         $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase', $barTestCase->getTestCaseClass());
         $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase', $bazTestCase->getTestCaseClass());
