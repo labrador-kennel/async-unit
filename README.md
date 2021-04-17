@@ -200,8 +200,8 @@ This test will resolve the Generator on the Loop and then compare the 2 values w
 > This list only includes Assertions that are implemented and tested. More Assertions are on the way!
 
 |Description|`assert()`|`asyncAssert()`|
-|---|---|
-|Confirm that 2 strings are equal to one another|`stringEquals(string $expected, string $actual, string $message = null)`|`stringEquals(string $expected, Promise|Generator|Coroutine $actual)`|
+|---|---|---|
+|Confirm that 2 strings are equal to one another|`stringEquals(string $expected, string $actual, string $message = null)`|`stringEquals(string $expected, Promise\|Generator\|Coroutine $actual)`|
 
 ### Creating your own Assertions
 

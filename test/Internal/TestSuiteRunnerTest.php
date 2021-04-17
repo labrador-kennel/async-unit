@@ -5,6 +5,10 @@ namespace Cspray\Labrador\AsyncTesting\Internal;
 use Amp\Loop;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncTesting\Exception\TestCaseSetUpException;
+use Cspray\Labrador\AsyncTesting\Exception\TestCaseTearDownException;
+use Cspray\Labrador\AsyncTesting\Exception\TestSetupException;
+use Cspray\Labrador\AsyncTesting\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncTesting\Internal\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
 use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
@@ -197,6 +201,137 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getMethod());
             $this->assertEquals(['ensureSomethingTwice', 'afterEach'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTest() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingTest';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+            /** @var TestInvokedEvent $testInvokedEvent */
+            $testInvokedEvent = $state->events[0];
+            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(InvokedTestCaseTestModel::class, $testInvokedEvent->getTarget());
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
+            $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getMethod());
+
+            $this->assertNotNull($testInvokedEvent->getTarget()->getFailureException());
+            $expectedMsg = 'An unexpected exception of type "Exception" with code 0 and message "Test failure" was thrown from #[Test] ' . ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class . '::throwsException';
+            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getFailureException()->getMessage());
+            $this->assertSame(0, $testInvokedEvent->getTarget()->getFailureException()->getCode());
+            $this->assertInstanceOf(\Exception::class, $testInvokedEvent->getTarget()->getFailureException()->getPrevious());
+            $this->assertSame('Test failure', $testInvokedEvent->getTarget()->getFailureException()->getPrevious()->getMessage());
+            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getPrevious()->getFile());
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTestWithAfterEachHook() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingTestWithAfterEachHook';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+            /** @var TestInvokedEvent $testInvokedEvent */
+            $testInvokedEvent = $state->events[0];
+            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(InvokedTestCaseTestModel::class, $testInvokedEvent->getTarget());
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTestWithAfterEachHook\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
+            $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getMethod());
+            $this->assertTrue($testInvokedEvent->getTarget()->getTestCase()->getAfterHookCalled());
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeAll() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingBeforeAll';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+                $state->events[] = $event;
+            });
+
+            $this->expectException(TestCaseSetUpException::class);
+            $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeAll\MyTestCase::class;
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::beforeAll" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the class beforeAll".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterAll() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingAfterAll';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+                $state->events[] = $event;
+            });
+
+            $this->expectException(TestCaseTearDownException::class);
+            $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterAll\MyTestCase::class;
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::afterAll" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the class afterAll".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeEach() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingBeforeEach';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+                $state->events[] = $event;
+            });
+
+            $this->expectException(TestSetUpException::class);
+            $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeEach\MyTestCase::class;
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::beforeEach" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the object beforeEach".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterEach() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/ExceptionThrowingAfterEach';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+                $state->events[] = $event;
+            });
+
+            $this->expectException(TestTearDownException::class);
+            $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterEach\MyTestCase::class;
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::afterEach" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the object afterEach".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
     }
 }

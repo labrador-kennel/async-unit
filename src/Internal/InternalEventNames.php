@@ -2,6 +2,9 @@
 
 namespace Cspray\Labrador\AsyncTesting\Internal;
 
+/**
+ * @internal
+ */
 interface InternalEventNames {
 
     const TEST_INVOKED = 'labrador.__asyncTesting.testInvoked';

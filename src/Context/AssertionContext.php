@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncTesting\Context;
 
 use Cspray\Labrador\AsyncTesting\Assertion\AssertStringEquals;
 use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;

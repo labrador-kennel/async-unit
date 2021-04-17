@@ -17,6 +17,9 @@ use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 
+/**
+ * @internal
+ */
 class Parser {
 
     private PhpParser $phpParser;
@@ -59,7 +62,6 @@ class Parser {
                 }
 
                 $statements = $this->phpParser->parse(file_get_contents($file->getRealPath()));
-
                 $nodeConnectingVisitor = new NodeConnectingVisitor();
                 $nameResolver = new NameResolver();
                 $testCaseVisitor = new TestCaseVisitor();
@@ -76,6 +78,11 @@ class Parser {
                     }
                     yield $testCaseModel;
                 }
+
+                unset($statements);
+                unset($nodeConnectingVisitor);
+                unset($testCaseVisitor);
+                unset($testCaseVisitor);
             }
         }
 
