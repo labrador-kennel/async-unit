@@ -37,12 +37,11 @@ class TestSuiteRunner {
                         $reflectedAssertionContext = $this->getReflectionClass(AssertionContext::class);
                         $reflectedAsyncAssertionContext = $this->getReflectionClass(AsyncAssertionContext::class);
 
-                        $assertionContextFacade = new AssertionContextFacade(
+                        $testCaseConstructor->invoke(
+                            $testCaseObject,
                             $reflectedAssertionContext->newInstanceWithoutConstructor(),
                             $reflectedAsyncAssertionContext->newInstanceWithoutConstructor()
                         );
-
-                        $testCaseConstructor->invoke($testCaseObject, $assertionContextFacade);
                         foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
                             $reflectionMethod = $reflectionClass->getMethod($beforeEachMethodModel->getMethod());
                             yield call(fn() => $reflectionMethod->invoke($testCaseObject));

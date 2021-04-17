@@ -1,7 +1,7 @@
 # Async Testing
 
-A PHP8 + Amphp testing framework built from the ground up with asynchronous programming 
-in mind.
+A comprehensive unit/integration testing framework that combines PHP8 and Amphp to support writing 
+tests with first-class async support.
 
 > This library is still in early development and is largely public at this point to garner feedback 
 > and solicit potential ideas or pitfalls. Please open a PR or start a Discussion if you'd like to 
@@ -13,37 +13,20 @@ in mind.
 composer require --dev cspray/labrador-async-testing
 ```
 
-## Haven't you heard of PHPUnit?
+## What we are (or strive to be)...
 
-I have! It is a great library, and I love it! If you look through my repositories you'll see that I 
-have written a lot of unit and integration tests. In fact, this library is tested with PHPUnit! However, 
-I do a lot of asynchronous programming and while the [amphp/phpunit-util]() library provides an adequate 
-wrapper around PHPUnit for simple tests I was running into something that required a more comprehensive 
-solution.
+- A SOLID, well-tested, comprehensive testing framework with first-class async support.
+- A set of explicit, opinionated interfaces and implementations to run tests configured primarily through the use of [Attributes]()
+- A static analysis tool to ensure that your tests are coherent, logical, and adhere to the opinions of this framework
+- A comprehensive Assertions API with first-class async support.
+- The primary test suite used by all Labrador projects.
 
-### The problem
+## What we are not...
 
-I was writing integration tests that was really putting my applicatino through its paces. Each _test_ 
-involved:
-
-- Starting up its own event loop
-- Connecting to the database
-- Starting up an HTTP server
-
-I quickly wrote up a thin abstraction layer around doing this and found myself chugging away with 
-fairly complicated tests that involved some fairly hard things to test properly. I ran into a few snags,
-mostly with the database connection pool configuration, but everything seemed to be going good. Then... I 
-wrote one test too many.
-
-Each test was interacting with a table on the database and with each one opening its own connection I 
-quickly reached a point where my database was pounded and hanging, causing my tests to timeout 
-and fail for seemingly no reason. I needed a way to open up a single database connection for the entire 
-suite of integration tests. Unfortunately there's no way to easily do that with the current PHPUnit wrapper.
-Hence, you see this project.
-
-This library, while inspired in many ways by PHPUnit, is only meant to replace it in the specific scenarios 
-laid out above. PHP needs a testing framework with asynchronicity built in as a first-class citizen. If you 
-find yourself writing a lot of asynchronous code please give this library a look.
+- A replacement for PHPUnit. We don't aim to have complete feature parity with PHPUnit. There are aspects of what PHPUnit 
+needs to provide that are largely irrelevant to us. You should be using this framework specifically if you have experience 
+pain points with the [amphp/phpunit-util]() wrapper. For the majority of use cases this library is probably sufficient.
+- A mocking framework. BYOM... Bring Your Own Mocks.
 
 ## User Guide
 
@@ -125,7 +108,7 @@ adhere to the following rules.
 - You MUST extend TestCase or tests will not run. In fact, an annotated `#[Test]` that does not extend TestCase is a compilation error.
 - Your TestCase MUST NOT have a constructor of any kind. We expect specific arguments to be passed to the TestCase. If 
   you need to do some form of setup procedures you should utilize one of the available hooks.
-- Your TestCase MUST have at least 1 method annotated with `#[Test]`. 
+- Your TestCase MUST have at least 1 method annotated with `#[Test]`.  If your TestCase has not `#[Test]` it is a compilation error.
 
 As Protocols are implemented more thoroughly additional checks or rules will be added to the use of this TestCase. Don't 
 worry, we intend for this to be fairly transparent and to primarily serve as a way of warning you when you've 
@@ -227,3 +210,36 @@ This test will resolve the Generator on the Loop and then compare the 2 values w
 ## Roadmap
 
 To see the planned future for Async Testing please checkout the Projects and Issues created in this repo.
+
+## Haven't you heard of PHPUnit?
+
+I have! It is a great library, and I love it! If you look through my repositories you'll see that I
+have written a lot of unit and integration tests. In fact, this library is tested with PHPUnit! However,
+I do a lot of asynchronous programming and while the [amphp/phpunit-util]() library provides an adequate
+wrapper around PHPUnit for simple tests I was running into something that required a more comprehensive
+solution.
+
+### The problem
+
+I was writing integration tests that was really putting my applicatino through its paces. Each _test_
+involved:
+
+- Starting up its own event loop
+- Connecting to the database
+- Starting up an HTTP server
+
+I quickly wrote up a thin abstraction layer around doing this and found myself chugging away with
+fairly complicated tests that involved some fairly hard things to test properly. I ran into a few snags,
+mostly with the database connection pool configuration, but everything seemed to be going good. Then... I
+wrote one test too many.
+
+Each test was interacting with a table on the database and with each one opening its own connection I
+quickly reached a point where my database was pounded and hanging, causing my tests to timeout
+and fail for seemingly no reason. I needed a way to open up a single database connection for the entire
+suite of integration tests. Unfortunately there's no way to easily do that with the current PHPUnit wrapper.
+Hence, you see this project.
+
+This library, while inspired in many ways by PHPUnit, is only meant to replace it in the specific scenarios
+laid out above. PHP needs a testing framework with asynchronicity built in as a first-class citizen. If you
+find yourself writing a lot of asynchronous code please give this library a look.
+

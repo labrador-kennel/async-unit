@@ -4,7 +4,10 @@ namespace Cspray\Labrador\AsyncTesting;
 
 use Amp\Coroutine;
 use Amp\Promise;
+use Cspray\Labrador\AsyncTesting\Assertion\AsyncAssertStringEquals;
+use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
 use Generator;
+use function Amp\call;
 
 final class AsyncAssertionContext {
 
@@ -24,7 +27,13 @@ final class AsyncAssertionContext {
      * @param string|null $message
      */
     public function stringEquals(string $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
-
+        return call(function() use($expected, $actual, $message) {
+            $results = yield (new AsyncAssertStringEquals($expected))->assert($actual, $message);
+            $this->count++;
+            if (!$results->isSuccessful()) {
+                throw new TestFailedException(sprintf('%s%s%s', $results->getErrorMessage(), PHP_EOL, $results->getComparisonDisplay()->toString()));
+            }
+        });
     }
 
 }
