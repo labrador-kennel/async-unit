@@ -13,6 +13,74 @@ tests with first-class async support.
 composer require --dev cspray/labrador-async-testing
 ```
 
+## Example
+
+```php
+<?php
+
+// A file that exists in /tests
+
+namespace Acme\MyApp;
+
+use Amp\Success;use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
+use Cspray\Labrador\AsyncTesting\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncTesting\Attribute\Test;
+use Cspray\Labrador\AsyncTesting\TestCase;
+use Amp\Delayed;
+
+// The name of this class doesn't matter... you only need to ensure you extend TestCase
+class MyAppTestCase extends TestCase {
+
+    // Again, none of the method names matter... just make sure you're annotating with the correct Attribute
+
+    #[BeforeAll]
+    public static function testCaseWideSetup() {
+    
+    }
+
+    #[BeforeEach]
+    public function testSpecificSetup() {
+    
+    }
+    
+    #[Test]
+    public function ensureSomethingHappens() {
+        yield new Delayed(100); // just to show you we're on the loop
+        $this->assert()->stringEquals('foo', 'foo');
+    }
+    
+    #[Test]
+    public function ensureSomethingAsyncHappens() {
+        yield new Delayed(100);
+        yield $this->asyncAssert()->stringEquals('foo', new Success('foo'));
+    }
+    
+    #[Test]
+    public function makeSureYouAssertSomething() {
+        // a failed test because you didn't assert anything!
+    }
+    
+    #[AfterEach]
+    public function testSpecificTearDown() {
+        
+    }
+    
+    #[AfterAll]
+    public static function classWideTearDown() {
+    
+    }
+    
+}
+```
+
+In your terminal you could use the provided CLI tool to run this test suite:
+
+```shell
+vendor/bin/async-testing tests
+```
+
+> See a similar example in action! With the repository on your local machine run the command and point at `examples/simple_equals_src`
+
 ## What we are (or strive to be)...
 
 - A SOLID, well-tested, comprehensive testing framework with first-class async support.
@@ -30,64 +98,7 @@ pain points with the [amphp/phpunit-util]() wrapper. For the majority of use cas
 
 ## User Guide
 
-At the current moment there is only limited capacity to run, through not well-defined boilerplate, a test suite that 
-looks like the following. The attributes should be explicit in how this test would work.
-
-```php
-<?php
-
-use Amp\Promise;use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeEach;use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;use function Amp\call;
-
-function whatMakesMeHappyProgramming() : string {
-    return "Unit Testing \o/";
-}
-
-function whatElseMakesMeHappyProgramming() : Promise {
-    return call(function() {
-        return "Async & Unit Testing! \o/";
-    });
-}
-
-class ExampleTestCase extends TestCase {
-
-    #[BeforeAll]
-    public static function beforeTestCaseRan() {
-    
-    }
-    
-    #[BeforeEach]
-    public function beforeEachTest() {
-    
-    }
-    
-    #[BeforeEach]
-    public function yesYouCanDoThisButBeCarefulDoingThisTooMuch() {    
-    }
-    
-    // There is a corresponding AfterEach that comes with the same warnings
-    
-    #[AfterAll]
-    public static function afterTestCaseRan() {
-    
-    }
-
-    #[Test]
-    public function ensureSomething() {
-        $this->assert()->stringEqual("Unit Testing \o/", whatMakesMeHappyProgramming());
-    }
-    
-    #[Test]
-    public function ensureSomethingAsync() {
-        yield $this->asyncAssert()->stringEqual("Async & Unit Testing! \o/", whatElseMakesMeHappyProgramming());
-    }
-
-}
-```
-
-The rest of this User Guide details how to use this library to achieve async test nirvana! This guide does not teach 
+This User Guide details how to use this library to achieve async test nirvana! This guide does not teach 
 the basics of unit testing or TDD in general. For that I really recommend you checkout PHPUnit's documentation. This 
 guide is specifically targeted to developers with experience unit testing and are having pain points with testing 
 asynchronous code in the existing unit testing ecosystem.

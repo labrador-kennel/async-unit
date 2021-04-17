@@ -1,21 +1,28 @@
 {
   "name": "cspray/labrador-async-test",
   "description": "An async testing framework written on top of PHP8",
+  "bin": [
+    "bin/async-testing"
+  ],
   "require": {
     "amphp/amp": "^2",
     "nikic/php-parser": "^4.10",
     "cspray/labrador-async-event": "^2.3",
-    "cspray/labrador": "^3.2.0-alpha2"
+    "cspray/labrador": "^3.2.0-alpha3",
+    "symfony/console": "^5.2",
+    "sebastianfeldmann/git": "^3.7"
   },
   "autoload": {
     "psr-4": {
-      "Cspray\\Labrador\\AsyncTesting\\": "src"
+      "Cspray\\Labrador\\AsyncTesting\\": "framework_src",
+      "Cspray\\Labrador\\AsyncTesting\\CliTool\\": "cli_tool_src"
     }
   },
   "autoload-dev": {
     "psr-4": {
       "Cspray\\Labrador\\AsyncTesting\\": "test",
-      "Acme\\DemoSuites\\": "acme_src"
+      "Acme\\DemoSuites\\": "acme_src",
+      "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src"
     }
   },
   "require-dev": {
