@@ -2,8 +2,9 @@
 
 namespace Cspray\Labrador\AsyncTesting\Internal\Model;
 
-use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;
-
+/**
+ * @internal
+ */
 class TestCaseModel {
 
     private array $testMethodModels = [];

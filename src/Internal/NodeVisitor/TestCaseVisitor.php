@@ -21,6 +21,9 @@ use PhpParser\Node\AttributeGroup;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
 
+/**
+ * @internal
+ */
 class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
 
     private array $testCaseModels = [];

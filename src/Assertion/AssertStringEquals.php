@@ -5,7 +5,6 @@ namespace Cspray\Labrador\AsyncTesting\Assertion;
 use Cspray\Labrador\AsyncTesting\Assertion;
 use Cspray\Labrador\AsyncTesting\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncTesting\AssertionResult;
-use Cspray\Labrador\AsyncTesting\AssertionResultFactory;
 
 class AssertStringEquals implements Assertion {
 

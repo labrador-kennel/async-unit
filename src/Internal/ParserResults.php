@@ -1,11 +1,12 @@
 <?php declare(strict_types=1);
 
-
 namespace Cspray\Labrador\AsyncTesting\Internal;
-
 
 use Cspray\Labrador\AsyncTesting\Internal\Model\TestCaseModel;
 
+/**
+ * @internal
+ */
 class ParserResults {
 
 

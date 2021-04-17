@@ -2,8 +2,9 @@
 
 namespace Cspray\Labrador\AsyncTesting\Internal\Model;
 
-use Cspray\Labrador\AsyncTesting\TestCase;
-
+/**
+ * @internal
+ */
 class TestSuiteModel {
 
     private array $testCaseModels;

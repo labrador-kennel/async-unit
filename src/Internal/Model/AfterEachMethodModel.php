@@ -2,6 +2,9 @@
 
 namespace Cspray\Labrador\AsyncTesting\Internal\Model;
 
+/**
+ * @internal
+ */
 class AfterEachMethodModel {
 
     use MethodModelTrait;

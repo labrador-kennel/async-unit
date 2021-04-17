@@ -1,6 +1,6 @@
 <?php
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncTesting\Context;
 
 use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
 use PHPUnit\Framework\TestCase;
