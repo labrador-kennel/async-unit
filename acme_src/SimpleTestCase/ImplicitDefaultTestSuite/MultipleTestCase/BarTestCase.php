@@ -8,7 +8,7 @@ use Amp\Delayed;
 use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class BarTestCase implements TestCase {
+class BarTestCase extends TestCase {
 
     private bool $testInvoked = false;
 

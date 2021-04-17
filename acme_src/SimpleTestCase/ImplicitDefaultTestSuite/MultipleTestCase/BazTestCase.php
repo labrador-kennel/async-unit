@@ -5,7 +5,7 @@ namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\MultipleTestCa
 use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class BazTestCase implements TestCase {
+class BazTestCase extends TestCase {
 
     private bool $testInvoked = false;
 

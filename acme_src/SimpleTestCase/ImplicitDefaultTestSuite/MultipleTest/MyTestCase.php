@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 use function Amp\call;
 
-class MyTestCase implements TestCase {
+class MyTestCase extends TestCase {
 
     private array $invoked = [];
 

@@ -4,7 +4,7 @@ namespace Acme\DemoSuites\ErrorConditions\NoTestsTestCase;
 
 use Cspray\Labrador\AsyncTesting\TestCase;
 
-class BadTestCase implements TestCase {
+class BadTestCase extends TestCase {
 
     public function getName() {
         return self::class;

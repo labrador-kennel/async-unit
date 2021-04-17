@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncTesting\Attribute\Test;
 use Cspray\Labrador\AsyncTesting\TestCase;
 use Generator;
 
-class MyTestCase implements TestCase {
+class MyTestCase extends TestCase {
 
     private bool $testInvoked = false;
 
