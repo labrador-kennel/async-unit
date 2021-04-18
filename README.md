@@ -85,23 +85,24 @@ vendor/bin/asyncunit tests
 ## What we are (or strive to be)...
 
 - A SOLID, well-tested, comprehensive testing framework with first-class async support.
-- A set of explicit, opinionated interfaces and implementations to run tests configured primarily through the use of [Attributes]()
-- A static analysis tool to ensure that your tests are coherent, logical, and adhere to the opinions of this framework
+- A set of explicit, opinionated interfaces and implementations to run tests configured primarily through the use of [Attributes](https://www.php.net/manual/en/language.attributes.overview.php).
+- A static analysis tool to ensure that your tests are coherent, logical, and adhere to the opinions of this framework.
 - A comprehensive Assertions API with first-class async support.
 - The primary test suite used by all Labrador projects.
 
 ## What we are not...
 
 - A replacement for PHPUnit. We don't aim to have complete feature parity with PHPUnit. There are aspects of what PHPUnit 
-needs to provide that are largely irrelevant to us. You should be using this framework specifically if you have experience 
-pain points with the [amphp/phpunit-util]() wrapper. For the majority of use cases this library is probably sufficient.
+needs to provide that Labrador projects hardly encounter or use. You should be using this framework specifically if you 
+have experienced pain points with the [amphp/phpunit-util](https://github.com/amphp/phpunit-util) wrapper. For the majority 
+of use cases the AsyncTestCase provided by `phpunit-util` will serve your needs.
 - A mocking framework. BYOM... Bring Your Own Mocks.
 
 ## User Guide
 
 This User Guide details how to use this library to achieve async test nirvana! This guide does not teach 
-the basics of unit testing or TDD in general. For that I really recommend you checkout PHPUnit's documentation. This 
-guide is specifically targeted to developers with experience unit testing and are having pain points with testing 
+the basics of unit testing or TDD in general. For that I really recommend you checkout [PHPUnit's documentation](https://phpunit.readthedocs.io). 
+This guide is specifically targeted to developers with experience unit testing and are having pain points with testing 
 asynchronous code in the existing unit testing ecosystem.
 
 ### The TestCase

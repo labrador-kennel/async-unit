@@ -1,42 +1,42 @@
-<?php
+<?php declare(strict_types=1);
+
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals
+ * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertArrayEquals
  */
-class AssertStringEqualsTest extends AbstractAssertionTestCase {
+class AssertArrayEqualsTest extends AbstractAssertionTestCase {
 
     /**
-     * @dataProvider nonStringProvider
+     * @dataProvider nonArrayProvider
      */
     public function testBadTypes($value, string $type) {
         $this->runBadTypeAssertions($value, $type);
     }
 
     protected function getAssertion($value) : Assertion {
-        return new AssertStringEquals($value);
+        return new AssertArrayEquals(['a', 'b', 'c']);
     }
 
     protected function getExpectedValue() {
-        return 'async unit';
+        return ['a', 'b', 'c'];
     }
 
     protected function getBadValue() {
-        return 'blocking code';
+        return ['z', 'x', 'y'];
     }
 
     protected function getExpectedType() {
-        return 'string';
+        return 'array';
     }
 
     protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+        return new Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay($expected, $actual);
     }
 
 }

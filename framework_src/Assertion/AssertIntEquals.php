@@ -5,21 +5,20 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
 
-class AssertStringEquals extends AbstractAssertionEquals implements Assertion {
+class AssertIntEquals extends AbstractAssertionEquals implements Assertion {
 
-    public function __construct(private string $expected) {}
+    public function __construct(private int $expected) {}
 
     protected function isValidType(mixed $actual) : bool {
-        return is_string($actual);
+        return is_integer($actual);
     }
 
     protected function getExpectedType() : string {
-        return 'string';
+        return 'integer';
     }
 
-    protected function getExpected() : string {
+    protected function getExpected() : int {
         return $this->expected;
     }
 
