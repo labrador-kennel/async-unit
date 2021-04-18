@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Internal;
 use Amp\Loop;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
@@ -363,4 +364,5 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getFile());
         });
     }
+
 }

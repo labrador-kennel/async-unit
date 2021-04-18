@@ -25,14 +25,14 @@ class AssertionContextTest extends TestCase {
 
     public function testAssertStringNotEqualThrowsException() {
         $this->expectException(TestFailedException::class);
-        $this->expectExceptionMessage("Failed comparing that 2 strings are equal to one another\nFailed comparing 'foo' (string) to 'bar' (string)");
+        $this->expectExceptionMessage("Failed comparing that 2 strings are equal to one another");
 
         $this->subject->stringEquals('foo', 'bar');
     }
 
     public function testAssertStringNotEqualCustomMessage() {
         $this->expectException(TestFailedException::class);
-        $this->expectExceptionMessage("my custom error message\nFailed comparing 'foo' (string) to 'bar' (string)");
+        $this->expectExceptionMessage("my custom error message");
 
         $this->subject->stringEquals('foo', 'bar', 'my custom error message');
     }
