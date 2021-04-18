@@ -7,6 +7,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 
 /**
  * Represents an object created for every #[Test] that provides access to the Assertion API as well as the mechanism for
@@ -16,6 +17,8 @@ use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
  * method.
  */
 final class AssertionContext {
+
+    use LastAssertionCalledTrait;
 
     private int $count = 0;
 
@@ -30,7 +33,12 @@ final class AssertionContext {
         $assertString = new AssertStringEquals($expected);
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
-            throw new AssertionFailedException($results->getErrorMessage(), new BinaryVarExportAssertionComparisonDisplay('', ''));
+            throw new AssertionFailedException(
+                $results->getErrorMessage(),
+                new BinaryVarExportAssertionComparisonDisplay('', ''),
+                $this->getLastAssertionFile(),
+                $this->getLastAssertionLine()
+            );
         }
     }
 

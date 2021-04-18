@@ -7,11 +7,13 @@ use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
-use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 use Generator;
 use function Amp\call;
 
 final class AsyncAssertionContext {
+
+    use LastAssertionCalledTrait;
 
     private int $count = 0;
 
@@ -33,7 +35,12 @@ final class AsyncAssertionContext {
             $results = yield (new AsyncAssertStringEquals($expected))->assert($actual, $message);
             $this->count++;
             if (!$results->isSuccessful()) {
-                throw new AssertionFailedException($results->getErrorMessage(), new BinaryVarExportAssertionComparisonDisplay('', ''));
+                throw new AssertionFailedException(
+                    $results->getErrorMessage(),
+                    new BinaryVarExportAssertionComparisonDisplay('', ''),
+                    $this->getLastAssertionFile(),
+                    $this->getLastAssertionLine()
+                );
             }
         });
     }
