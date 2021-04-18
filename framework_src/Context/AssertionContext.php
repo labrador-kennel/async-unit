@@ -2,9 +2,12 @@
 
 namespace Cspray\Labrador\AsyncUnit\Context;
 
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 
 /**
  * Represents an object created for every #[Test] that provides access to the Assertion API as well as the mechanism for
@@ -15,9 +18,9 @@ use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
  */
 final class AssertionContext {
 
-    private int $count = 0;
+    use LastAssertionCalledTrait;
 
-    private ?AssertionComparisonDisplay $lastFailedAssertionDisplay = null;
+    private int $count = 0;
 
     private function __construct() {}
 
@@ -30,13 +33,13 @@ final class AssertionContext {
         $assertString = new AssertStringEquals($expected);
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
-            $this->lastFailedAssertionDisplay = $results->getComparisonDisplay();
-            throw new TestFailedException($results->getErrorMessage());
+            throw new AssertionFailedException(
+                $results->getErrorMessage(),
+                $results->getComparisonDisplay(),
+                $this->getLastAssertionFile(),
+                $this->getLastAssertionLine()
+            );
         }
-    }
-
-    public function getFailedAssertionComparisonDisplay() : ?AssertionComparisonDisplay {
-        return $this->lastFailedAssertionDisplay;
     }
 
 }

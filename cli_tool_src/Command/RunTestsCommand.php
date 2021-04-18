@@ -69,10 +69,15 @@ class RunTestsCommand extends Command {
             $state->cli->lightRed()->inline('X');
             $emitter->once(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($cli, $event) {
                 $cli->inline($event->getTarget()->getTestCase()::class)->inline('::')
-                    ->inline($event->getTarget()->getTestMethod())->out(' failed! The failure message:')
-                    ->tab()->out($event->getTarget()->getFailureException()->getMessage());
-                if ($event->getTarget()->getAssertionComparisonDisplay()) {
-                    $cli->tab()->out($event->getTarget()->getAssertionComparisonDisplay()->toString());
+                    ->inline($event->getTarget()->getTestMethod())->out(' failed!');
+                if ($event->getTarget()->getFailureException()->isAssertionFailure()) {
+                    $cli->out(
+                        $event->getTarget()->getFailureException()->getAssertionFailureFile() . 'L' . $event->getTarget()->getFailureException()->getAssertionFailureLine()
+                    );
+                }
+                $cli->br()->tab()->out($event->getTarget()->getFailureException()->getMessage());
+                if ($event->getTarget()->getFailureException()->isAssertionFailure()) {
+                    $cli->tab()->out($event->getTarget()->getFailureException()->getComparisonDisplay()->toString());
                 }
                 $cli->br()->out('Stack trace:')->out($event->getTarget()->getFailureException()->getTraceAsString());
                 $cli->br()->border('-')->br();

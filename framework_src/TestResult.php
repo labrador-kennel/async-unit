@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 interface TestResult {
@@ -11,7 +12,6 @@ interface TestResult {
 
     public function isSuccessful() : bool;
 
-    public function getFailureException() : TestFailedException;
+    public function getFailureException() : TestFailedException|AssertionFailedException;
 
-    public function getAssertionComparisonDisplay() : ?AssertionComparisonDisplay;
 }

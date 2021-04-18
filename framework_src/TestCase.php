@@ -25,12 +25,26 @@ abstract class TestCase {
      */
     private function __construct(private AssertionContext $assertionContext, private AsyncAssertionContext $asyncAssertionContext) {}
 
-    protected function assert() : AssertionContext {
-        return $this->assertionContext;
+    final protected function assert() : AssertionContext {
+        return $this->setAssertionFileAndLine($this->assertionContext, __FUNCTION__, debug_backtrace(10));
     }
 
-    protected function asyncAssert() : AsyncAssertionContext {
-        return $this->asyncAssertionContext;
+    final protected function asyncAssert() : AsyncAssertionContext {
+        return $this->setAssertionFileAndLine($this->asyncAssertionContext, __FUNCTION__, debug_backtrace(10));
+    }
+
+    private function setAssertionFileAndLine(AssertionContext|AsyncAssertionContext $context, string $method, array $backtrace) {
+        foreach ($backtrace as $trace) {
+            if (!isset($trace['class']) || !isset($trace['function'])) {
+                continue;
+            }
+            if ($trace['class'] === self::class && $trace['function'] === $method) {
+                $context->setLastAssertionFile($trace['file']);
+                $context->setLastAssertionLine($trace['line']);
+                break;
+            }
+        }
+        return $context;
     }
 
 }

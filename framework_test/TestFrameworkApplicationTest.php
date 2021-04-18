@@ -147,7 +147,6 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $testResult = $event->getTarget();
 
             $this->assertFalse($testResult->isSuccessful());
-            $this->assertSame('Failed comparing \'foo\' (string) to \'bar\' (string)', $testResult->getAssertionComparisonDisplay()?->toString());
         });
     }
 

@@ -97,8 +97,7 @@ class TestSuiteRunner {
                             $invokedModel = new InvokedTestCaseTestModel(
                                 $testCaseObject,
                                 $testMethodModel->getMethod(),
-                                $failureException,
-                                $assertionContext->getFailedAssertionComparisonDisplay()
+                                $failureException
                             );
                         }
 

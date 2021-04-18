@@ -10,6 +10,7 @@ use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
@@ -46,8 +47,7 @@ class TestFrameworkApplication extends AbstractApplication {
                 $testResult = $this->getTestResult(
                     $invokedTestModel->getTestCase(),
                     $invokedTestModel->getMethod(),
-                    $testInvokedEvent->getTarget()->getFailureException(),
-                    $testInvokedEvent->getTarget()->getAssertionComparisonDisplay()
+                    $testInvokedEvent->getTarget()->getFailureException()
                 );
 
                 if ($testPassed) {
@@ -68,16 +68,14 @@ class TestFrameworkApplication extends AbstractApplication {
     private function getTestResult(
         TestCase $testCase,
         string $method,
-        ?TestFailedException $testFailedException,
-        ?AssertionComparisonDisplay $comparisonDisplay
+        ?TestFailedException $testFailedException
     ) : TestResult {
-        return new class($testCase, $method, $testFailedException, $comparisonDisplay) implements TestResult {
+        return new class($testCase, $method, $testFailedException) implements TestResult {
 
             public function __construct(
                 private TestCase $testCase,
                 private string $method,
-                private ?TestFailedException $testFailedException,
-                private ?AssertionComparisonDisplay $comparisonDisplay
+                private ?TestFailedException $testFailedException
             ) {}
 
             public function getTestCase() : TestCase {
@@ -92,15 +90,11 @@ class TestFrameworkApplication extends AbstractApplication {
                 return is_null($this->testFailedException);
             }
 
-            public function getFailureException() : TestFailedException {
+            public function getFailureException() : TestFailedException|AssertionFailedException {
                 if (is_null($this->testFailedException)) {
                     throw new InvalidStateException('Attempted to access a TestFailedException on a successful TestResult.');
                 }
                 return $this->testFailedException;
-            }
-
-            public function getAssertionComparisonDisplay() : ?AssertionComparisonDisplay {
-                return $this->comparisonDisplay;
             }
         };
     }
