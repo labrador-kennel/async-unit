@@ -19,8 +19,6 @@ final class AssertionContext {
 
     private int $count = 0;
 
-    private ?AssertionComparisonDisplay $lastFailedAssertionDisplay = null;
-
     private function __construct() {}
 
     public function getAssertionCount() : int {
@@ -32,13 +30,8 @@ final class AssertionContext {
         $assertString = new AssertStringEquals($expected);
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
-            $this->lastFailedAssertionDisplay = $results->getComparisonDisplay();
             throw new AssertionFailedException($results->getErrorMessage(), new BinaryVarExportAssertionComparisonDisplay('', ''));
         }
-    }
-
-    public function getFailedAssertionComparisonDisplay() : ?AssertionComparisonDisplay {
-        return $this->lastFailedAssertionDisplay;
     }
 
 }

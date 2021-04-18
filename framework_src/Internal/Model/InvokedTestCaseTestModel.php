@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnit\Internal\Model;
 
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\TestCase;
 
@@ -15,8 +16,7 @@ class InvokedTestCaseTestModel {
     public function __construct(
         private TestCase $testCase,
         private string $method,
-        private ?TestFailedException $exception = null,
-        private ?AssertionComparisonDisplay $comparisonDisplay = null
+        private ?TestFailedException $exception = null
     ) {}
 
     public function getTestCase() : TestCase {
@@ -27,12 +27,8 @@ class InvokedTestCaseTestModel {
         return $this->method;
     }
 
-    public function getFailureException() : ?TestFailedException {
+    public function getFailureException() : TestFailedException|AssertionFailedException|null {
         return $this->exception;
-    }
-
-    public function getAssertionComparisonDisplay() : ?AssertionComparisonDisplay {
-        return $this->comparisonDisplay;
     }
 
 }
