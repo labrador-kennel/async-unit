@@ -7,19 +7,19 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExpo
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionResult;
 
-class AssertStringEquals extends AbstractAssertionEquals implements Assertion {
+class AssertFloatEquals extends AbstractAssertionEquals implements Assertion {
 
-    public function __construct(private string $expected) {}
+    public function __construct(private float $expected) {}
 
     protected function isValidType(mixed $actual) : bool {
-        return is_string($actual);
+        return is_float($actual);
     }
 
     protected function getExpectedType() : string {
-        return 'string';
+        return 'double';
     }
 
-    protected function getExpected() : string {
+    protected function getExpected() : float {
         return $this->expected;
     }
 

@@ -1,42 +1,40 @@
-<?php
+<?php declare(strict_types=1);
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals
+ * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertFloatEquals
  */
-class AssertStringEqualsTest extends AbstractAssertionTestCase {
+class AssertFloatEqualsTest extends AbstractAssertionTestCase {
 
     /**
-     * @dataProvider nonStringProvider
+     * @dataProvider nonFloatProvider
      */
     public function testBadTypes($value, string $type) {
         $this->runBadTypeAssertions($value, $type);
     }
 
     protected function getAssertion($value) : Assertion {
-        return new AssertStringEquals($value);
+        return new AssertFloatEquals($value);
     }
 
     protected function getGoodValue() {
-        return 'async unit';
+        return 9876.54;
     }
 
     protected function getBadValue() {
-        return 'blocking code';
+        return 1234.56;
     }
 
     protected function getExpectedType() {
-        return 'string';
+        return 'double';
     }
 
     protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
         return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
     }
-
 }
