@@ -23,7 +23,7 @@ class AssertArrayEqualsTest extends AbstractAssertionTestCase {
         return new AssertArrayEquals(['a', 'b', 'c']);
     }
 
-    protected function getGoodValue() {
+    protected function getExpectedValue() {
         return ['a', 'b', 'c'];
     }
 

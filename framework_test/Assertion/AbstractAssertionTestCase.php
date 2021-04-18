@@ -12,9 +12,9 @@ abstract class AbstractAssertionTestCase extends TestCase {
 
     use AssertionDataProvider;
 
-    abstract protected function getAssertion($value) : Assertion;
+    abstract protected function getAssertion($expected) : Assertion;
 
-    abstract protected function getGoodValue();
+    abstract protected function getExpectedValue();
 
     abstract protected function getBadValue();
 
@@ -33,17 +33,17 @@ abstract class AbstractAssertionTestCase extends TestCase {
     }
 
     public function runBadTypeAssertions(mixed $value, string $type) {
-        $subject = $this->getAssertion($this->getGoodValue());
+        $subject = $this->getAssertion($this->getExpectedValue());
         $results = $subject->assert($value);
 
         $this->assertFalse($results->isSuccessful());
         $this->assertSame($this->getInvalidTypeMessage(gettype($value)), $results->getErrorMessage());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getGoodValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
     }
 
     public function testAssertGoodValueEqualsGoodValue() {
-        $subject = $this->getAssertion($this->getGoodValue());
-        $results = $subject->assert($this->getGoodValue());
+        $subject = $this->getAssertion($this->getExpectedValue());
+        $results = $subject->assert($this->getExpectedValue());
 
         $this->assertTrue($results->isSuccessful());
         $this->assertNull($results->getErrorMessage());
@@ -51,21 +51,21 @@ abstract class AbstractAssertionTestCase extends TestCase {
     }
 
     public function testAssertGoodValueDoesNotEqualBadValueInformation() {
-        $subject = $this->getAssertion($this->getGoodValue());
+        $subject = $this->getAssertion($this->getExpectedValue());
         $results = $subject->assert($this->getBadValue());
 
         $this->assertFalse($results->isSuccessful());
         $this->assertSame($this->getInvalidComparisonMessage($this->getBadValue()), $results->getErrorMessage());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getGoodValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
     }
 
     public function testCustomMessageUsedIfProvided() {
-        $subject = $this->getAssertion($this->getGoodValue());
+        $subject = $this->getAssertion($this->getExpectedValue());
         $results = $subject->assert($this->getBadValue(), 'my custom message');
 
         $this->assertFalse($results->isSuccessful());
         $this->assertSame('my custom message', $results->getErrorMessage());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getGoodValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
     }
 
 

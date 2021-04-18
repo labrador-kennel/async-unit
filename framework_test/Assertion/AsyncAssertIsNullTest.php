@@ -2,13 +2,15 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
-use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\NullAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 
 /**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull
+ * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse
  */
-class AssertIsNullTest extends AbstractAssertionTestCase {
+class AsyncAssertIsNullTest extends AbstractAsyncAssertionTestCase {
 
     /**
      * @dataProvider nonNullProvider
@@ -17,8 +19,8 @@ class AssertIsNullTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertIsNull();
+    protected function getAssertion($expected) : AsyncAssertion {
+        return new AsyncAssertIsNull($expected);
     }
 
     protected function getExpectedValue() {
@@ -26,22 +28,15 @@ class AssertIsNullTest extends AbstractAssertionTestCase {
     }
 
     protected function getBadValue() {
-        return 'not null';
+        return 'non null';
     }
 
-    protected function getExpectedType() {
+    protected function getExpectedType() : string {
         return 'NULL';
     }
 
     protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new class($actual) implements AssertionComparisonDisplay {
-
-            public function __construct(private $actual) {}
-
-            public function toString() : string {
-                return sprintf('Failed asserting that a value %s (%s) is null.', var_export($this->actual, true), gettype($this->actual));
-            }
-        };
+        return new NullAssertionComparisonDisplay($actual);
     }
 
     protected function getInvalidTypeMessage(string $actualType) : string {

@@ -2,13 +2,15 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
-use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\TrueAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 
 /**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull
+ * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse
  */
-class AssertIsFalseTest extends AbstractAssertionTestCase {
+class AsyncAssertIsTrueTest extends AbstractAsyncAssertionTestCase {
 
     /**
      * @dataProvider nonBoolProvider
@@ -17,35 +19,28 @@ class AssertIsFalseTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertIsFalse();
+    protected function getAssertion($expected) : AsyncAssertion {
+        return new AsyncAssertIsTrue($expected);
     }
 
     protected function getExpectedValue() {
-        return false;
-    }
-
-    protected function getBadValue() {
         return true;
     }
 
-    protected function getExpectedType() {
+    protected function getBadValue() {
+        return false;
+    }
+
+    protected function getExpectedType() : string {
         return 'boolean';
     }
 
     protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new class($actual) implements AssertionComparisonDisplay {
-
-            public function __construct(private $actual) {}
-
-            public function toString() : string {
-                return sprintf('Failed asserting that a value %s (%s) is false.', var_export($this->actual, true), gettype($this->actual));
-            }
-        };
+        return new TrueAssertionComparisonDisplay($actual);
     }
 
     protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is false.', $actualType);
+        return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
     }
 
     protected function getInvalidComparisonMessage($actual) : string {

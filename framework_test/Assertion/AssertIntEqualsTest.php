@@ -22,7 +22,7 @@ class AssertIntEqualsTest extends AbstractAssertionTestCase {
         return new AssertIntEquals($value);
     }
 
-    protected function getGoodValue() {
+    protected function getExpectedValue() {
         return 1234;
     }
 

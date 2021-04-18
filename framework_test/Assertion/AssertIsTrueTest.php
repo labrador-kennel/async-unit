@@ -21,7 +21,7 @@ class AssertIsTrueTest extends AbstractAssertionTestCase {
         return new AssertIsTrue();
     }
 
-    protected function getGoodValue() {
+    protected function getExpectedValue() {
         return true;
     }
 

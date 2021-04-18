@@ -22,7 +22,7 @@ class AssertFloatEqualsTest extends AbstractAssertionTestCase {
         return new AssertFloatEquals($value);
     }
 
-    protected function getGoodValue() {
+    protected function getExpectedValue() {
         return 9876.54;
     }
 
