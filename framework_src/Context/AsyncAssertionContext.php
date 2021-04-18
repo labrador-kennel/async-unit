@@ -37,7 +37,7 @@ final class AsyncAssertionContext {
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
                     $results->getErrorMessage(),
-                    new BinaryVarExportAssertionComparisonDisplay('', ''),
+                    $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
                 );

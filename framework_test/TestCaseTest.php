@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
@@ -32,6 +33,10 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $this->assertNotNull($assertionException);
             $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
             $this->assertSame(11, $assertionException->getAssertionFailureLine());
+            $this->assertEquals(
+                (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
+                $assertionException->getComparisonDisplay()->toString()
+            );
         }
     }
 
@@ -54,6 +59,10 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
                 $this->assertNotNull($assertionException);
                 $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
                 $this->assertSame(15, $assertionException->getAssertionFailureLine());
+                $this->assertEquals(
+                    (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
+                    $assertionException->getComparisonDisplay()->toString()
+                );
             }
         });
     }
