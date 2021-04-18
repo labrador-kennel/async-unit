@@ -4,11 +4,13 @@ namespace Cspray\Labrador\AsyncUnit\CliTool\Command;
 
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
+use League\CLImate\CLImate;
 use Psr\Log\NullLogger;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -49,13 +51,36 @@ class RunTestsCommand extends Command {
         ]);
 
         $emitter = $injector->make(EventEmitter::class);
+        $cli = new CLImate();
 
-        $emitter->on(Events::TEST_FAILED_EVENT, function() use($output) {
-            $output->write('X');
+        $state = new \stdClass();
+        $state->cli = $cli;
+        $state->hadFailingTests = false;
+
+        $emitter->once(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($state, $cli) {
+            if ($state->hadFailingTests) {
+                $cli->br()->br()->red()->flank('There were failing tests', '!', 1);
+                $cli->border('=');
+            }
         });
 
-        $emitter->on(Events::TEST_PASSED_EVENT, function() use($output) {
-            $output->write('.');
+        $emitter->on(Events::TEST_FAILED_EVENT, function(TestFailedEvent $event) use($state, $emitter, $cli) {
+            $state->hadFailingTests = true;
+            $state->cli->lightRed()->inline('X');
+            $emitter->once(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($cli, $event) {
+                $cli->inline($event->getTarget()->getTestCase()::class)->inline('::')
+                    ->inline($event->getTarget()->getTestMethod())->out(' failed! The failure message:')
+                    ->tab()->out($event->getTarget()->getFailureException()->getMessage());
+                if ($event->getTarget()->getAssertionComparisonDisplay()) {
+                    $cli->tab()->out($event->getTarget()->getAssertionComparisonDisplay()->toString());
+                }
+                $cli->br()->out('Stack trace:')->out($event->getTarget()->getFailureException()->getTraceAsString());
+                $cli->br()->border('-')->br();
+            });
+        });
+
+        $emitter->on(Events::TEST_PASSED_EVENT, function() use($state) {
+            $state->cli->green()->inline('.');
         });
 
         $inspirationalMessages = [
@@ -65,13 +90,17 @@ class RunTestsCommand extends Command {
             'Alright, waking the hamsters up!',
 
         ];
-        $output->write('AsyncUnit v' . $this->version . ' - ');
-        $output->writeln($inspirationalMessages[array_rand($inspirationalMessages)]);
-        $output->writeln('');
+        $cli->bold()->backgroundBlue()->inline('AsyncUnit')
+            ->inline(' ')
+            ->lightYellow()->inline('v' . $this->version)
+            ->inline(' - ')
+            ->out($inspirationalMessages[array_rand($inspirationalMessages)])
+            ->br()
+            ->inline('Runtime: PHP ')->out(phpversion())
+            ->br();
 
         $injector->make(Engine::class)->run($application);
 
-        $output->writeln('');
 
         return Command::SUCCESS;
     }

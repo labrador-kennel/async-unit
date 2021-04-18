@@ -31,7 +31,7 @@ final class AssertionContext {
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
             $this->lastFailedAssertionDisplay = $results->getComparisonDisplay();
-            throw new TestFailedException(sprintf('%s%s%s', $results->getErrorMessage(), PHP_EOL, $this->lastFailedAssertionDisplay->toString()));
+            throw new TestFailedException($results->getErrorMessage());
         }
     }
 

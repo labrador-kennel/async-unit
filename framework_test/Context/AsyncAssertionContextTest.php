@@ -32,7 +32,7 @@ class AsyncAssertionContextTest extends \PHPUnit\Framework\TestCase {
     public function testAssertStringNotEqualThrowsException() {
         Loop::run(function() {
             $this->expectException(TestFailedException::class);
-            $this->expectExceptionMessage("Failed comparing that 2 strings are equal to one another\nFailed comparing 'foo' (string) to 'bar' (string)");
+            $this->expectExceptionMessage("Failed comparing that 2 strings are equal to one another");
 
             yield $this->subject->stringEquals('foo', new Success('bar'));
         });
@@ -41,7 +41,7 @@ class AsyncAssertionContextTest extends \PHPUnit\Framework\TestCase {
     public function testAssertStringNotEqualCustomMessage() {
         Loop::run(function() {
             $this->expectException(TestFailedException::class);
-            $this->expectExceptionMessage("my custom error message\nFailed comparing 'foo' (string) to 'bar' (string)");
+            $this->expectExceptionMessage("my custom error message");
 
             yield $this->subject->stringEquals('foo', new Success('bar'), 'my custom error message');
         });

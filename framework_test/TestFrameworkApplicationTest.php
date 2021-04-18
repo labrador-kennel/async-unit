@@ -9,6 +9,7 @@ use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
+use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
@@ -147,6 +148,22 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
             $this->assertFalse($testResult->isSuccessful());
             $this->assertSame('Failed comparing \'foo\' (string) to \'bar\' (string)', $testResult->getAssertionComparisonDisplay()?->toString());
+        });
+    }
+
+    public function testTestProcessingFinishedEventEmitted() {
+        Loop::run(function() {
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest']);
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function() use($state) {
+                $state->data[] = 'test invoked';
+            });
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($state) {
+                $state->data[] = 'test processing finished';
+            });
+
+            yield $application->start();
+
+            $this->assertSame(['test invoked', 'test processing finished'], $state->data);
         });
     }
 

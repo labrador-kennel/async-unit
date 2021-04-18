@@ -7,6 +7,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
@@ -57,6 +58,10 @@ class TestFrameworkApplication extends AbstractApplication {
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            yield $this->emitter->emit(
+                new StandardEvent(Events::TEST_PROCESSING_FINISHED_EVENT, new \stdClass())
+            );
         });
     }
 

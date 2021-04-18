@@ -31,7 +31,7 @@ final class AsyncAssertionContext {
             $results = yield (new AsyncAssertStringEquals($expected))->assert($actual, $message);
             $this->count++;
             if (!$results->isSuccessful()) {
-                throw new TestFailedException(sprintf('%s%s%s', $results->getErrorMessage(), PHP_EOL, $results->getComparisonDisplay()->toString()));
+                throw new TestFailedException($results->getErrorMessage());
             }
         });
     }
