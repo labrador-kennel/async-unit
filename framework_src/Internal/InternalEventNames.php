@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
 /**
  * @internal
  */
 interface InternalEventNames {
 
-    const TEST_INVOKED = 'labrador.__asyncTesting.testInvoked';
+    const TEST_INVOKED = 'labrador.__asyncUnit.testInvoked';
 
 }

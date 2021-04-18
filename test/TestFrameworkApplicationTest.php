@@ -1,21 +1,21 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
 use Auryn\Injector;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncTesting\Event\TestPassedEvent;
-use Cspray\Labrador\AsyncTesting\Exception\InvalidStateException;
+use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
 use Psr\Log\NullLogger;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\TestFrameworkApplication
+ * @covers \Cspray\Labrador\AsyncUnit\TestFrameworkApplication
  */
 class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 

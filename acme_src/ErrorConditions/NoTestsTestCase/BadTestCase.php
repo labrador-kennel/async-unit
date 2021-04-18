@@ -2,7 +2,7 @@
 
 namespace Acme\DemoSuites\ErrorConditions\NoTestsTestCase;
 
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 class BadTestCase extends TestCase {
 

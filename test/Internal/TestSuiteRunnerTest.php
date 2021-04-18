@@ -1,21 +1,21 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
 use Amp\Loop;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Exception\TestCaseSetUpException;
-use Cspray\Labrador\AsyncTesting\Exception\TestCaseTearDownException;
-use Cspray\Labrador\AsyncTesting\Exception\TestSetupException;
-use Cspray\Labrador\AsyncTesting\Exception\TestTearDownException;
-use Cspray\Labrador\AsyncTesting\Internal\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
+use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
+use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
+use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
+use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Internal\Model\InvokedTestCaseTestModel;
 use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\TestSuiteRunner
+ * @covers \Cspray\Labrador\AsyncUnit\TestSuiteRunner
  */
 class TestSuiteRunnerTest extends PHPUnitTestCase {
 

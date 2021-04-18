@@ -1,12 +1,12 @@
 <?php
 
-namespace Cspray\Labrador\AsyncTesting\Context;
+namespace Cspray\Labrador\AsyncUnit\Context;
 
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\AssertionContext
+ * @covers \Cspray\Labrador\AsyncUnit\AssertionContext
  */
 class AssertionContextTest extends TestCase {
 

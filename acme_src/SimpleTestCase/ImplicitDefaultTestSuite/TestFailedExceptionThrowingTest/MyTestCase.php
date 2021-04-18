@@ -2,9 +2,9 @@
 
 namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest;
 
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 class MyTestCase extends TestCase {
 

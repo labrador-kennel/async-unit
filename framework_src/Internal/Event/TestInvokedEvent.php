@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal\Event;
+namespace Cspray\Labrador\AsyncUnit\Internal\Event;
 
 use Cspray\Labrador\AsyncEvent\Event;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
-use Cspray\Labrador\AsyncTesting\Internal\InternalEventNames;
-use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
+use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
+use Cspray\Labrador\AsyncUnit\Internal\Model\InvokedTestCaseTestModel;
 
 /**
  * @internal

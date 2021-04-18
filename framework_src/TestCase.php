@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
-use Cspray\Labrador\AsyncTesting\Context\AssertionContext;
-use Cspray\Labrador\AsyncTesting\Context\AsyncAssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 
 /**
  * Represents a type that acts a collection of #[Test] methods to be ran as well as the code necessary to support

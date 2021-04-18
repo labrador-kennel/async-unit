@@ -7,8 +7,8 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 
 $repo = new \SebastianFeldmann\Git\Repository(dirname(__DIR__));
 $version = $repo->getInfoOperator()->getCurrentCommitHash();
-$application = new ConsoleApplication('async-testing', substr($version, 0, 7));
+$application = new ConsoleApplication('AsyncUnit', substr($version, 0, 7));
 
-$application->add(new \Cspray\Labrador\AsyncTesting\CliTool\Command\RunTestsCommand($version));
+$application->add(new \Cspray\Labrador\AsyncUnit\CliTool\Command\RunTestsCommand($version));
 
 $application->run();

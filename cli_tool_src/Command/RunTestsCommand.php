@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\CliTool\Command;
+namespace Cspray\Labrador\AsyncUnit\CliTool\Command;
 
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Events;
-use Cspray\Labrador\AsyncTesting\TestFrameworkApplicationObjectGraph;
+use Cspray\Labrador\AsyncUnit\Events;
+use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
@@ -65,7 +65,7 @@ class RunTestsCommand extends Command {
             'Alright, waking the hamsters up!',
 
         ];
-        $output->write('Async Testing v' . $this->version . ' - ');
+        $output->write('AsyncUnit v' . $this->version . ' - ');
         $output->writeln($inspirationalMessages[array_rand($inspirationalMessages)]);
         $output->writeln('');
 

@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal\Model;
+namespace Cspray\Labrador\AsyncUnit\Internal\Model;
 
-use Cspray\Labrador\AsyncTesting\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncTesting\Context\AssertionContext;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 /**
  * @internal

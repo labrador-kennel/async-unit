@@ -4,8 +4,8 @@
 namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\SingleTest;
 
 use Amp\Delayed;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\TestCase;
 use Generator;
 
 class MyTestCase extends TestCase {

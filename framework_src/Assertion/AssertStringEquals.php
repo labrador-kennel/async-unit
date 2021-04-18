@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Assertion;
+namespace Cspray\Labrador\AsyncUnit\Assertion;
 
-use Cspray\Labrador\AsyncTesting\Assertion;
-use Cspray\Labrador\AsyncTesting\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncTesting\AssertionResult;
+use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
 
 class AssertStringEquals implements Assertion {
 

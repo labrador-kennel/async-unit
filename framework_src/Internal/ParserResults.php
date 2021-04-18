@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 
 /**
  * @internal

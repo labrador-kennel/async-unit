@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 interface TestResult {
     public function getTestCase() : TestCase;

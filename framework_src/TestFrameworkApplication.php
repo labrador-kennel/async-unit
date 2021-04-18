@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 
 use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncTesting\Event\TestPassedEvent;
-use Cspray\Labrador\AsyncTesting\Exception\InvalidStateException;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
-use Cspray\Labrador\AsyncTesting\Internal\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncTesting\Internal\InternalEventNames;
-use Cspray\Labrador\AsyncTesting\Internal\Parser;
-use Cspray\Labrador\AsyncTesting\Internal\TestSuiteRunner;
+use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
+use Cspray\Labrador\AsyncUnit\Internal\Parser;
+use Cspray\Labrador\AsyncUnit\Internal\TestSuiteRunner;
 use Cspray\Labrador\Plugin\Pluggable;
 use PHPUnit\Framework\Assert;
 use function Amp\call;

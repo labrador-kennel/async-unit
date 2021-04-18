@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
 use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncTesting\Context\AssertionContext;
-use Cspray\Labrador\AsyncTesting\Context\AsyncAssertionContext;
-use Cspray\Labrador\AsyncTesting\Exception\TestCaseSetUpException;
-use Cspray\Labrador\AsyncTesting\Exception\TestCaseTearDownException;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
-use Cspray\Labrador\AsyncTesting\Exception\TestSetupException;
-use Cspray\Labrador\AsyncTesting\Exception\TestTearDownException;
-use Cspray\Labrador\AsyncTesting\Internal\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncTesting\Internal\Model\InvokedTestCaseTestModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
+use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
+use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
+use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
+use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Internal\Model\InvokedTestCaseTestModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\TestCase;
 use ReflectionClass;
 use Throwable;
 use function Amp\call;

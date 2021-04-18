@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Assertion\AssertionComparisonDisplay;
+namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay;
 
-use Cspray\Labrador\AsyncTesting\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class BinaryVarExportAssertionComparisonDisplay implements AssertionComparisonDisplay {
 

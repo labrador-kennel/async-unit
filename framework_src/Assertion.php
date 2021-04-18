@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 /**
  * A type that represents an individual assertion in a #[Test], 1-or-many Assertion may take place in a #[Test].

@@ -5,8 +5,8 @@ namespace Acme\Examples\SimpleEquals;
 use Amp\Delayed;
 use Amp\Promise;
 use Amp\Success;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\TestCase;
 use function Amp\call;
 
 class StringEqualsTest extends TestCase {
