@@ -4,7 +4,9 @@ namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Amp\Coroutine;
 use Amp\Promise;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Generator;
 use function Amp\call;
@@ -31,7 +33,7 @@ final class AsyncAssertionContext {
             $results = yield (new AsyncAssertStringEquals($expected))->assert($actual, $message);
             $this->count++;
             if (!$results->isSuccessful()) {
-                throw new TestFailedException($results->getErrorMessage());
+                throw new AssertionFailedException($results->getErrorMessage(), new BinaryVarExportAssertionComparisonDisplay('', ''));
             }
         });
     }

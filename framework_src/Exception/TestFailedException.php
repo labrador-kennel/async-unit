@@ -4,4 +4,8 @@ namespace Cspray\Labrador\AsyncUnit\Exception;
 
 class TestFailedException extends Exception {
 
+    public function isAssertionFailure() : bool {
+        return false;
+    }
+
 }

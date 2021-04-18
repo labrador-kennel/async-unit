@@ -6,6 +6,7 @@ namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Amp\Loop;
 use Amp\Success;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 /**
@@ -31,7 +32,7 @@ class AsyncAssertionContextTest extends \PHPUnit\Framework\TestCase {
 
     public function testAssertStringNotEqualThrowsException() {
         Loop::run(function() {
-            $this->expectException(TestFailedException::class);
+            $this->expectException(AssertionFailedException::class);
             $this->expectExceptionMessage("Failed comparing that 2 strings are equal to one another");
 
             yield $this->subject->stringEquals('foo', new Success('bar'));
@@ -40,7 +41,7 @@ class AsyncAssertionContextTest extends \PHPUnit\Framework\TestCase {
 
     public function testAssertStringNotEqualCustomMessage() {
         Loop::run(function() {
-            $this->expectException(TestFailedException::class);
+            $this->expectException(AssertionFailedException::class);
             $this->expectExceptionMessage("my custom error message");
 
             yield $this->subject->stringEquals('foo', new Success('bar'), 'my custom error message');

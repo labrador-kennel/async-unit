@@ -2,8 +2,10 @@
 
 namespace Cspray\Labrador\AsyncUnit\Context;
 
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 /**
@@ -31,7 +33,7 @@ final class AssertionContext {
         $results = $assertString->assert($actual, $message);
         if (!$results->isSuccessful()) {
             $this->lastFailedAssertionDisplay = $results->getComparisonDisplay();
-            throw new TestFailedException($results->getErrorMessage());
+            throw new AssertionFailedException($results->getErrorMessage(), new BinaryVarExportAssertionComparisonDisplay('', ''));
         }
     }
 
