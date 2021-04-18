@@ -1,11 +1,11 @@
 <?php
 
-namespace Cspray\Labrador\AsyncTesting\Assertion;
+namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use PHPUnit\Framework\TestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\Assertion\AssertStringEquals
+ * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals
  */
 class AssertStringEqualsTest extends TestCase {
 

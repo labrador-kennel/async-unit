@@ -4,9 +4,9 @@
 namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\ExceptionThrowingBeforeAll;
 
 
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 class MyTestCase extends TestCase {
 

@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 /**
  * Represents the data about a call to {@see Assertion::assert} or {@see AsyncAssertion::assert} that could be a

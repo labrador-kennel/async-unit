@@ -1,10 +1,11 @@
 {
-  "name": "cspray/labrador-async-test",
-  "description": "An async testing framework written on top of PHP8",
+  "name": "cspray/labrador-async-unit",
+  "description": "An async unit and integration testing framework written on top of PHP8",
   "bin": [
-    "bin/async-testing"
+    "bin/asyncunit"
   ],
   "require": {
+    "php": "^8.0",
     "amphp/amp": "^2",
     "nikic/php-parser": "^4.10",
     "cspray/labrador-async-event": "^2.3",
@@ -12,20 +13,20 @@
     "symfony/console": "^5.2",
     "sebastianfeldmann/git": "^3.7"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  },
   "autoload": {
     "psr-4": {
-      "Cspray\\Labrador\\AsyncTesting\\": "framework_src",
-      "Cspray\\Labrador\\AsyncTesting\\CliTool\\": "cli_tool_src"
+      "Cspray\\Labrador\\AsyncUnit\\": "framework_src",
+      "Cspray\\Labrador\\AsyncUnit\\CliTool\\": "cli_tool_src"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Cspray\\Labrador\\AsyncTesting\\": "test",
+      "Cspray\\Labrador\\AsyncUnit\\": "test",
       "Acme\\DemoSuites\\": "acme_src",
       "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src"
     }
-  },
-  "require-dev": {
-    "phpunit/phpunit": "^9.5"
   }
 }

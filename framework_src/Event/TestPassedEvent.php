@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Event;
+namespace Cspray\Labrador\AsyncUnit\Event;
 
 use Cspray\Labrador\AsyncEvent\StandardEvent;
-use Cspray\Labrador\AsyncTesting\Events;
-use Cspray\Labrador\AsyncTesting\TestResult;
+use Cspray\Labrador\AsyncUnit\Events;
+use Cspray\Labrador\AsyncUnit\TestResult;
 
 class TestPassedEvent extends StandardEvent {
 

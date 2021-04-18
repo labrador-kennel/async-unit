@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Assertion;
+namespace Cspray\Labrador\AsyncUnit\Assertion;
 
-use Cspray\Labrador\AsyncTesting\AssertionResult;
-use Cspray\Labrador\AsyncTesting\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
+use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 final class AssertionResultFactory {
 

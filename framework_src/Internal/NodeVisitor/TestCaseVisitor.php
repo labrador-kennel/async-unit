@@ -1,20 +1,20 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal\NodeVisitor;
+namespace Cspray\Labrador\AsyncUnit\Internal\NodeVisitor;
 
-use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;
-use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeEach;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncTesting\Internal\Model\AfterAllMethodModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\AfterEachMethodModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\BeforeAllMethodModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\BeforeEachMethodModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestMethodModel;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
+use Cspray\Labrador\AsyncUnit\Internal\Model\AfterAllMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\AfterEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeAllMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\TestCase;
 use PhpParser\Node;
 use PhpParser\Node\Attribute;
 use PhpParser\Node\AttributeGroup;

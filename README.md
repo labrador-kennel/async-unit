@@ -1,16 +1,14 @@
-# Async Testing
+# AsyncUnit
 
-A comprehensive unit/integration testing framework that combines PHP8 and Amphp to support writing 
-tests with first-class async support.
+[![Unit Tests](https://github.com/labrador-kennel/async-testing/actions/workflows/php.yml/badge.svg)](https://github.com/labrador-kennel/async-testing/actions/workflows/php.yml)
 
-> This library is still in early development and is largely public at this point to garner feedback 
-> and solicit potential ideas or pitfalls. Please open a PR or start a Discussion if you'd like to 
-> contribute!
+A comprehensive unit/integration testing framework that combines PHP8 and Amphp to support writing tests with 
+first-class async support.
 
 ## Installation
 
 ```
-composer require --dev cspray/labrador-async-testing
+composer require --dev cspray/labrador-async-unit
 ```
 
 ## Example
@@ -22,11 +20,14 @@ composer require --dev cspray/labrador-async-testing
 
 namespace Acme\MyApp;
 
-use Amp\Success;use Cspray\Labrador\AsyncTesting\Attribute\AfterAll;use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;use Cspray\Labrador\AsyncTesting\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncTesting\Attribute\BeforeEach;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Amp\Success;
 use Amp\Delayed;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 // The name of this class doesn't matter... you only need to ensure you extend TestCase
 class MyAppTestCase extends TestCase {
@@ -76,7 +77,7 @@ class MyAppTestCase extends TestCase {
 In your terminal you could use the provided CLI tool to run this test suite:
 
 ```shell
-vendor/bin/async-testing tests
+vendor/bin/asyncunit tests
 ```
 
 > See a similar example in action! With the repository on your local machine run the command and point at `examples/simple_equals_src`
@@ -141,12 +142,12 @@ expected arguments and return types.
 
 ```php
 
-namespace Cspray\Labrador\AsyncTesting\Protocol;
+namespace Cspray\Labrador\AsyncUnit\Protocol;
 
 use Amp\Promise;
-use Cspray\Labrador\AsyncTesting\Attribute\ProtocolRequiresAttribute;
-use Cspray\Labrador\AsyncTesting\Attribute\Protocol;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\Attribute\ProtocolRequiresAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\Protocol;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
 
 #[Protocol]
 #[ProtocolRequiresAttribute(Test::class)]
@@ -220,7 +221,7 @@ This test will resolve the Generator on the Loop and then compare the 2 values w
 
 ## Roadmap
 
-To see the planned future for Async Testing please checkout the Projects and Issues created in this repo.
+To see the planned future for AsyncUnit please checkout the Projects and Issues created in this repo.
 
 ## Haven't you heard of PHPUnit?
 

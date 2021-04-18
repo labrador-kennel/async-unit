@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 /**
  * A type that represents how the $expected and $actual values comparisons differ in a failed AssertionResult.

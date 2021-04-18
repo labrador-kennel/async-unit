@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
 
-namespace Cspray\Labrador\AsyncTesting\Protocol;
+namespace Cspray\Labrador\AsyncUnit\Protocol;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;
-use Cspray\Labrador\AsyncTesting\Attribute\Protocol;
-use Cspray\Labrador\AsyncTesting\Attribute\ProtocolRequiresAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\Protocol;
+use Cspray\Labrador\AsyncUnit\Attribute\ProtocolRequiresAttribute;
 use Generator;
 
 #[Protocol]

@@ -1,15 +1,15 @@
 <?php declare(strict_types=1);
 
 
-namespace Cspray\Labrador\AsyncTesting\Context;
+namespace Cspray\Labrador\AsyncUnit\Context;
 
 
 use Amp\Loop;
 use Amp\Success;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\AsyncAssertionContext
+ * @covers \Cspray\Labrador\AsyncUnit\AsyncAssertionContext
  */
 class AsyncAssertionContextTest extends \PHPUnit\Framework\TestCase {
 

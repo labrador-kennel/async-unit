@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Assertion;
+namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncTesting\AsyncAssertion;
+use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 use function Amp\call;
 

@@ -1,15 +1,15 @@
 <?php
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
-use Cspray\Labrador\AsyncTesting\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestMethodModel;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\TestCase;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncTesting\Internal\Parser
+ * @covers \Cspray\Labrador\AsyncUnit\Internal\Parser
  */
 class ParserTest extends PHPUnitTestCase {
 

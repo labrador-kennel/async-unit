@@ -1,10 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Context;
+namespace Cspray\Labrador\AsyncUnit\Context;
 
-use Cspray\Labrador\AsyncTesting\Assertion\AssertStringEquals;
-use Cspray\Labrador\AsyncTesting\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
+use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 
 /**
  * Represents an object created for every #[Test] that provides access to the Assertion API as well as the mechanism for

@@ -1,12 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Internal;
+namespace Cspray\Labrador\AsyncUnit\Internal;
 
-use Cspray\Labrador\AsyncTesting\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestMethodModel;
-use Cspray\Labrador\AsyncTesting\Internal\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncTesting\Internal\NodeVisitor\TestCaseVisitor;
+use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Internal\NodeVisitor\TestCaseVisitor;
 use FilesystemIterator;
 use Generator;
 use PhpParser\NodeTraverser;

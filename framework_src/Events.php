@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting;
+namespace Cspray\Labrador\AsyncUnit;
 
 interface Events {
 
-    const TEST_PASSED_EVENT = 'labrador.asyncTesting.testPassed';
+    const TEST_PASSED_EVENT = 'labrador.asyncUnit.testPassed';
 
-    const TEST_FAILED_EVENT = 'labrador.asyncTesting.testFailed';
+    const TEST_FAILED_EVENT = 'labrador.asyncUnit.testFailed';
 
 }

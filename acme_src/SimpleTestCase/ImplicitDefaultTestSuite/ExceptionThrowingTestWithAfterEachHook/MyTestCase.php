@@ -2,9 +2,9 @@
 
 namespace Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite\ExceptionThrowingTestWithAfterEachHook;
 
-use Cspray\Labrador\AsyncTesting\Attribute\AfterEach;
-use Cspray\Labrador\AsyncTesting\Attribute\Test;
-use Cspray\Labrador\AsyncTesting\TestCase;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\TestCase;
 
 class MyTestCase extends TestCase {
 

@@ -1,11 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncTesting\Context;
+namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncTesting\Assertion\AsyncAssertStringEquals;
-use Cspray\Labrador\AsyncTesting\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Generator;
 use function Amp\call;
 
