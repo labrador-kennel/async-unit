@@ -77,7 +77,7 @@ class MyAppTestCase extends TestCase {
 In your terminal you could use the provided CLI tool to run this test suite:
 
 ```shell
-vendor/bin/asyncunit tests
+vendor/bin/asyncunit run tests
 ```
 
 > See a similar example in action! With the repository on your local machine run the command and point at `examples/simple_equals_src`
@@ -210,11 +210,8 @@ This test will resolve the Generator on the Loop and then compare the 2 values w
 
 ### Assertions list
 
-> This list only includes Assertions that are implemented and tested. More Assertions are on the way!
-
-|Description|`assert()`|`asyncAssert()`|
-|---|---|---|
-|Confirm that 2 strings are equal to one another|`stringEquals(string $expected, string $actual, string $message = null)`|`stringEquals(string $expected, Promise\|Generator\|Coroutine $actual)`|
+This list is currently being generated. For now, please review the helper methods provided in the 
+AssertionContext and AsyncAssertionContext.
 
 ### Creating your own Assertions
 
