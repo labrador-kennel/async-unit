@@ -12,7 +12,7 @@ use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
-use Acme\DemoSuites\SimpleTestCase\ImplicitDefaultTestSuite;
+use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Psr\Log\NullLogger;
 
 /**
@@ -52,7 +52,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
             yield $application->start();
 
             $this->assertCount(1, $state->passed->events);
@@ -71,7 +71,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestAsyncAssertion() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/SingleTestAsyncAssertion']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTestAsyncAssertion']);
             yield $application->start();
 
             $this->assertCount(1, $state->passed->events);
@@ -90,7 +90,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteNoAssertions() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/NoAssertions']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/NoAssertions']);
             yield $application->start();
 
             $this->assertCount(0, $state->passed->events);
@@ -115,7 +115,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testGettingFailureExceptionFromValidTestResultThrowsException() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
             yield $application->start();
 
             $this->assertCount(1, $state->passed->events);
@@ -135,7 +135,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteFailedAssertion() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/FailedAssertion']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/FailedAssertion']);
             yield $application->start();
 
             $this->assertCount(0, $state->passed->events);
@@ -152,7 +152,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testTestProcessingFinishedEventEmitted() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest']);
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
             $this->emitter->on(InternalEventNames::TEST_INVOKED, function() use($state) {
                 $state->data[] = 'test invoked';
             });

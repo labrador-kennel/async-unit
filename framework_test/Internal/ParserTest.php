@@ -78,7 +78,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testDefaultTestSuiteName() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest');
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -88,64 +88,64 @@ class ParserTest extends PHPUnitTestCase {
 
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/SingleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest');
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertInstanceOf(TestCaseModel::class, $testSuite->getTestCaseModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\SingleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\SingleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
 
         $this->assertCount(1, $testSuite->getTestCaseModels()[0]->getTestMethodModels());
         $this->assertInstanceOf(TestMethodModel::class, $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\SingleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\SingleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
         $this->assertSame('ensureSomethingHappens', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getMethod());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/MultipleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest');
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertInstanceOf(TestCaseModel::class, $testSuite->getTestCaseModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
 
         $this->assertCount(3, $testSuite->getTestCaseModels()[0]->getTestMethodModels());
 
         $this->assertInstanceOf(TestMethodModel::class, $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
         $this->assertSame('ensureSomethingHappens', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getMethod());
 
         $this->assertInstanceOf(TestMethodModel::class, $testSuite->getTestCaseModels()[0]->getTestMethodModels()[1]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[1]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[1]->getClass());
         $this->assertSame('ensureSomethingHappensTwice', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[1]->getMethod());
 
         $this->assertInstanceOf(TestMethodModel::class, $testSuite->getTestCaseModels()[0]->getTestMethodModels()[2]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[2]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[2]->getClass());
         $this->assertSame('ensureSomethingHappensThreeTimes', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[2]->getMethod());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteHasNotTestCaseObject() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/HasNotTestCaseObject');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasNotTestCaseObject');
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertInstanceOf(TestCaseModel::class, $testSuite->getTestCaseModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\HasNotTestCaseObject\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\HasNotTestCaseObject\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestCaseClass());
 
         $this->assertCount(1, $testSuite->getTestCaseModels()[0]->getTestMethodModels());
         $this->assertInstanceOf(TestMethodModel::class, $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]);
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\HasNotTestCaseObject\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\HasNotTestCaseObject\\MyTestCase', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getClass());
         $this->assertSame('ensureSomethingHappens', $testSuite->getTestCaseModels()[0]->getTestMethodModels()[0]->getMethod());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTestCase() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/MultipleTestCase');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTestCase');
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -160,13 +160,13 @@ class ParserTest extends PHPUnitTestCase {
             return null;
         };
 
-        $barTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase');
-        $bazTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase');
-        $fooTestCase = $getTestCase('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase');
+        $barTestCase = $getTestCase('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase');
+        $bazTestCase = $getTestCase('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase');
+        $fooTestCase = $getTestCase('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase');
 
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase', $barTestCase->getTestCaseClass());
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase', $bazTestCase->getTestCaseClass());
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase', $fooTestCase->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase', $barTestCase->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase', $bazTestCase->getTestCaseClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase', $fooTestCase->getTestCaseClass());
 
         $this->assertCount(1, $barTestCase->getTestMethodModels());
         $this->assertCount(1, $bazTestCase->getTestMethodModels());
@@ -186,7 +186,7 @@ class ParserTest extends PHPUnitTestCase {
      * @dataProvider hooksProvider
      */
     public function testParsingSimpleTestCaseHasHooks(string $testCaseGetter, string $subNamespace, string $methodName) {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/SimpleTestCase/ImplicitDefaultTestSuite/' . $subNamespace);
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $subNamespace);
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -195,7 +195,7 @@ class ParserTest extends PHPUnitTestCase {
         $myTestCase = $testSuite->getTestCaseModels()[0];
 
         $this->assertCount(1, $myTestCase->$testCaseGetter());
-        $this->assertSame('Acme\\DemoSuites\\SimpleTestCase\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->$testCaseGetter()[0]->getClass());
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->$testCaseGetter()[0]->getClass());
         $this->assertSame($methodName, $myTestCase->$testCaseGetter()[0]->getMethod());
     }
 
