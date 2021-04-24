@@ -48,7 +48,7 @@ class AssertIsFalseTest extends AbstractAssertionTestCase {
         return sprintf('Failed asserting that a value with type "%s" is false.', $actualType);
     }
 
-    protected function getInvalidComparisonMessage($actual) : string {
+    protected function getAssertionString($actual) : string {
         return $this->getInvalidTypeMessage(gettype($actual));
     }
 }

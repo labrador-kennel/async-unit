@@ -19,22 +19,15 @@ use function Amp\call;
 final class AsyncAssertionContext {
 
     use LastAssertionCalledTrait;
-
-    private int $count = 0;
-
-    private function __construct() {}
-
-    public function getAssertionCount() : int {
-        return $this->count;
-    }
+    use SharedAssertionContextTrait;
 
     public function arrayEquals(array $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($expected, $actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertArrayEquals($expected))->assert($actual, $message);
+            $results = yield (new AsyncAssertArrayEquals($expected))->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -46,10 +39,10 @@ final class AsyncAssertionContext {
     public function floatEquals(float $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($expected, $actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertFloatEquals($expected))->assert($actual, $message);
+            $results = yield (new AsyncAssertFloatEquals($expected))->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -61,10 +54,10 @@ final class AsyncAssertionContext {
     public function intEquals(int $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($expected, $actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertIntEquals($expected))->assert($actual, $message);
+            $results = yield (new AsyncAssertIntEquals($expected))->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -84,10 +77,10 @@ final class AsyncAssertionContext {
     public function stringEquals(string $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($expected, $actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertStringEquals($expected))->assert($actual, $message);
+            $results = yield (new AsyncAssertStringEquals($expected))->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -99,10 +92,10 @@ final class AsyncAssertionContext {
     public function isTrue(Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertIsTrue())->assert($actual, $message);
+            $results = yield (new AsyncAssertIsTrue())->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -114,10 +107,10 @@ final class AsyncAssertionContext {
     public function isFalse(Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertIsFalse())->assert($actual, $message);
+            $results = yield (new AsyncAssertIsFalse())->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()
@@ -129,10 +122,10 @@ final class AsyncAssertionContext {
     public function isNull(Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function () use($actual, $message) {
             $this->count++;
-            $results = yield (new AsyncAssertIsNull())->assert($actual, $message);
+            $results = yield (new AsyncAssertIsNull())->assert($actual);
             if (!$results->isSuccessful()) {
                 throw new AssertionFailedException(
-                    $results->getErrorMessage(),
+                    $this->getDefaultFailureMessage($results->getAssertionString()),
                     $results->getComparisonDisplay(),
                     $this->getLastAssertionFile(),
                     $this->getLastAssertionLine()

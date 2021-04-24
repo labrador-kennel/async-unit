@@ -9,6 +9,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsTrue;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 
@@ -22,107 +23,88 @@ use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 final class AssertionContext {
 
     use LastAssertionCalledTrait;
-
-    private int $count = 0;
-
-    private function __construct() {}
-
-    public function getAssertionCount() : int {
-        return $this->count;
-    }
+    use SharedAssertionContextTrait;
 
     public function arrayEquals(array $expected, array $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertArrayEquals($expected);
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function floatEquals(float $expected, float $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertFloatEquals($expected);
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function intEquals(int $expected, int $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertIntEquals($expected);
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function stringEquals(string $expected, string $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertStringEquals($expected);
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function isTrue(bool $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertIsTrue();
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function isFalse(bool $actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertIsFalse();
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
-            throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
     }
 
     public function isNull($actual, string $message = null) : void {
-        $this->count++;
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
         $assert = new AssertIsNull();
-        $results = $assert->assert($actual, $message);
-        if (!$results->isSuccessful()) {
+        $results = $assert->assert($actual);
+
+        $this->handleAssertionResults($results, $isNot);
+    }
+
+    private function invokedAssertionContext() : void {
+        $this->count++;
+        $this->isNot = false;
+    }
+
+    private function handleAssertionResults(AssertionResult $result, bool $isNot) {
+        if (($isNot && $result->isSuccessful()) || (!$isNot && !$result->isSuccessful())) {
             throw new AssertionFailedException(
-                $results->getErrorMessage(),
-                $results->getComparisonDisplay(),
+                $this->getDefaultFailureMessage($isNot ? $result->getNotAssertionString() : $result->getAssertionString()),
+                $result->getComparisonDisplay(),
                 $this->getLastAssertionFile(),
                 $this->getLastAssertionLine()
             );

@@ -9,29 +9,38 @@ use Cspray\Labrador\AsyncUnit\AssertionResult;
 
 abstract class AbstractAssertionEquals implements Assertion {
 
-    final public function assert(mixed $actual, string $errorMessage = null) : AssertionResult {
+    final public function assert(mixed $actual) : AssertionResult {
         if (!$this->isValidType($actual)) {
-            $errorMessage = $errorMessage ?? $this->getDefaultInvalidTypeMessage(gettype($actual));
             return AssertionResultFactory::invalidAssertion(
-                $errorMessage,
+                $this->getInvalidTypeAssertionString(gettype($actual)),
+                $this->getNotAssertionString($actual),
                 $this->getAssertionComparisonDisplay($actual)
             );
         } else if ($this->getExpected() !== $actual) {
             return AssertionResultFactory::invalidAssertion(
-                $errorMessage ?? $this->getDefaultInvalidComparisonMessage($actual),
+                $this->getAssertionString($actual),
+                $this->getNotAssertionString($actual),
                 $this->getAssertionComparisonDisplay($actual)
             );
         }
 
-        return AssertionResultFactory::validAssertion();
+        return AssertionResultFactory::validAssertion(
+            $this->getAssertionString($actual),
+            $this->getNotAssertionString($actual),
+            $this->getAssertionComparisonDisplay($actual)
+        );
     }
 
-    protected function getDefaultInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType());
+    protected function getInvalidTypeAssertionString(string $actualType) : string {
+        return sprintf('asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType());
     }
 
-    protected function getDefaultInvalidComparisonMessage($actual) : string {
-        return sprintf('Failed comparing that 2 %ss are equal to one another', $this->getExpectedType());
+    protected function getAssertionString($actual) : string {
+        return sprintf('comparing that 2 %ss are equal to one another', $this->getExpectedType());
+    }
+
+    protected function getNotAssertionString($actual) : string {
+        return sprintf('comparing that 2 %ss are not equal to one another', $this->getExpectedType());
     }
 
     abstract protected function isValidType(mixed $actual) : bool;

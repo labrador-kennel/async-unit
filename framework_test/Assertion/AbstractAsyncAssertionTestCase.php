@@ -23,13 +23,13 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
 
     abstract protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay;
 
-    protected function getInvalidComparisonMessage($actual) : string {
-        return 'Failed comparing that 2 ' . $this->getExpectedType() . 's are equal to one another';
+    protected function getAssertionString($actual) : string {
+        return 'comparing that 2 ' . $this->getExpectedType() . 's are equal to one another';
     }
 
     protected function getInvalidTypeMessage(string $actualType) : string {
         return sprintf(
-            'Failed asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType()
+            'asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType()
         );
     }
 
@@ -39,7 +39,7 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert(new Success($value));
 
             $this->assertFalse($results->isSuccessful());
-            $this->assertSame($this->getInvalidTypeMessage(gettype($value)), $results->getErrorMessage());
+            $this->assertSame($this->getInvalidTypeMessage(gettype($value)), $results->getAssertionString());
             $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
         });
     }
@@ -50,8 +50,8 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert(new Success($this->getExpectedValue()));
 
             $this->assertTrue($results->isSuccessful());
-            $this->assertNull($results->getErrorMessage());
-            $this->assertNull($results->getComparisonDisplay());
+            $this->assertSame($this->getAssertionString($this->getExpectedValue()), $results->getAssertionString());
+            $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getExpectedValue())->toString(), $results->getComparisonDisplay()->toString());
         });
     }
 
@@ -61,18 +61,7 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert(new Success($this->getBadValue()));
 
             $this->assertFalse($results->isSuccessful());
-            $this->assertSame($this->getInvalidComparisonMessage($this->getBadValue()), $results->getErrorMessage());
-            $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
-        });
-    }
-
-    public function testCustomMessageUsedIfProvided() {
-        Loop::run(function() {
-            $subject = $this->getAssertion($this->getExpectedValue());
-            $results = yield $subject->assert(new Success($this->getBadValue()), 'my custom message');
-
-            $this->assertFalse($results->isSuccessful());
-            $this->assertSame('my custom message', $results->getErrorMessage());
+            $this->assertSame($this->getAssertionString($this->getBadValue()), $results->getAssertionString());
             $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
         });
     }

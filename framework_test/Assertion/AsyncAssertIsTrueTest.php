@@ -43,7 +43,7 @@ class AsyncAssertIsTrueTest extends AbstractAsyncAssertionTestCase {
         return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
     }
 
-    protected function getInvalidComparisonMessage($actual) : string {
+    protected function getAssertionString($actual) : string {
         return $this->getInvalidTypeMessage(gettype($actual));
     }
 }
