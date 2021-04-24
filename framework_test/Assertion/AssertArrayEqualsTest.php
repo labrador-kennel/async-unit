@@ -19,8 +19,8 @@ class AssertArrayEqualsTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertArrayEquals(['a', 'b', 'c']);
+    protected function getAssertion($value, $actual) : Assertion {
+        return new AssertArrayEquals(['a', 'b', 'c'], $actual);
     }
 
     protected function getExpectedValue() {

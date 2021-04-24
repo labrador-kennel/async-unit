@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertIntEquals extends AbstractAssertionEquals implements Assertion {
 
-    public function __construct(private int $expected) {}
+    public function __construct(private int $expected, private mixed $actual) {}
 
     protected function isValidType(mixed $actual) : bool {
         return is_integer($actual);
@@ -20,6 +20,10 @@ class AssertIntEquals extends AbstractAssertionEquals implements Assertion {
 
     protected function getExpected() : int {
         return $this->expected;
+    }
+
+    protected function getActual() : mixed {
+        return $this->actual;
     }
 
     protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {

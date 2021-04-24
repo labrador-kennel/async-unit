@@ -10,6 +10,8 @@ use Cspray\Labrador\AsyncUnit\AssertionResult;
 
 class AssertIsFalse extends AbstractAssertionEquals implements Assertion {
 
+    public function __construct(private mixed $actual) {}
+
     protected function isValidType(mixed $actual) : bool {
         return is_bool($actual);
     }
@@ -18,8 +20,12 @@ class AssertIsFalse extends AbstractAssertionEquals implements Assertion {
         return 'boolean';
     }
 
-    protected function getExpected() {
+    protected function getExpected() : bool {
         return false;
+    }
+
+    protected function getActual() : mixed {
+        return $this->actual;
     }
 
     protected function getInvalidTypeAssertionString(string $actualType) : string {

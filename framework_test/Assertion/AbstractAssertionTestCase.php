@@ -12,7 +12,7 @@ abstract class AbstractAssertionTestCase extends TestCase {
 
     use AssertionDataProvider;
 
-    abstract protected function getAssertion($expected) : Assertion;
+    abstract protected function getAssertion($expected, $actual) : Assertion;
 
     abstract protected function getExpectedValue();
 
@@ -33,17 +33,17 @@ abstract class AbstractAssertionTestCase extends TestCase {
     }
 
     public function runBadTypeAssertions(mixed $value, string $type) {
-        $subject = $this->getAssertion($this->getExpectedValue());
-        $results = $subject->assert($value);
+        $subject = $this->getAssertion($this->getExpectedValue(), $value);
+        $results = $subject->assert();
 
         $this->assertFalse($results->isSuccessful());
-        $this->assertSame($this->getInvalidTypeMessage(gettype($value)), $results->getAssertionString());
+        $this->assertSame($this->getInvalidTypeMessage($type), $results->getAssertionString());
         $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
     }
 
     public function testAssertGoodValueEqualsGoodValue() {
-        $subject = $this->getAssertion($this->getExpectedValue());
-        $results = $subject->assert($this->getExpectedValue());
+        $subject = $this->getAssertion($this->getExpectedValue(), $this->getExpectedValue());
+        $results = $subject->assert();
 
         $this->assertTrue($results->isSuccessful());
         $this->assertSame($this->getAssertionString($this->getExpectedValue()), $results->getAssertionString());
@@ -51,8 +51,8 @@ abstract class AbstractAssertionTestCase extends TestCase {
     }
 
     public function testAssertGoodValueDoesNotEqualBadValueInformation() {
-        $subject = $this->getAssertion($this->getExpectedValue());
-        $results = $subject->assert($this->getBadValue());
+        $subject = $this->getAssertion($this->getExpectedValue(), $this->getBadValue());
+        $results = $subject->assert();
 
         $this->assertFalse($results->isSuccessful());
         $this->assertSame($this->getAssertionString($this->getBadValue()), $results->getAssertionString());

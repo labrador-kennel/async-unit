@@ -31,9 +31,8 @@ interface Assertion {
      * truly represent the Assertion cannot be processed because of something that was not, or should not, be accounted
      * for.
      *
-     * @param mixed $actual
      * @return AssertionResult
      */
-    public function assert(mixed $actual) : AssertionResult;
+    public function assert() : AssertionResult;
 
 }

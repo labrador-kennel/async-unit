@@ -3,9 +3,12 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+use Amp\Coroutine;
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
+use Generator;
 
 /**
  * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertFloatEquals
@@ -18,15 +21,15 @@ class AsyncAssertIntEqualsTest extends AbstractAsyncAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($expected) : AsyncAssertion {
-        return new AsyncAssertIntEquals($expected);
+    protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
+        return new AsyncAssertIntEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getExpectedValue() : int {
         return 1;
     }
 
-    protected function getBadValue() {
+    protected function getBadValue() : int {
         return 2;
     }
 

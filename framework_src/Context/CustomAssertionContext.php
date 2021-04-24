@@ -2,7 +2,9 @@
 
 namespace Cspray\Labrador\AsyncUnit\Context;
 
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;

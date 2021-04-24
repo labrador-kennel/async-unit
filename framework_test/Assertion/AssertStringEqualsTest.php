@@ -19,8 +19,8 @@ class AssertStringEqualsTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertStringEquals($value);
+    protected function getAssertion($value, $actual) : Assertion {
+        return new AssertStringEquals($value, $actual);
     }
 
     protected function getExpectedValue() {

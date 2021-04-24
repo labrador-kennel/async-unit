@@ -2,11 +2,14 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+use Amp\Coroutine;
 use Amp\Loop;
+use Amp\Promise;
 use Amp\Success;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
+use Generator;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -21,15 +24,15 @@ class AsyncAssertStringEqualsTest extends AbstractAsyncAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($expected) : AsyncAssertion {
-        return new AsyncAssertStringEquals($expected);
+    protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
+        return new AsyncAssertStringEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getExpectedValue() : string {
         return 'async unit';
     }
 
-    protected function getBadValue() {
+    protected function getBadValue() : string {
         return 'blocking code';
     }
 

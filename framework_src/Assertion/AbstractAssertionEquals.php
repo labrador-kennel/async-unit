@@ -9,7 +9,8 @@ use Cspray\Labrador\AsyncUnit\AssertionResult;
 
 abstract class AbstractAssertionEquals implements Assertion {
 
-    final public function assert(mixed $actual) : AssertionResult {
+    final public function assert() : AssertionResult {
+        $actual = $this->getActual();
         if (!$this->isValidType($actual)) {
             return AssertionResultFactory::invalidAssertion(
                 $this->getInvalidTypeAssertionString(gettype($actual)),
@@ -48,6 +49,8 @@ abstract class AbstractAssertionEquals implements Assertion {
     abstract protected function getExpectedType() : string;
 
     abstract protected function getExpected();
+
+    abstract protected function getActual();
 
     abstract protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay;
 }

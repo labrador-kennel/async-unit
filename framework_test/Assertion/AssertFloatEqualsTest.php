@@ -18,8 +18,8 @@ class AssertFloatEqualsTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertFloatEquals($value);
+    protected function getAssertion($value, $actual) : Assertion {
+        return new AssertFloatEquals($value, $actual);
     }
 
     protected function getExpectedValue() {

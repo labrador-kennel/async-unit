@@ -2,7 +2,9 @@
 
 namespace Cspray\Labrador\AsyncUnit\Context;
 
+use Amp\Loop;
 use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
@@ -62,10 +64,12 @@ class CustomAssertionContextTest extends TestCase {
     }
 
     public function testCreateAsyncAssertionDoesNotExistThrowsException() {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('There is no custom async assertion registered for "customAssertionName".');
+        Loop::run(function() {
+            $this->expectException(InvalidArgumentException::class);
+            $this->expectExceptionMessage('There is no custom async assertion registered for "customAssertionName".');
 
-        $this->subject->createAsyncAssertion('customAssertionName');
+            yield $this->subject->createAsyncAssertion('customAssertionName');
+        });
     }
 
     public function testCreateRegisteredFactoryDoesNotReturnAssertionThrowsException() {

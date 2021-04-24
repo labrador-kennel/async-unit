@@ -8,6 +8,8 @@ use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertIsNull extends AbstractAssertionEquals implements Assertion {
 
+    public function __construct(private mixed $actual) {}
+
     protected function isValidType(mixed $actual) : bool {
         return is_null($actual);
     }
@@ -16,8 +18,12 @@ class AssertIsNull extends AbstractAssertionEquals implements Assertion {
         return 'NULL';
     }
 
-    protected function getExpected() {
+    protected function getExpected() : mixed {
         return null;
+    }
+
+    protected function getActual() : mixed {
+        return $this->actual;
     }
 
     protected function getInvalidTypeAssertionString(string $actualType) : string {

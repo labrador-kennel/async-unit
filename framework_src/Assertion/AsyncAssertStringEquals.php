@@ -11,9 +11,11 @@ use function Amp\call;
 
 class AsyncAssertStringEquals extends AbstractAsyncAssertion implements AsyncAssertion {
 
-    public function __construct(private string $expected) {}
+    public function __construct(private string $expected, Promise|Generator|Coroutine $actual) {
+        parent::__construct($actual);
+    }
 
-    protected function getAssertion() : Assertion {
-        return new AssertStringEquals($this->expected);
+    protected function getAssertion(mixed $resolvedActual) : Assertion {
+        return new AssertStringEquals($this->expected, $resolvedActual);
     }
 }
