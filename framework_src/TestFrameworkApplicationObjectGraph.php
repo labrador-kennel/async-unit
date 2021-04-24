@@ -21,6 +21,7 @@ final class TestFrameworkApplicationObjectGraph extends CoreApplicationObjectGra
 
         $injector->share(TestSuiteRunner::class);
 
+        $injector->share(Application::class);
         $injector->alias(Application::class, TestFrameworkApplication::class);
         $injector->prepare(Application::class, function(Application $application) use($customAssertionContext) {
             $application->registerPluginLoadHandler(CustomAssertionPlugin::class, function(CustomAssertionPlugin $plugin) use($customAssertionContext) {

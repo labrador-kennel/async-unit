@@ -56,6 +56,8 @@ class RunTestsCommand extends Command {
             if ($state->hadFailingTests) {
                 $cli->br()->br()->red()->flank('There were failing tests', '!', 1);
                 $cli->border('=');
+            } else {
+                $cli->br();
             }
         });
 

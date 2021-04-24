@@ -2,8 +2,11 @@
 
 namespace Cspray\Labrador\AsyncUnit\Internal;
 
+use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin;
+use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\AsyncUnitAssertions;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
+use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
@@ -229,6 +232,17 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $myTestCase->$testCaseGetter());
         $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->$testCaseGetter()[0]->getClass());
         $this->assertSame($methodName, $myTestCase->$testCaseGetter()[0]->getMethod());
+    }
+
+    public function testParsingCustomAssertionPlugins() {
+        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasAssertionPlugin');
+
+        $this->assertCount(2, $results->getPluginModels());
+
+        $pluginNames = array_map(fn(PluginModel $pluginModel) => $pluginModel->getPluginClass(), $results->getPluginModels());
+        $expected = [MyCustomAssertionPlugin::class, MyOtherCustomAssertionPlugin::class];
+
+        $this->assertEqualsCanonicalizing($expected, $pluginNames);
     }
 
     private function fetchTestCaseModel(TestSuiteModel $testSuite, string $className) : TestCaseModel {

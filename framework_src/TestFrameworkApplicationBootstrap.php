@@ -3,6 +3,8 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Auryn\Injector;
+use Cspray\Labrador\Application;
+use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Parser;
 use Cspray\Labrador\Environment;
 use Psr\Log\LoggerInterface;
@@ -26,6 +28,10 @@ final class TestFrameworkApplicationBootstrap {
         $results = $parser->parse($this->scanDirs);
 
         $injector->share($results);
+
+        $app = $injector->make(Application::class);
+        $pluginModels = $results->getPluginModels();
+        array_walk($pluginModels, fn(PluginModel $pluginModel) => $app->registerPlugin($pluginModel->getPluginClass()));
 
         return $injector;
     }

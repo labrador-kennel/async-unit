@@ -7,15 +7,17 @@ use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Internal\Model\AfterAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\AfterEachMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncUnit\Internal\NodeVisitor\TestCaseVisitor;
+use Cspray\Labrador\AsyncUnit\Internal\NodeVisitor\AsyncUnitVisitor;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use FilesystemIterator;
 use Generator;
@@ -28,6 +30,7 @@ use PhpParser\Parser as PhpParser;
 use PhpParser\ParserFactory;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use SplFileInfo;
 
 /**
  * @internal
@@ -46,12 +49,18 @@ class Parser {
 
     public function parse(string|array $dirs) : ParserResult {
         $testSuiteModel = new TestSuiteModel();
+        $plugins = [];
         $dirs = is_string($dirs) ? [$dirs] : $dirs;
         foreach ($this->parseDirs($dirs) as $model) {
-            $testSuiteModel->addTestCaseModel($model);
+            if ($model instanceof TestCaseModel) {
+                $testSuiteModel->addTestCaseModel($model);
+            } else if ($model instanceof PluginModel) {
+                $plugins[] = $model;
+            }
+
         }
 
-        return new ParserResult([$testSuiteModel], []);
+        return new ParserResult([$testSuiteModel], $plugins);
     }
 
     private function parseDirs(array $dirs) : Generator {
@@ -67,13 +76,13 @@ class Parser {
 
             $nodeConnectingVisitor = new NodeConnectingVisitor();
             $nameResolver = new NameResolver();
-            $testCaseVisitor = new TestCaseVisitor();
+            $asyncUnitVisitor = new AsyncUnitVisitor();
 
             $this->nodeTraverser->addVisitor($nodeConnectingVisitor);
             $this->nodeTraverser->addVisitor($nameResolver);
-            $this->nodeTraverser->addVisitor($testCaseVisitor);
+            $this->nodeTraverser->addVisitor($asyncUnitVisitor);
 
-            /** @var \SplFileInfo $file */
+            /** @var SplFileInfo $file */
             foreach ($dirIterator as $file) {
                 if ($file->isDir() || $file->getExtension() !== 'php') {
                     continue;
@@ -82,13 +91,13 @@ class Parser {
                 $this->nodeTraverser->traverse($statements);
             }
 
-            $testCaseClasses = $this->filterClassExtendsTestCase($testCaseVisitor->getClasses());
-            $classMethods = $testCaseVisitor->getAnnotatedClassMethods();
+            $classMethods = $asyncUnitVisitor->getAnnotatedClassMethods();
 
             // We need to make sure there aren't any class methods that could be annotated but not extending
             // the correct TestCase or TestSuite
             $this->validateAnnotatedMethodsExtendsTestCase($classMethods);
 
+            $testCaseClasses = $this->filterClassExtendsTestCase($asyncUnitVisitor->getClasses());
             foreach ($testCaseClasses as $testCaseClass) {
                 if ($testCaseClass->isAbstract()) {
                     continue;
@@ -145,6 +154,11 @@ class Parser {
 
                 yield $testCaseModel;
             }
+
+            $pluginClasses = $this->filterClassImplementsCustomAssertionPlugin($asyncUnitVisitor->getClasses());
+            foreach ($pluginClasses as $pluginClass) {
+                yield new PluginModel($pluginClass->namespacedName->toString());
+            }
         }
     }
 
@@ -160,6 +174,22 @@ class Parser {
             }
         }
         return $testCases;
+    }
+
+    /**
+     * @param Class_[] $classes
+     * @return Class_[]
+     */
+    private function filterClassImplementsCustomAssertionPlugin(array $classes) : array {
+        $plugins = [];
+        foreach ($classes as $class) {
+            $classImplements = class_implements($class->namespacedName->toString());
+            if (in_array(CustomAssertionPlugin::class, $classImplements)) {
+                $plugins[] = $class;
+            }
+
+        }
+        return $plugins;
     }
 
     /**
