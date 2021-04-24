@@ -185,6 +185,24 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertTestCaseClassBelongsToTestSuite($firstTestCaseClass, $testSuite);
         $this->assertTestCaseClassBelongsToTestSuite($thirdTestCaseClass, $testSuite);
         $this->assertTestCaseClassBelongsToTestSuite($fifthTestCaseClass, $testSuite);
+
+        $firstTestCase = $this->fetchTestCaseModel($testSuite, $firstTestCaseClass);
+        $this->assertCount(1, $firstTestCase->getTestMethodModels());
+        $this->assertTestMethodBelongsToTestCase($firstTestCaseClass . '::firstEnsureSomething', $firstTestCase);
+
+        $thirdTestCase = $this->fetchTestCaseModel($testSuite, $thirdTestCaseClass);
+        $this->assertCount(3, $thirdTestCase->getTestMethodModels());
+        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::firstEnsureSomething', $thirdTestCase);
+        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::secondEnsureSomething', $thirdTestCase);
+        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::thirdEnsureSomething', $thirdTestCase);
+
+        $fifthTestCase = $this->fetchTestCaseModel($testSuite, $fifthTestCaseClass);
+        $this->assertCount(5, $fifthTestCase->getTestMethodModels());
+        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::firstEnsureSomething', $fifthTestCase);
+        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::secondEnsureSomething', $fifthTestCase);
+        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::thirdEnsureSomething', $fifthTestCase);
+        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fourthEnsureSomething', $fifthTestCase);
+        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fifthEnsureSomething', $fifthTestCase);
     }
 
     public function hooksProvider() {
