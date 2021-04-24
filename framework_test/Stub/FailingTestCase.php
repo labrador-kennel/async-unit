@@ -15,4 +15,8 @@ class FailingTestCase extends TestCase {
         yield $this->asyncAssert()->stringEquals('foo', new Success('bar'));
     }
 
+    public function doFailureWithCustomMessage() {
+        $this->assert()->stringEquals('foo', 'bar', 'my custom message');
+    }
+
 }

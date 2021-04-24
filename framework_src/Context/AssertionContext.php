@@ -9,8 +9,6 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsTrue;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
-use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
 
 /**
@@ -32,7 +30,7 @@ final class AssertionContext {
         $assert = new AssertArrayEquals($expected);
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function floatEquals(float $expected, float $actual, string $message = null) : void {
@@ -42,7 +40,7 @@ final class AssertionContext {
         $assert = new AssertFloatEquals($expected);
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function intEquals(int $expected, int $actual, string $message = null) : void {
@@ -52,7 +50,7 @@ final class AssertionContext {
         $assert = new AssertIntEquals($expected);
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function stringEquals(string $expected, string $actual, string $message = null) : void {
@@ -62,7 +60,7 @@ final class AssertionContext {
         $assert = new AssertStringEquals($expected);
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function isTrue(bool $actual, string $message = null) : void {
@@ -72,7 +70,7 @@ final class AssertionContext {
         $assert = new AssertIsTrue();
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function isFalse(bool $actual, string $message = null) : void {
@@ -82,7 +80,7 @@ final class AssertionContext {
         $assert = new AssertIsFalse();
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
     public function isNull($actual, string $message = null) : void {
@@ -92,23 +90,7 @@ final class AssertionContext {
         $assert = new AssertIsNull();
         $results = $assert->assert($actual);
 
-        $this->handleAssertionResults($results, $isNot);
-    }
-
-    private function invokedAssertionContext() : void {
-        $this->count++;
-        $this->isNot = false;
-    }
-
-    private function handleAssertionResults(AssertionResult $result, bool $isNot) {
-        if (($isNot && $result->isSuccessful()) || (!$isNot && !$result->isSuccessful())) {
-            throw new AssertionFailedException(
-                $this->getDefaultFailureMessage($isNot ? $result->getNotAssertionString() : $result->getAssertionString()),
-                $result->getComparisonDisplay(),
-                $this->getLastAssertionFile(),
-                $this->getLastAssertionLine()
-            );
-        }
+        $this->handleAssertionResults($results, $isNot, $message);
     }
 
 }

@@ -35,6 +35,25 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         }
     }
 
+    public function testFailingAssertionHasCustomMessage() {
+        [$subject] = $this->getSubjectAndContexts(FailingTestCase::class);
+        $assertionException = null;
+        try {
+            $subject->doFailureWithCustomMessage();
+        } catch (AssertionFailedException $exception) {
+            $assertionException = $exception;
+        } finally {
+            $this->assertNotNull($assertionException);
+            $this->assertSame('my custom message', $assertionException->getMessage());
+            $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
+            $this->assertSame(19, $assertionException->getAssertionFailureLine());
+            $this->assertEquals(
+                (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
+                $assertionException->getComparisonDisplay()->toString()
+            );
+        }
+    }
+
     public function testFailingAsyncAssertionHasFileAndLine() {
         Loop::run(function() {
             [$subject] = $this->getSubjectAndContexts(FailingTestCase::class);
@@ -61,10 +80,14 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         Loop::run(function() {
             /** @var AssertNotTestCase $subject */
             /** @var AssertionContext $assertionContext */
-            [$subject, $assertionContext] = $this->getSubjectAndContexts(AssertNotTestCase::class);
+            /** @var AsyncAssertionContext $asyncAssertionContext */
+            [$subject, $assertionContext, $asyncAssertionContext] = $this->getSubjectAndContexts(AssertNotTestCase::class);
 
             $subject->doNotAssertion();
             $this->assertEquals(1, $assertionContext->getAssertionCount());
+
+            yield call(fn() => $subject->doAsyncNotAssertion());
+            $this->assertEquals(1, $asyncAssertionContext->getAssertionCount());
         });
     }
 
@@ -82,7 +105,7 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
                 $this->assertNotNull($assertionException);
                 $this->assertSame('Failed comparing that 2 strings are not equal to one another', $assertionException->getMessage());
                 $this->assertSame(__DIR__ . '/Stub/AssertNotTestCase.php', $assertionException->getAssertionFailureFile());
-                $this->assertSame(14, $assertionException->getAssertionFailureLine());
+                $this->assertSame(15, $assertionException->getAssertionFailureLine());
             }
         });
     }
