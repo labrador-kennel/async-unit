@@ -23,7 +23,7 @@ use Cspray\Labrador\Plugin\Pluggable;
 use PHPUnit\Framework\Assert;
 use function Amp\call;
 
-class TestFrameworkApplication extends AbstractApplication {
+final class TestFrameworkApplication extends AbstractApplication {
 
     private EventEmitter $emitter;
     private ParserResult $parserResult;
