@@ -7,7 +7,7 @@ namespace Cspray\Labrador\AsyncUnit\Internal\Model;
  */
 class TestSuiteModel {
 
-    private array $testCaseModels;
+    private array $testCaseModels = [];
 
     public function __construct() {
 
