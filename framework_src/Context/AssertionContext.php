@@ -23,12 +23,14 @@ final class AssertionContext {
     use LastAssertionCalledTrait;
     use SharedAssertionContextTrait;
 
+    private function __construct(private CustomAssertionContext $customAssertionContext) {}
+
     public function arrayEquals(array $expected, array $actual, string $message = null) : void {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertArrayEquals($expected);
-        $results = $assert->assert($actual);
+        $assert = new AssertArrayEquals($expected, $actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
@@ -37,8 +39,8 @@ final class AssertionContext {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertFloatEquals($expected);
-        $results = $assert->assert($actual);
+        $assert = new AssertFloatEquals($expected, $actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
@@ -47,8 +49,8 @@ final class AssertionContext {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertIntEquals($expected);
-        $results = $assert->assert($actual);
+        $assert = new AssertIntEquals($expected, $actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
@@ -57,8 +59,8 @@ final class AssertionContext {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertStringEquals($expected);
-        $results = $assert->assert($actual);
+        $assert = new AssertStringEquals($expected, $actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
@@ -67,8 +69,8 @@ final class AssertionContext {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertIsTrue();
-        $results = $assert->assert($actual);
+        $assert = new AssertIsTrue($actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
@@ -77,20 +79,29 @@ final class AssertionContext {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertIsFalse();
-        $results = $assert->assert($actual);
+        $assert = new AssertIsFalse($actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
     }
 
-    public function isNull($actual, string $message = null) : void {
+    public function isNull(mixed $actual, string $message = null) : void {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
 
-        $assert = new AssertIsNull();
-        $results = $assert->assert($actual);
+        $assert = new AssertIsNull($actual);
+        $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);
+    }
+
+    public function __call(string $methodName, array $args) : void {
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
+        $results = $this->customAssertionContext->createAssertion($methodName, ...$args)->assert();
+
+        $this->handleAssertionResults($results, $isNot, null);
     }
 
 }

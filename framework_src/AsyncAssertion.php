@@ -11,9 +11,8 @@ use Generator;
 interface AsyncAssertion {
 
     /**
-     * @param Promise|Generator|Coroutine $actual
      * @return Promise<AssertionResult>
      */
-    public function assert(Promise|Generator|Coroutine $actual) : Promise;
+    public function assert() : Promise;
 
 }

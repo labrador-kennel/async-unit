@@ -6,10 +6,14 @@ use Amp\Loop;
 use Auryn\Injector;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
+use Cspray\Labrador\AsyncUnit\Internal\Parser;
+use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
+use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
@@ -46,8 +50,10 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $state->failed->events[] = $event;
         });
 
+        $parserResult = $this->injector->make(Parser::class)->parse($dirs);
+
         /** @var TestFrameworkApplication $application */
-        return [$state, $this->injector->make(Application::class, [':testDirectories' => $dirs])];
+        return [$state, $this->injector->make(Application::class, [':parserResult' => $parserResult])];
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
@@ -163,6 +169,29 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             yield $application->start();
 
             $this->assertSame(['test invoked', 'test processing finished'], $state->data);
+        });
+    }
+
+    public function testLoadingCustomAssertionPlugins() {
+        Loop::run(function() {
+            /** @var Application $application */
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
+
+            $this->injector->share(FooAssertionPlugin::class);
+            $this->injector->share(BarAssertionPlugin::class);
+
+            $application->registerPlugin(FooAssertionPlugin::class);
+            $application->registerPlugin(BarAssertionPlugin::class);
+
+            yield $application->loadPlugins();
+
+            $actual = $this->injector->make(CustomAssertionContext::class);
+
+            $fooPlugin = $this->injector->make(FooAssertionPlugin::class);
+            $barPlugin = $this->injector->make(BarAssertionPlugin::class);
+
+            $this->assertSame($fooPlugin->getCustomAssertionContext(), $actual);
+            $this->assertSame($barPlugin->getCustomAssertionContext(), $actual);
         });
     }
 

@@ -15,7 +15,7 @@ use PhpParser\NodeVisitorAbstract;
 /**
  * @internal
  */
-class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
+class AsyncUnitVisitor extends NodeVisitorAbstract implements NodeVisitor {
 
     use AttributeGroupTraverser;
 

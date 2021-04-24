@@ -8,6 +8,7 @@ use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
+use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
@@ -16,30 +17,33 @@ use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
 use Cspray\Labrador\AsyncUnit\Internal\Parser;
+use Cspray\Labrador\AsyncUnit\Internal\ParserResult;
 use Cspray\Labrador\AsyncUnit\Internal\TestSuiteRunner;
 use Cspray\Labrador\Plugin\Pluggable;
 use PHPUnit\Framework\Assert;
 use function Amp\call;
 
-class TestFrameworkApplication extends AbstractApplication {
+final class TestFrameworkApplication extends AbstractApplication {
 
-    private array $testDirectories;
-
-    private Parser $parser;
     private EventEmitter $emitter;
+    private ParserResult $parserResult;
     private TestSuiteRunner $testSuiteRunner;
 
-    public function __construct(Pluggable $pluggable, EventEmitter $emitter, array $testDirectories) {
+    public function __construct(
+        Pluggable $pluggable,
+        EventEmitter $emitter,
+        ParserResult $parserResult,
+        TestSuiteRunner $testSuiteRunner
+    ) {
         parent::__construct($pluggable);
-        $this->testDirectories = $testDirectories;
-        $this->parser = new Parser();
         $this->emitter = $emitter;
-        $this->testSuiteRunner = new TestSuiteRunner($emitter);
+        $this->parserResult = $parserResult;
+        $this->testSuiteRunner = $testSuiteRunner;
     }
 
     protected function doStart() : Promise {
         return call(function() {
-            $testSuites = $this->parser->parse($this->testDirectories);
+            $testSuites = $this->parserResult->getTestSuiteModels();
 
             $this->emitter->on(InternalEventNames::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) {
                 $invokedTestModel = $testInvokedEvent->getTarget();

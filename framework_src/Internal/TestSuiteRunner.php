@@ -6,6 +6,7 @@ use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
@@ -26,7 +27,7 @@ class TestSuiteRunner {
 
     private array $reflectionCache = [];
 
-    public function __construct(private EventEmitter $emitter) {}
+    public function __construct(private EventEmitter $emitter, private CustomAssertionContext $customAssertionContext) {}
 
     public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
         return call(function() use($testSuiteModels) {
@@ -160,8 +161,17 @@ class TestSuiteRunner {
         $reflectedAsyncAssertionContext = $this->getReflectionClass(AsyncAssertionContext::class);
         $testCaseConstructor = $reflectionClass->getConstructor();
         $testCaseConstructor->setAccessible(true);
+
         $assertionContext = $reflectedAssertionContext->newInstanceWithoutConstructor();
+        $assertionContextConstructor = $reflectedAssertionContext->getConstructor();
+        $assertionContextConstructor->setAccessible(true);
+        $assertionContextConstructor->invoke($assertionContext, $this->customAssertionContext);
+
         $asyncAssertionContext = $reflectedAsyncAssertionContext->newInstanceWithoutConstructor();
+        $asyncAssertionContextConstructor = $reflectedAsyncAssertionContext->getConstructor();
+        $asyncAssertionContextConstructor->setAccessible(true);
+        $asyncAssertionContextConstructor->invoke($asyncAssertionContext, $this->customAssertionContext);
+
         $testCaseConstructor->invoke(
             $testCaseObject,
             $assertionContext,

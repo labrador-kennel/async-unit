@@ -11,13 +11,15 @@ use function Amp\call;
 
 abstract class AbstractAsyncAssertion implements AsyncAssertion {
 
-    final public function assert(Promise|Coroutine|Generator $actual) : Promise {
-        return call(function() use($actual) {
-            $actual = yield call(fn() => $actual);
-            $assertion = $this->getAssertion();
-            return $assertion->assert($actual);
+    public function __construct(private Promise|Generator|Coroutine $actual) {}
+
+    final public function assert() : Promise {
+        return call(function() {
+            $actual = yield call(fn() => $this->actual);
+            $assertion = $this->getAssertion($actual);
+            return $assertion->assert();
         });
     }
 
-    abstract protected function getAssertion() : Assertion;
+    abstract protected function getAssertion(mixed $resolvedResolvedActual) : Assertion;
 }

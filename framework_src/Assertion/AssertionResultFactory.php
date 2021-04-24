@@ -72,6 +72,5 @@ final class AssertionResultFactory {
         };
     }
 
-
 }
 

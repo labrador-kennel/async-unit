@@ -2,11 +2,10 @@
 
 namespace Cspray\Labrador\AsyncUnit\CliTool\Command;
 
-use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
-use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
+use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationBootstrap;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
@@ -39,16 +38,12 @@ class RunTestsCommand extends Command {
     protected function execute(InputInterface $input, OutputInterface $output) {
         $environment = new StandardEnvironment(EnvironmentType::Development());
         $logger = new NullLogger();
-        $injector = (new TestFrameworkApplicationObjectGraph($environment, $logger))->wireObjectGraph();
-
         $directories = [];
         $cwd = getcwd();
         foreach ($input->getArgument('test-dirs') as $testDir) {
             $directories[] = $cwd . '/' . $testDir;
         }
-        $application = $injector->make(Application::class, [
-            ':testDirectories' => $directories
-        ]);
+        $injector = (new TestFrameworkApplicationBootstrap($environment, $logger, $directories))->getBootstrappedInjector();
 
         $emitter = $injector->make(EventEmitter::class);
         $cli = new CLImate();
@@ -61,6 +56,8 @@ class RunTestsCommand extends Command {
             if ($state->hadFailingTests) {
                 $cli->br()->br()->red()->flank('There were failing tests', '!', 1);
                 $cli->border('=');
+            } else {
+                $cli->br();
             }
         });
 
@@ -93,7 +90,6 @@ class RunTestsCommand extends Command {
             'Zoom, zoom... here we go!',
             'One Loop to rule them all.',
             'Alright, waking the hamsters up!',
-
         ];
         $cli->bold()->backgroundBlue()->inline('AsyncUnit')
             ->inline(' ')
@@ -104,8 +100,7 @@ class RunTestsCommand extends Command {
             ->inline('Runtime: PHP ')->out(phpversion())
             ->br();
 
-        $injector->make(Engine::class)->run($application);
-
+        $injector->execute(Engine::class . '::run');
 
         return Command::SUCCESS;
     }

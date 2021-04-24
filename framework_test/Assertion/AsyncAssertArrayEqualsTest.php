@@ -2,12 +2,12 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
-use Amp\Loop;
-use Amp\Success;
+use Amp\Coroutine;
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
-use PHPUnit\Framework\TestCase;
+use Generator;
 
 /**
  * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals
@@ -21,15 +21,15 @@ class AsyncAssertArrayEqualsTest extends AbstractAsyncAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($expected) : AsyncAssertion {
-        return new AsyncAssertArrayEquals($expected);
+    protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
+        return new AsyncAssertArrayEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getExpectedValue() : array {
         return ['generators', 'promises', 'coroutines'];
     }
 
-    protected function getBadValue() {
+    protected function getBadValue() : array {
         return ['blocks', 'io', 'nooooo'];
     }
 

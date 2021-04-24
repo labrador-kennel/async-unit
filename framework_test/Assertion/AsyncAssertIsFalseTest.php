@@ -2,9 +2,12 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+use Amp\Coroutine;
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
+use Generator;
 
 /**
  * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse
@@ -18,15 +21,15 @@ class AsyncAssertIsFalseTest extends AbstractAsyncAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($expected) : AsyncAssertion {
-        return new AsyncAssertIsFalse($expected);
+    protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
+        return new AsyncAssertIsFalse($actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getExpectedValue() : bool {
         return false;
     }
 
-    protected function getBadValue() {
+    protected function getBadValue() : bool {
         return true;
     }
 

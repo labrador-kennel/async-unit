@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\AssertionResult;
 
 class AssertFloatEquals extends AbstractAssertionEquals implements Assertion {
 
-    public function __construct(private float $expected) {}
+    public function __construct(private float $expected, private mixed $actual) {}
 
     protected function isValidType(mixed $actual) : bool {
         return is_float($actual);
@@ -21,6 +21,10 @@ class AssertFloatEquals extends AbstractAssertionEquals implements Assertion {
 
     protected function getExpected() : float {
         return $this->expected;
+    }
+
+    protected function getActual() : mixed {
+        return $this->actual;
     }
 
     protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {

@@ -20,12 +20,14 @@ final class AsyncAssertionContext {
     use LastAssertionCalledTrait;
     use SharedAssertionContextTrait;
 
+    private function __construct(private CustomAssertionContext $customAssertionContext) {}
+
     public function arrayEquals(array $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
         return call(function() use($expected, $actual, $message) {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
 
-            $results = yield (new AsyncAssertArrayEquals($expected))->assert($actual);
+            $results = yield (new AsyncAssertArrayEquals($expected, $actual))->assert();
 
             $this->handleAssertionResults($results, $isNot, $message);
         });
@@ -36,7 +38,7 @@ final class AsyncAssertionContext {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
 
-            $results = yield (new AsyncAssertFloatEquals($expected))->assert($actual);
+            $results = yield (new AsyncAssertFloatEquals($expected, $actual))->assert();
 
             $this->handleAssertionResults($results, $isNot, $message);
         });
@@ -47,7 +49,7 @@ final class AsyncAssertionContext {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
 
-            $results = yield (new AsyncAssertIntEquals($expected))->assert($actual);
+            $results = yield (new AsyncAssertIntEquals($expected, $actual))->assert();
 
             $this->handleAssertionResults($results, $isNot, $message);
         });
@@ -65,7 +67,7 @@ final class AsyncAssertionContext {
         return call(function() use($expected, $actual, $message) {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
-            $results = yield (new AsyncAssertStringEquals($expected))->assert($actual);
+            $results = yield (new AsyncAssertStringEquals($expected, $actual))->assert();
             $this->handleAssertionResults($results, $isNot, $message);
         });
     }
@@ -74,7 +76,7 @@ final class AsyncAssertionContext {
         return call(function() use($actual, $message) {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
-            $results = yield (new AsyncAssertIsTrue())->assert($actual);
+            $results = yield (new AsyncAssertIsTrue($actual))->assert();
             $this->handleAssertionResults($results, $isNot, $message);
         });
     }
@@ -83,7 +85,7 @@ final class AsyncAssertionContext {
         return call(function() use($actual, $message) {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
-            $results = yield (new AsyncAssertIsFalse())->assert($actual);
+            $results = yield (new AsyncAssertIsFalse($actual))->assert();
             $this->handleAssertionResults($results, $isNot, $message);
         });
     }
@@ -92,8 +94,17 @@ final class AsyncAssertionContext {
         return call(function () use($actual, $message) {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
-            $results = yield (new AsyncAssertIsNull())->assert($actual);
+            $results = yield (new AsyncAssertIsNull($actual))->assert();
             $this->handleAssertionResults($results, $isNot, $message);
+        });
+    }
+
+    public function __call(string $methodName, array $args) : Promise {
+        return call(function() use($methodName, $args) {
+            $isNot = $this->isNot;
+            $this->invokedAssertionContext();
+            $results = yield $this->customAssertionContext->createAsyncAssertion($methodName, ...$args)->assert();
+            $this->handleAssertionResults($results, $isNot, null);
         });
     }
 }

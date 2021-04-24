@@ -17,8 +17,8 @@ class AssertIsFalseTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertIsFalse();
+    protected function getAssertion($value, $actual) : Assertion {
+        return new AssertIsFalse($actual);
     }
 
     protected function getExpectedValue() {

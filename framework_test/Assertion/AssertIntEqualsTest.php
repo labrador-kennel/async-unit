@@ -18,8 +18,8 @@ class AssertIntEqualsTest extends AbstractAssertionTestCase {
         $this->runBadTypeAssertions($value, $type);
     }
 
-    protected function getAssertion($value) : Assertion {
-        return new AssertIntEquals($value);
+    protected function getAssertion($value, $actual) : Assertion {
+        return new AssertIntEquals($value, $actual);
     }
 
     protected function getExpectedValue() {
