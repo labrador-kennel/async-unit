@@ -7,17 +7,8 @@ use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncUnit\Internal\Model\AfterAllMethodModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\AfterEachMethodModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeAllMethodModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeEachMethodModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
-use Cspray\Labrador\AsyncUnit\TestCase;
+use Cspray\Labrador\AsyncUnit\Internal\AttributeGroupTraverser;
 use PhpParser\Node;
-use PhpParser\Node\Attribute;
-use PhpParser\Node\AttributeGroup;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
 
@@ -26,145 +17,48 @@ use PhpParser\NodeVisitorAbstract;
  */
 class TestCaseVisitor extends NodeVisitorAbstract implements NodeVisitor {
 
-    private array $testCaseModels = [];
+    use AttributeGroupTraverser;
+
+    private array $classes = [];
+    private array $classMethods = [];
 
     /**
-     * @return TestCaseModel[]
+     * @return Node\Stmt\Class_[]
      */
-    public function getTestCaseModels() : array {
-        return array_values($this->testCaseModels);
+    public function getClasses() : array {
+        return $this->classes;
+    }
+
+    /**
+     * @return Node\Stmt\ClassMethod[]
+     */
+    public function getAnnotatedClassMethods() : array {
+        return $this->classMethods;
     }
 
     public function enterNode(Node $node) {
         if ($node instanceof Node\Stmt\Class_) {
-            if ($this->isClassTestCase($node)) {
-                $this->fetchTestCaseModel($node);
-                // we don't do anything here but we still want to get it added to our test case models
-                // if you implement this interface we expect you to have some kind of test and we need
-                // to check for that
-            }
+            $this->classes[] = $node;
         } else if ($node instanceof Node\Stmt\ClassMethod) {
-            if ($this->findAttribute(Test::class, ...$node->attrGroups)) {
-                $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
-                // we're checking this again so that when our method models call this we're checking for the other
-                // case where the #[Test] method may not implement the correct interface
-                if (!$this->isClassTestCase($node->getAttribute('parent'))) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[Test] but this class does not extend "%s".',
-                        $testCaseName,
-                        $node->name->toString(),
-                        TestCase::class
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $methodModel = new TestMethodModel($testCaseName, $node->name->toString());
-                $testCaseModel = $this->fetchTestCaseModel($node->getAttribute('parent'));
-                $testCaseModel->addTestMethodModel($methodModel);
-            } else if ($this->findAttribute(BeforeAll::class, ...$node->attrGroups)) {
-                $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
-                if (!$this->isClassTestCase($node->getAttribute('parent'))) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[BeforeAll] but this class does not extend "%s".',
-                        $testCaseName,
-                        $node->name->toString(),
-                        TestCase::class
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                if (!$node->isStatic()) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[BeforeAll] hook.',
-                        $testCaseName,
-                        $node->name->toString()
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $methodModel = new BeforeAllMethodModel($testCaseName, $node->name->toString());
-                $testCaseModel = $this->fetchTestCaseModel($node->getAttribute('parent'));
-                $testCaseModel->addBeforeAllMethodModel($methodModel);
-            } else if ($this->findAttribute(BeforeEach::class, ...$node->attrGroups)) {
-                $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
-                if (!$this->isClassTestCase($node->getAttribute('parent'))) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[BeforeEach] but this class does not extend "%s".',
-                        $testCaseName,
-                        $node->name->toString(),
-                        TestCase::class
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $methodModel = new BeforeEachMethodModel($testCaseName, $node->name->toString());
-                $testCaseModel = $this->fetchTestCaseModel($node->getAttribute('parent'));
-                $testCaseModel->addBeforeEachMethodModel($methodModel);
-            } else if ($this->findAttribute(AfterAll::class, ...$node->attrGroups)) {
-                $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
-                if (!$this->isClassTestCase($node->getAttribute('parent'))) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[AfterAll] but this class does not extend "%s".',
-                        $testCaseName,
-                        $node->name->toString(),
-                        TestCase::class
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                if (!$node->isStatic()) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[AfterAll] hook.',
-                        $testCaseName,
-                        $node->name->toString()
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $methodModel = new AfterAllMethodModel($testCaseName, $node->name->toString());
-                $testCaseModel = $this->fetchTestCaseModel($node->getAttribute('parent'));
-                $testCaseModel->addAfterAllMethodModel($methodModel);
-            } else if ($this->findAttribute(AfterEach::class, ...$node->attrGroups)) {
-                $testCaseName = $node->getAttribute('parent')->namespacedName->toString();
-                if (!$this->isClassTestCase($node->getAttribute('parent'))) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The method "%s" is marked as #[AfterEach] but this class does not extend "%s".',
-                        $testCaseName,
-                        $node->name->toString(),
-                        TestCase::class
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $methodModel = new AfterEachMethodModel($testCaseName, $node->name->toString());
-                $testCaseModel = $this->fetchTestCaseModel($node->getAttribute('parent'));
-                $testCaseModel->addAfterEachMethodModel($methodModel);
+            if ($this->hasAnyAsyncUnitAttribute($node)) {
+                $this->classMethods[] = $node;
             }
         }
     }
 
-    private function isTestCaseModelCached(string $testCaseClass) : bool {
-        return isset($this->testCaseModels[$testCaseClass]);
-    }
-
-    private function fetchTestCaseModel(Node\Stmt\Class_ $node) : TestCaseModel {
-        $testCaseName = $node->namespacedName->toString();
-        if (!$this->isTestCaseModelCached($testCaseName)) {
-            $this->testCaseModels[$testCaseName] = new TestCaseModel($testCaseName);
-        }
-
-        return $this->testCaseModels[$testCaseName];
-    }
-
-    private function isClassTestCase(Node\Stmt\Class_ $class) : bool {
-        return !is_null($class->extends) && $class->extends->toString() === TestCase::class;
-    }
-
-
-    private function findAttribute(string $attributeType, AttributeGroup... $attributeGroups) : ?Attribute {
-        foreach ($attributeGroups as $attributeGroup) {
-            foreach ($attributeGroup->attrs as $attribute) {
-                if ($attribute->name->toString() === $attributeType) {
-                    return $attribute;
-                }
+    private function hasAnyAsyncUnitAttribute(Node\Stmt\ClassMethod $classMethod) : bool {
+        $validAttributes = [
+            Test::class,
+            BeforeAll::class,
+            BeforeEach::class,
+            AfterAll::class,
+            AfterEach::class
+        ];
+        foreach ($validAttributes as $validAttribute) {
+            if (!is_null($this->findAttribute($validAttribute, ...$classMethod->attrGroups))) {
+                return true;
             }
         }
-
-        return null;
+        return false;
     }
-
-
 }
