@@ -44,18 +44,14 @@ class Parser {
         $this->nodeTraverser = new NodeTraverser();
     }
 
-    /**
-     * @param string|array $dirs
-     * @return TestSuiteModel[]
-     */
-    public function parse(string|array $dirs) : array {
+    public function parse(string|array $dirs) : ParserResult {
         $testSuiteModel = new TestSuiteModel();
         $dirs = is_string($dirs) ? [$dirs] : $dirs;
         foreach ($this->parseDirs($dirs) as $model) {
             $testSuiteModel->addTestCaseModel($model);
         }
 
-        return [$testSuiteModel];
+        return new ParserResult([$testSuiteModel], []);
     }
 
     private function parseDirs(array $dirs) : Generator {

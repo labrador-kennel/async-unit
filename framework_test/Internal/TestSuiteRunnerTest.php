@@ -43,7 +43,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestInvokesMethod() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -64,7 +64,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteMultipleTestInvokesMethod() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -94,7 +94,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleBeforeAllHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleBeforeAllHook');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleBeforeAllHook')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -124,7 +124,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleBeforeEachHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleBeforeEachHook');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleBeforeEachHook')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -154,7 +154,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleAfterAllHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleAfterAllHook');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleAfterAllHook')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -184,7 +184,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleAfterEachHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleAfterEachHook');
+            $testSuites = $this->parser->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasSingleAfterEachHook')->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -215,7 +215,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTest() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingTest';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -246,7 +246,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTestWithAfterEachHook() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingTestWithAfterEachHook';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -270,7 +270,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeAll() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingBeforeAll';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -289,7 +289,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterAll() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingAfterAll';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -308,7 +308,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeEach() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingBeforeEach';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -327,7 +327,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterEach() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExceptionThrowingAfterEach';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -346,7 +346,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteTestFailedExceptionThrowingTest() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/TestFailedExceptionThrowingTest';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 
@@ -375,7 +375,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteCustomAssertions() {
         Loop::run(function() {
             $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/CustomAssertions';
-            $testSuites = $this->parser->parse($dir);
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
 

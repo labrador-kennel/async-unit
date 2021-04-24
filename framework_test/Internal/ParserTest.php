@@ -84,7 +84,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testDefaultTestSuiteName() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -93,7 +93,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -109,7 +109,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -129,7 +129,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteHasNotTestCaseObject() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasNotTestCaseObject');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasNotTestCaseObject')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -148,7 +148,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTestCase() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTestCase');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTestCase')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -172,7 +172,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingImplicitDefaultTestSuiteExtendedTestCases() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExtendedTestCases');
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExtendedTestCases')->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -218,7 +218,7 @@ class ParserTest extends PHPUnitTestCase {
      * @dataProvider hooksProvider
      */
     public function testParsingSimpleTestCaseHasHooks(string $testCaseGetter, string $subNamespace, string $methodName) {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $subNamespace);
+        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $subNamespace)->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];

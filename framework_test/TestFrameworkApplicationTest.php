@@ -11,6 +11,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
+use Cspray\Labrador\AsyncUnit\Internal\Parser;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\EnvironmentType;
@@ -49,8 +50,10 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $state->failed->events[] = $event;
         });
 
+        $parserResult = $this->injector->make(Parser::class)->parse($dirs);
+
         /** @var TestFrameworkApplication $application */
-        return [$state, $this->injector->make(Application::class, [':testDirectories' => $dirs])];
+        return [$state, $this->injector->make(Application::class, [':parserResult' => $parserResult])];
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
