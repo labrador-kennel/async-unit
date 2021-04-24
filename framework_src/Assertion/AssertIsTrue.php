@@ -21,12 +21,12 @@ class AssertIsTrue extends AbstractAssertionEquals implements Assertion {
         return true;
     }
 
-    protected function getDefaultInvalidTypeMessage(string $actualType) : string {
+    protected function getInvalidTypeAssertionString(string $actualType) : string {
         return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
     }
 
-    protected function getDefaultInvalidComparisonMessage($actual) : string {
-        return $this->getDefaultInvalidTypeMessage(gettype($actual));
+    protected function getAssertionString($actual) : string {
+        return $this->getInvalidTypeAssertionString(gettype($actual));
     }
 
     protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {

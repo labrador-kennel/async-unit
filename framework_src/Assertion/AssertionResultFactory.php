@@ -9,28 +9,48 @@ final class AssertionResultFactory {
 
     private function __construct() {}
 
-    public static function validAssertion() : AssertionResult {
-        return new class implements AssertionResult {
+    public static function validAssertion(
+        string $assertionString,
+        string $notAssertionString,
+        AssertionComparisonDisplay $assertionComparisonDisplay
+    ) : AssertionResult {
+        return new class($assertionString, $notAssertionString, $assertionComparisonDisplay) implements AssertionResult {
+
+            public function __construct(
+                private string $assertionString,
+                private string $notAssertionString,
+                private AssertionComparisonDisplay $assertionComparisonDisplay
+            ) {}
 
             public function isSuccessful() : bool {
                 return true;
             }
 
-            public function getErrorMessage() : ?string {
-                return null;
+            public function getAssertionString() : string {
+                return $this->assertionString;
             }
 
-            public function getComparisonDisplay() : ?AssertionComparisonDisplay {
-                return null;
+            public function getNotAssertionString() : string {
+                return $this->notAssertionString;
             }
+
+            public function getComparisonDisplay() : AssertionComparisonDisplay {
+                return $this->assertionComparisonDisplay;
+            }
+
         };
     }
 
-    public static function invalidAssertion(string $message, AssertionComparisonDisplay $comparisonDisplay) : AssertionResult {
-        return new class($message, $comparisonDisplay) implements AssertionResult {
+    public static function invalidAssertion(
+        string $assertionString,
+        string $notAssertionString,
+        AssertionComparisonDisplay $comparisonDisplay
+    ) : AssertionResult {
+        return new class($assertionString, $notAssertionString, $comparisonDisplay) implements AssertionResult {
 
             public function __construct(
-                private string $message,
+                private string $assertionString,
+                private string $notAssertionString,
                 private AssertionComparisonDisplay $comparisonDisplay
             ) {}
 
@@ -38,11 +58,15 @@ final class AssertionResultFactory {
                 return false;
             }
 
-            public function getErrorMessage() : string {
-                return $this->message;
+            public function getAssertionString() : string {
+                return $this->assertionString;
             }
 
-            public function getComparisonDisplay() : ?AssertionComparisonDisplay {
+            public function getNotAssertionString() : string {
+                return $this->notAssertionString;
+            }
+
+            public function getComparisonDisplay() : AssertionComparisonDisplay {
                 return $this->comparisonDisplay;
             }
         };

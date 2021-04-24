@@ -20,10 +20,13 @@ class AssertIsNull extends AbstractAssertionEquals implements Assertion {
         return null;
     }
 
-    protected function getDefaultInvalidTypeMessage(string $actualType) : string {
+    protected function getInvalidTypeAssertionString(string $actualType) : string {
         return sprintf('Failed asserting that a value with type "%s" is null.', $actualType);
     }
 
+    protected function getAssertionString($actual) : string {
+        return $this->getInvalidTypeAssertionString(gettype($actual));
+    }
 
     protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {
         return new NullAssertionComparisonDisplay($actual);

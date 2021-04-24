@@ -10,7 +10,7 @@ class BinaryVarExportAssertionComparisonDisplay implements AssertionComparisonDi
 
     public function toString() : string {
         return sprintf(
-            'Failed comparing %s (%s) to %s (%s)',
+            'comparing %s (%s) to %s (%s)',
             var_export($this->a, true),
             gettype($this->a),
             var_export($this->b, true),

@@ -32,9 +32,8 @@ interface Assertion {
      * for.
      *
      * @param mixed $actual
-     * @param string|null $errorMessage
      * @return AssertionResult
      */
-    public function assert(mixed $actual, string $errorMessage = null) : AssertionResult;
+    public function assert(mixed $actual) : AssertionResult;
 
 }
