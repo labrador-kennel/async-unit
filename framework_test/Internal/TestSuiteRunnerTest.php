@@ -3,8 +3,13 @@
 namespace Cspray\Labrador\AsyncUnit\Internal;
 
 use Amp\Loop;
+use Amp\Success;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\AssertionResult;
+use Cspray\Labrador\AsyncUnit\AsyncAssertion;
+use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
@@ -25,13 +30,15 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     private string $acmeSrcDir;
     private Parser $parser;
     private EventEmitter $emitter;
+    private CustomAssertionContext $customAssertionContext;
     private TestSuiteRunner $testSuiteRunner;
 
     public function setUp() : void {
         $this->acmeSrcDir = dirname(__DIR__, 2) . '/acme_src';
         $this->parser = new Parser();
         $this->emitter = new AmpEventEmitter();
-        $this->testSuiteRunner = new TestSuiteRunner($this->emitter);
+        $this->customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
+        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext);
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestInvokesMethod() {
@@ -362,6 +369,44 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getFailureException()->getMessage());
             $this->assertSame(0, $testInvokedEvent->getTarget()->getFailureException()->getCode());
             $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getFile());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteCustomAssertions() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/CustomAssertions';
+            $testSuites = $this->parser->parse($dir);
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            $assertion = $this->getMockBuilder(Assertion::class)->getMock();
+            $assertionResult = $this->getMockBuilder(AssertionResult::class)->getMock();
+            $assertionResult->expects($this->once())->method('isSuccessful')->willReturn(true);
+            $assertion->expects($this->once())->method('assert')->willReturn($assertionResult);
+
+            $asyncAssertion = $this->getMockBuilder(AsyncAssertion::class)->getMock();
+            $asyncAssertionResult = $this->getMockBuilder(AssertionResult::class)->getMock();
+            $asyncAssertionResult->expects($this->once())->method('isSuccessful')->willReturn(true);
+            $asyncAssertion->expects($this->once())->method('assert')->willReturn(new Success($asyncAssertionResult));
+
+            $this->customAssertionContext->registerAssertion('theCustomAssertion', fn() => $assertion);
+            $this->customAssertionContext->registerAsyncAssertion('theCustomAssertion', fn() => $asyncAssertion);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+            /** @var TestInvokedEvent $testInvokedEvent */
+            $testInvokedEvent = $state->events[0];
+            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(InvokedTestCaseTestModel::class, $testInvokedEvent->getTarget());
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\CustomAssertions\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
+            $this->assertSame('ensureCustomAssertionsPass', $testInvokedEvent->getTarget()->getMethod());
+
+            $this->assertNull($testInvokedEvent->getTarget()->getFailureException());
         });
     }
 

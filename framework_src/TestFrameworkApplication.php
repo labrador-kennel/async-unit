@@ -8,6 +8,7 @@ use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
+use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
@@ -29,12 +30,12 @@ class TestFrameworkApplication extends AbstractApplication {
     private EventEmitter $emitter;
     private TestSuiteRunner $testSuiteRunner;
 
-    public function __construct(Pluggable $pluggable, EventEmitter $emitter, array $testDirectories) {
+    public function __construct(Pluggable $pluggable, EventEmitter $emitter, CustomAssertionContext $context, array $testDirectories) {
         parent::__construct($pluggable);
         $this->testDirectories = $testDirectories;
         $this->parser = new Parser();
         $this->emitter = $emitter;
-        $this->testSuiteRunner = new TestSuiteRunner($emitter);
+        $this->testSuiteRunner = new TestSuiteRunner($emitter, $context);
     }
 
     protected function doStart() : Promise {
