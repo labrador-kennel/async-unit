@@ -6,6 +6,7 @@ use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
@@ -13,14 +14,13 @@ use Cspray\Labrador\AsyncUnit\Internal\Model\AfterAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\AfterEachMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\MethodModelTrait;
 use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\Internal\NodeVisitor\AsyncUnitVisitor;
 use Cspray\Labrador\AsyncUnit\TestCase;
-use FilesystemIterator;
-use Generator;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeTraverser;
@@ -28,8 +28,10 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\NodeConnectingVisitor;
 use PhpParser\Parser as PhpParser;
 use PhpParser\ParserFactory;
+use FilesystemIterator;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use Generator;
 use SplFileInfo;
 
 /**
@@ -57,7 +59,6 @@ class Parser {
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
             }
-
         }
 
         return new ParserResult([$testSuiteModel], $plugins);
@@ -216,10 +217,13 @@ class Parser {
                 continue;
             }
             if ($classMethod->getAttribute('parent')->namespacedName->toString() === $className) {
-                $testCaseModel->addTestMethodModel(new TestMethodModel(
-                    $testCaseModel->getTestCaseClass(),
-                    $classMethod->name->toString()
-                ));
+                $testMethodModel = new TestMethodModel($testCaseModel->getTestCaseClass(), $classMethod->name->toString());
+                $dataProviderAttribute = $this->findAttribute(DataProvider::class, ...$classMethod->attrGroups);
+                if (!is_null($dataProviderAttribute)) {
+                    $testMethodModel->setDataProvider($dataProviderAttribute->args[0]->value->value);
+                }
+
+                $testCaseModel->addTestMethodModel($testMethodModel);
             }
         }
 

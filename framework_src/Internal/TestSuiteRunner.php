@@ -14,6 +14,8 @@ use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncUnit\Internal\Model\InvokedTestCaseTestModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use ReflectionClass;
@@ -54,74 +56,16 @@ class TestSuiteRunner {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */
                         [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass);
-                        foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
-                            try {
-                                yield call([$testCaseObject, $beforeEachMethodModel->getMethod()]);
-                            } catch (Throwable $throwable) {
-                                $msg = sprintf(
-                                    'Failed setting up "%s::%s" #[BeforeEach] hook with exception of type "%s" with code %s and message "%s".',
-                                    $testCaseClass,
-                                    $beforeEachMethodModel->getMethod(),
-                                    $throwable::class,
-                                    $throwable->getCode(),
-                                    $throwable->getMessage()
-                                );
-                                throw new TestSetupException($msg);
+                        if ($testMethodModel->getDataProvider() !== null) {
+                            $dataProvider = $testMethodModel->getDataProvider();
+                            $dataSets = $testCaseObject->$dataProvider();
+                            foreach ($dataSets as $args) {
+                                yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel, $args);
+                                [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass);
                             }
+                        } else {
+                            yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel);
                         }
-
-                        $testCaseMethod = $testMethodModel->getMethod();
-                        $failureException = null;
-                        try {
-                            yield call(fn() => $testCaseObject->$testCaseMethod());
-                            if ($assertionContext->getAssertionCount() === 0 && $asyncAssertionContext->getAssertionCount() === 0) {
-                                $msg = sprintf(
-                                    'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
-                                    $testCaseClass,
-                                    $testCaseMethod
-                                );
-                                throw new TestFailedException($msg);
-                            }
-                        } catch (TestFailedException $exception) {
-                            $failureException = $exception;
-                        } catch (Throwable $throwable) {
-                            $msg = sprintf(
-                                'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
-                                $throwable::class,
-                                $throwable->getCode(),
-                                $throwable->getMessage(),
-                                $testCaseObject::class,
-                                $testMethodModel->getMethod()
-                            );
-                            $failureException = new TestFailedException($msg, previous: $throwable);
-                        } finally {
-                            $invokedModel = new InvokedTestCaseTestModel(
-                                $testCaseObject,
-                                $testMethodModel->getMethod(),
-                                $failureException
-                            );
-                        }
-
-                        foreach ($testCaseModel->getAfterEachMethodModels() as $afterEachMethodModel) {
-                            try {
-                                yield call([$testCaseObject, $afterEachMethodModel->getMethod()]);
-                            } catch (Throwable $throwable) {
-                                $msg = sprintf(
-                                    'Failed tearing down "%s::%s" #[AfterEach] hook with exception of type "%s" with code %s and message "%s".',
-                                    $testCaseClass,
-                                    $afterEachMethodModel->getMethod(),
-                                    $throwable::class,
-                                    $throwable->getCode(),
-                                    $throwable->getMessage()
-                                );
-                                throw new TestTearDownException($msg);
-                            }
-                        }
-
-                        yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
-
-                        unset($testCaseObject);
-                        unset($failureException);
                     }
 
                     foreach ($testCaseModel->getAfterAllMethodModels() as $afterAllMethodModel) {
@@ -143,6 +87,79 @@ class TestSuiteRunner {
             }
         });
         // yield the instantiated object and name of invoked method
+    }
+
+    private function invokeTest(TestCase $testCase, AssertionContext $assertionContext, AsyncAssertionContext $asyncAssertionContext, TestCaseModel $testCaseModel, TestMethodModel $testMethodModel, array $args = []) : Promise {
+        return call(function() use($testCase, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel, $args) {
+            foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
+                try {
+                    yield call([$testCase, $beforeEachMethodModel->getMethod()]);
+                } catch (Throwable $throwable) {
+                    $msg = sprintf(
+                        'Failed setting up "%s::%s" #[BeforeEach] hook with exception of type "%s" with code %s and message "%s".',
+                        $testCase::class,
+                        $beforeEachMethodModel->getMethod(),
+                        $throwable::class,
+                        $throwable->getCode(),
+                        $throwable->getMessage()
+                    );
+                    throw new TestSetupException($msg);
+                }
+            }
+
+            $testCaseMethod = $testMethodModel->getMethod();
+            $failureException = null;
+            try {
+                yield call(fn() => $testCase->$testCaseMethod(...$args));
+                if ($assertionContext->getAssertionCount() === 0 && $asyncAssertionContext->getAssertionCount() === 0) {
+                    $msg = sprintf(
+                        'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
+                        $testCase::class,
+                        $testCaseMethod
+                    );
+                    throw new TestFailedException($msg);
+                }
+            } catch (TestFailedException $exception) {
+                $failureException = $exception;
+            } catch (Throwable $throwable) {
+                $msg = sprintf(
+                    'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
+                    $throwable::class,
+                    $throwable->getCode(),
+                    $throwable->getMessage(),
+                    $testCase::class,
+                    $testMethodModel->getMethod()
+                );
+                $failureException = new TestFailedException($msg, previous: $throwable);
+            } finally {
+                $invokedModel = new InvokedTestCaseTestModel(
+                    $testCase,
+                    $testMethodModel->getMethod(),
+                    $failureException
+                );
+            }
+
+            foreach ($testCaseModel->getAfterEachMethodModels() as $afterEachMethodModel) {
+                try {
+                    yield call([$testCase, $afterEachMethodModel->getMethod()]);
+                } catch (Throwable $throwable) {
+                    $msg = sprintf(
+                        'Failed tearing down "%s::%s" #[AfterEach] hook with exception of type "%s" with code %s and message "%s".',
+                        $testCase::class,
+                        $afterEachMethodModel->getMethod(),
+                        $throwable::class,
+                        $throwable->getCode(),
+                        $throwable->getMessage()
+                    );
+                    throw new TestTearDownException($msg);
+                }
+            }
+
+            yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
+
+            unset($testCase);
+            unset($failureException);
+        });
     }
 
     private function getReflectionClass(string $class) : ReflectionClass {

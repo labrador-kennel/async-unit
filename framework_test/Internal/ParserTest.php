@@ -245,6 +245,23 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertEqualsCanonicalizing($expected, $pluginNames);
     }
 
+    public function testParsingDataProvider() {
+        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasDataProvider');
+
+        $this->assertCount(1, $results->getTestSuiteModels());
+        $testSuite = $results->getTestSuiteModels()[0];
+
+        $this->assertCount(1, $testSuite->getTestCaseModels());
+        $testCaseModel = $testSuite->getTestCaseModels()[0];
+
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\HasDataProvider\\MyTestCase', $testCaseModel->getTestCaseClass());
+        $this->assertCount(1, $testCaseModel->getTestMethodModels());
+        $testMethodModel = $testCaseModel->getTestMethodModels()[0];
+
+        $this->assertSame('ensureStringsEqual', $testMethodModel->getMethod());
+        $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
+    }
+
     private function fetchTestCaseModel(TestSuiteModel $testSuite, string $className) : TestCaseModel {
         foreach ($testSuite->getTestCaseModels() as $testCaseModel) {
             if ($testCaseModel->getTestCaseClass() === $className) {
