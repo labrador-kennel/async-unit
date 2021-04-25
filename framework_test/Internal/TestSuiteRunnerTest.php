@@ -410,4 +410,25 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteHasDataProvider() {
+        Loop::run(function() {
+            $dir = $this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasDataProvider';
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(3, $state->events);
+
+            /** @var TestInvokedEvent $firstEvent */
+            $firstEvent = $state->events[0];
+            $this->assertSame(1, $firstEvent->getTarget()->getTestCase()->getCounter());
+        });
+    }
+
 }

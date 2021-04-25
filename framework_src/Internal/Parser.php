@@ -59,7 +59,6 @@ class Parser {
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
             }
-
         }
 
         return new ParserResult([$testSuiteModel], $plugins);
