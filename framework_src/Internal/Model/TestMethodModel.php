@@ -9,4 +9,14 @@ class TestMethodModel {
 
     use MethodModelTrait;
 
+    private ?string $dataProvider = null;
+
+    public function getDataProvider() : ?string {
+        return $this->dataProvider;
+    }
+
+    public function setDataProvider(string $dataProvider) : void {
+        $this->dataProvider = $dataProvider;
+    }
+
 }
