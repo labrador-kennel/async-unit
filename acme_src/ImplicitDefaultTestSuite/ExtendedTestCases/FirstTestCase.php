@@ -9,7 +9,7 @@ class FirstTestCase extends TestCase {
 
     #[Test]
     public function firstEnsureSomething() {
-
+        $this->assert()->stringEquals('foo', 'foo');
     }
 
 }

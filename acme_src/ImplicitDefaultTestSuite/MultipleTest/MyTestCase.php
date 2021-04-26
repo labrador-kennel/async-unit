@@ -15,17 +15,20 @@ class MyTestCase extends TestCase {
     public function ensureSomethingHappens() {
         yield new Delayed(100);
         $this->invoked[] = __METHOD__;
+        $this->assert()->stringEquals('foo', 'foo');
     }
 
     #[Test]
     public function ensureSomethingHappensTwice() {
         $this->invoked[] = __METHOD__;
+        $this->assert()->not()->stringEquals('AsyncUnit', 'PHPUnit');
     }
 
     #[Test]
     public function ensureSomethingHappensThreeTimes() {
         return call(function() {
             $this->invoked[] = __METHOD__;
+            $this->assert()->intEquals(42, 42);
         });
     }
 

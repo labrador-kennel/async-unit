@@ -8,7 +8,10 @@ abstract class AbstractFourthTestCase extends ThirdTestCase {
 
     #[Test]
     public function fourthEnsureSomething() {
-
+        $this->assert()->isNull(null);
+        $this->assert()->isFalse(false);
+        $this->assert()->isTrue(true);
+        $this->assert()->stringEquals('AsyncUnit', 'AsyncUnit');
     }
 
 }

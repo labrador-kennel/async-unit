@@ -9,9 +9,10 @@ use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
-use Cspray\Labrador\AsyncUnit\Internal\Parser;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\EnvironmentType;
@@ -39,6 +40,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     private function getStateAndApplication(array $dirs) {
         $state = new \stdClass();
+        $state->data = [];
         $state->passed = new \stdClass();
         $state->passed->events = [];
         $state->failed = new \stdClass();
@@ -156,7 +158,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         });
     }
 
-    public function testTestProcessingFinishedEventEmitted() {
+    public function testTestProcessingEventsEmitted() {
         Loop::run(function() {
             [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
             $this->emitter->on(InternalEventNames::TEST_INVOKED, function() use($state) {
@@ -165,10 +167,53 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($state) {
                 $state->data[] = 'test processing finished';
             });
+            $this->emitter->on(Events::TEST_PROCESSING_STARTED_EVENT, function() use($state) {
+                $state->data[] = 'test processing started';
+            });
 
             yield $application->start();
 
-            $this->assertSame(['test invoked', 'test processing finished'], $state->data);
+            $this->assertSame(['test processing started', 'test invoked', 'test processing finished'], $state->data);
+        });
+    }
+
+    public function testTestProcessingStartedHasPreRunSummary() {
+        Loop::run(function() {
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/ExtendedTestCases']);
+            $this->emitter->on(Events::TEST_PROCESSING_STARTED_EVENT, function($event) use($state) {
+                $state->data[] = $event;
+            });
+
+            yield $application->start();
+
+            $this->assertCount(1, $state->data);
+            /** @var TestProcessingStartedEvent $testStartedEvent */
+            $testStartedEvent = $state->data[0];
+
+            $this->assertInstanceOf(TestProcessingStartedEvent::class, $testStartedEvent);
+            $this->assertEquals(1, $testStartedEvent->getTarget()->getTestSuiteCount());
+            $this->assertEquals(3, $testStartedEvent->getTarget()->getTotalTestCaseCount());
+        });
+    }
+
+    public function testTestProcessingFinishedHasPostRunSummary() {
+        Loop::run(function() {
+            [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/ExtendedTestCases']);
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function($event) use($state) {
+                $state->data[] = $event;
+            });
+
+            yield $application->start();
+
+            $this->assertCount(1, $state->data);
+            /** @var TestProcessingFinishedEvent $testFinishedEvent */
+            $testFinishedEvent = $state->data[0];
+
+            $this->assertInstanceOf(TestProcessingFinishedEvent::class, $testFinishedEvent);
+            $this->assertSame(9, $testFinishedEvent->getTarget()->getExecutedTestCount());
+            $this->assertSame(1, $testFinishedEvent->getTarget()->getFailureTestCount());
+            $this->assertSame(18, $testFinishedEvent->getTarget()->getAssertionCount());
+            $this->assertSame(4, $testFinishedEvent->getTarget()->getAsyncAssertionCount());
         });
     }
 

@@ -1,0 +1,4 @@
+{
+  "testDirs": ["foo"],
+  "plugins": [1, 3.4, []]
+}

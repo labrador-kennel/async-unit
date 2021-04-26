@@ -34,7 +34,7 @@ trait SharedAssertionContextTrait {
         if (($isNot && $result->isSuccessful()) || (!$isNot && !$result->isSuccessful())) {
             throw new AssertionFailedException(
                 $customMessage ?? $this->getDefaultFailureMessage($isNot ? $result->getNotAssertionString() : $result->getAssertionString()),
-                $result->getComparisonDisplay(),
+                $this->getDefaultFailureMessage($isNot ? $result->getComparisonDisplay()->toNotString() : $result->getComparisonDisplay()->toString()),
                 $this->getLastAssertionFile(),
                 $this->getLastAssertionLine()
             );

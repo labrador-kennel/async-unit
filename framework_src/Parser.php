@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
@@ -8,19 +8,17 @@ use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
+use Cspray\Labrador\AsyncUnit\Internal\AttributeGroupTraverser;
 use Cspray\Labrador\AsyncUnit\Internal\Model\AfterAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\AfterEachMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\BeforeEachMethodModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\MethodModelTrait;
 use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\Internal\NodeVisitor\AsyncUnitVisitor;
-use Cspray\Labrador\AsyncUnit\TestCase;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeTraverser;
@@ -33,11 +31,9 @@ use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use Generator;
 use SplFileInfo;
+use stdClass;
 
-/**
- * @internal
- */
-class Parser {
+final class Parser {
 
     use AttributeGroupTraverser;
 
@@ -53,18 +49,22 @@ class Parser {
         $testSuiteModel = new TestSuiteModel();
         $plugins = [];
         $dirs = is_string($dirs) ? [$dirs] : $dirs;
-        foreach ($this->parseDirs($dirs) as $model) {
+        $parseState = new stdClass();
+        $parseState->totalTestCaseCount = 0;
+        $parseState->totalTestCount = 0;
+        foreach ($this->parseDirs($dirs, $parseState) as $model) {
             if ($model instanceof TestCaseModel) {
+                $parseState->totalTestCaseCount++;
                 $testSuiteModel->addTestCaseModel($model);
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
             }
         }
 
-        return new ParserResult([$testSuiteModel], $plugins);
+        return new ParserResult([$testSuiteModel], $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
     }
 
-    private function parseDirs(array $dirs) : Generator {
+    private function parseDirs(array $dirs, stdClass $state) : Generator {
         foreach ($dirs as $dir) {
             $dirIterator = new RecursiveIteratorIterator(
                 new RecursiveDirectoryIterator(
@@ -105,7 +105,7 @@ class Parser {
                 }
                 $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString());
 
-                $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getTestCaseClass());
+                $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getTestCaseClass(), $state);
 
                 foreach ($classMethods as $classMethod) {
                     // Our visitor gets all the class methods so this might be valid that this isn't extending the
@@ -211,7 +211,7 @@ class Parser {
      * @param TestCaseModel $testCaseModel
      * @param string $className
      */
-    private function addTestsToTestCaseModel(array $classes, array $classMethods, TestCaseModel $testCaseModel, string $className) {
+    private function addTestsToTestCaseModel(array $classes, array $classMethods, TestCaseModel $testCaseModel, string $className, stdClass $parseState) {
         foreach ($classMethods as $classMethod) {
             if (!$this->findAttribute(Test::class, ...$classMethod->attrGroups)) {
                 continue;
@@ -223,13 +223,14 @@ class Parser {
                     $testMethodModel->setDataProvider($dataProviderAttribute->args[0]->value->value);
                 }
 
+                $parseState->totalTestCount++;
                 $testCaseModel->addTestMethodModel($testMethodModel);
             }
         }
 
         $extendedClass = $this->getExtendedClass($classes, $className);
         if (!is_null($extendedClass)) {
-            $this->addTestsToTestCaseModel($classes, $classMethods, $testCaseModel, $extendedClass->namespacedName->toString());
+            $this->addTestsToTestCaseModel($classes, $classMethods, $testCaseModel, $extendedClass->namespacedName->toString(), $parseState);
         }
 
     }

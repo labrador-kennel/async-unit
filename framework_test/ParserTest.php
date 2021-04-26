@@ -1,18 +1,13 @@
 <?php
 
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
 use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin;
 use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin;
-use Cspray\Labrador\AsyncUnit\AsyncUnitAssertions;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncUnit\TestCase;
-use Cspray\Labrador\AsyncUnit\TestSuite;
-use Cspray\Labrador\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
@@ -26,7 +21,7 @@ class ParserTest extends PHPUnitTestCase {
     private Parser $subject;
 
     public function setUp() : void {
-        $this->acmeSrcDir = dirname(__DIR__, 2) . '/acme_src';
+        $this->acmeSrcDir = dirname(__DIR__) . '/acme_src';
         $this->subject = new Parser();
     }
 
@@ -260,6 +255,14 @@ class ParserTest extends PHPUnitTestCase {
 
         $this->assertSame('ensureStringsEqual', $testMethodModel->getMethod());
         $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
+    }
+
+    public function testParsingResultTelemetry() {
+        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExtendedTestCases');
+
+        $this->assertEquals(1, $results->getTestSuiteCount());
+        $this->assertEquals(3, $results->getTotalTestCaseCount());
+        $this->assertEquals(9, $results->getTotalTestCount());
     }
 
     private function fetchTestCaseModel(TestSuiteModel $testSuite, string $className) : TestCaseModel {

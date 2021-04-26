@@ -17,4 +17,6 @@ interface AssertionComparisonDisplay {
      */
     public function toString() : string;
 
+    public function toNotString() : string;
+
 }

@@ -9,6 +9,10 @@ class NullAssertionComparisonDisplay implements AssertionComparisonDisplay {
     public function __construct(private $actual) {}
 
     public function toString() : string {
-        return sprintf('Failed asserting that a value %s (%s) is null.', var_export($this->actual, true), gettype($this->actual));
+        return sprintf('asserting %s (%s) is null', var_export($this->actual, true), gettype($this->actual));
+    }
+
+    public function toNotString() : string {
+        return sprintf('asserting %s (%s) is not null', var_export($this->actual, true), gettype($this->actual));
     }
 }

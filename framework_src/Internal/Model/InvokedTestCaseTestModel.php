@@ -16,6 +16,8 @@ class InvokedTestCaseTestModel {
     public function __construct(
         private TestCase $testCase,
         private string $method,
+        private int $assertionCount,
+        private int $asyncAssertionCount,
         private ?TestFailedException $exception = null
     ) {}
 
@@ -25,6 +27,14 @@ class InvokedTestCaseTestModel {
 
     public function getMethod() : string {
         return $this->method;
+    }
+
+    public function getAssertionCount() : int {
+        return $this->assertionCount;
+    }
+
+    public function getAsyncAssertionCount() : int {
+        return $this->asyncAssertionCount;
     }
 
     public function getFailureException() : TestFailedException|AssertionFailedException|null {
