@@ -33,8 +33,8 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
             $this->assertSame(11, $assertionException->getAssertionFailureLine());
             $this->assertEquals(
-                (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
-                $assertionException->getComparisonDisplay()->toString()
+                sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
+                $assertionException->getDetailedMessage()
             );
         }
     }
@@ -52,8 +52,8 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
             $this->assertSame(19, $assertionException->getAssertionFailureLine());
             $this->assertEquals(
-                (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
-                $assertionException->getComparisonDisplay()->toString()
+                sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
+                $assertionException->getDetailedMessage()
             );
         }
     }
@@ -73,8 +73,8 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
                 $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
                 $this->assertSame(15, $assertionException->getAssertionFailureLine());
                 $this->assertEquals(
-                    (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString(),
-                    $assertionException->getComparisonDisplay()->toString()
+                    sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
+                    $assertionException->getDetailedMessage()
                 );
             }
         });

@@ -8,6 +8,8 @@ interface Events {
 
     const TEST_FAILED_EVENT = 'labrador.asyncUnit.testFailed';
 
+    const TEST_PROCESSING_STARTED_EVENT = 'labrador.asyncUnit.testProcessingStarted';
+
     const TEST_PROCESSING_FINISHED_EVENT = 'labrador.asyncUnit.testProcessingFinished';
 
 }

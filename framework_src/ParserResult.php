@@ -1,21 +1,33 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
 
 /**
  * @internal
  */
-class ParserResult {
-
+final class ParserResult {
 
     public function __construct(
         private array $testSuiteModels,
-        private array $pluginModels
+        private array $pluginModels,
+        private int $totalTestCaseCount,
+        private int $totalTestCount
     ) {}
+
+    public function getTestSuiteCount() : int {
+        return count($this->testSuiteModels);
+    }
+
+    public function getTotalTestCaseCount() : int {
+        return $this->totalTestCaseCount;
+    }
+
+    public function getTotalTestCount() : int {
+        return $this->totalTestCount;
+    }
 
     /**
      * @return TestSuiteModel[]

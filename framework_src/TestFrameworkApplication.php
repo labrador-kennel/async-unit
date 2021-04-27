@@ -1,26 +1,23 @@
 <?php declare(strict_types=1);
 
-
 namespace Cspray\Labrador\AsyncUnit;
-
 
 use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
-use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
-use Cspray\Labrador\AsyncUnit\Internal\Parser;
-use Cspray\Labrador\AsyncUnit\Internal\ParserResult;
 use Cspray\Labrador\AsyncUnit\Internal\TestSuiteRunner;
 use Cspray\Labrador\Plugin\Pluggable;
-use PHPUnit\Framework\Assert;
+use stdClass;
 use function Amp\call;
 
 final class TestFrameworkApplication extends AbstractApplication {
@@ -43,9 +40,18 @@ final class TestFrameworkApplication extends AbstractApplication {
 
     protected function doStart() : Promise {
         return call(function() {
-            $testSuites = $this->parserResult->getTestSuiteModels();
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) {
+            $testRunState = new stdClass();
+            $testRunState->testsInvoked = 0;
+            $testRunState->failedTests = 0;
+            $testRunState->totalAssertionCount = 0;
+            $testRunState->totalAsyncAssertionCount = 0;
+
+            $this->emitter->on(InternalEventNames::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) use($testRunState) {
+                $testRunState->testsInvoked++;
+                $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getAssertionCount();
+                $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getAsyncAssertionCount();
+
                 $invokedTestModel = $testInvokedEvent->getTarget();
                 $testPassed = is_null($testInvokedEvent->getTarget()->getFailureException());
                 $testResult = $this->getTestResult(
@@ -57,16 +63,65 @@ final class TestFrameworkApplication extends AbstractApplication {
                 if ($testPassed) {
                     yield $this->emitter->emit(new TestPassedEvent($testResult));
                 } else {
+                    $testRunState->failedTests++;
                     yield $this->emitter->emit(new TestFailedEvent($testResult));
                 }
             });
 
+            $testSuites = $this->parserResult->getTestSuiteModels();
+
+            yield $this->emitter->emit(
+                new TestProcessingStartedEvent($this->getPreRunSummary())
+            );
+
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             yield $this->emitter->emit(
-                new StandardEvent(Events::TEST_PROCESSING_FINISHED_EVENT, new \stdClass())
+                new TestProcessingFinishedEvent($this->getPostRunSummary($testRunState))
             );
         });
+    }
+
+    private function getPreRunSummary() : PreRunSummary {
+        return new class($this->parserResult) implements PreRunSummary {
+
+            public function __construct(private ParserResult $parserResult) {}
+
+            public function getTestSuiteCount() : int {
+                return $this->parserResult->getTestSuiteCount();
+            }
+
+            public function getTotalTestCaseCount() : int {
+                return $this->parserResult->getTotalTestCaseCount();
+            }
+
+            public function getTotalTestCount() : int {
+                return $this->parserResult->getTotalTestCount();
+            }
+        };
+    }
+
+    private function getPostRunSummary(stdClass $testRunState) : PostRunSummary {
+        return new class($testRunState) implements PostRunSummary {
+
+            public function __construct(private stdClass $testRunState) {}
+
+            public function getExecutedTestCount() : int {
+                return $this->testRunState->testsInvoked;
+            }
+
+            public function getAssertionCount() : int {
+                return $this->testRunState->totalAssertionCount;
+            }
+
+            public function getFailureTestCount() : int {
+                return $this->testRunState->failedTests;
+            }
+
+            public function getAsyncAssertionCount() : int {
+                return $this->testRunState->totalAsyncAssertionCount;
+            }
+        };
     }
 
     private function getTestResult(

@@ -1,0 +1,5 @@
+{
+  "$schema": "https://labrador-kennel.io/dev/async-unit/schema/cli",
+  "testDirs": "something",
+  "plugins": "something"
+}

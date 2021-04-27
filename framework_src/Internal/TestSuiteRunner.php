@@ -25,7 +25,7 @@ use function Amp\call;
 /**
  * @internal
  */
-class TestSuiteRunner {
+final class TestSuiteRunner {
 
     private array $reflectionCache = [];
 
@@ -135,6 +135,8 @@ class TestSuiteRunner {
                 $invokedModel = new InvokedTestCaseTestModel(
                     $testCase,
                     $testMethodModel->getMethod(),
+                    $assertionContext->getAssertionCount(),
+                    $asyncAssertionContext->getAssertionCount(),
                     $failureException
                 );
             }

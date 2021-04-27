@@ -39,7 +39,11 @@ class AssertIsFalseTest extends AbstractAssertionTestCase {
             public function __construct(private $actual) {}
 
             public function toString() : string {
-                return sprintf('Failed asserting that a value %s (%s) is false.', var_export($this->actual, true), gettype($this->actual));
+                return sprintf('asserting %s (%s) is false', var_export($this->actual, true), gettype($this->actual));
+            }
+
+            public function toNotString() : string {
+
             }
         };
     }

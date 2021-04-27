@@ -1,14 +1,26 @@
 #!/usr/bin/php
 <?php
 
+namespace Cspray\Labrador\AsyncUnit;
+
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-use Symfony\Component\Console\Application as ConsoleApplication;
+use Cspray\Labrador\AsyncUnit\CliTool\AsyncUnitCliApplication;
+use Cspray\Labrador\AsyncUnit\CliTool\ConfigurationFactory;
+use Cspray\Labrador\EnvironmentType;
+use Cspray\Labrador\StandardEnvironment;
+use Psr\Log\NullLogger;
 
-$repo = new \SebastianFeldmann\Git\Repository(dirname(__DIR__));
-$version = $repo->getInfoOperator()->getCurrentCommitHash();
-$application = new ConsoleApplication('AsyncUnit', substr($version, 0, 7));
+$environment = new StandardEnvironment(EnvironmentType::Development());
+$logger = new NullLogger();
 
-$application->add(new \Cspray\Labrador\AsyncUnit\CliTool\Command\RunTestsCommand($version));
+$configurationFactory = new ConfigurationFactory();
+
+$application = new AsyncUnitCliApplication(
+    $configurationFactory,
+    new TestFrameworkApplicationObjectGraph($environment, $logger),
+    getcwd(),
+    'HEAD'
+);
 
 $application->run();
