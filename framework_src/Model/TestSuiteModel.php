@@ -6,11 +6,11 @@ class TestSuiteModel {
 
     private array $testCaseModels = [];
 
-    public function __construct() {
+    public function __construct(private string $class) {
     }
 
-    public function getName() : string {
-        return 'Default TestSuite';
+    public function getTestSuiteClass() : string {
+        return $this->class;
     }
 
     /**

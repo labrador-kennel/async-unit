@@ -4,8 +4,6 @@ namespace Cspray\Labrador\AsyncUnit;
 
 interface TestSuite {
 
-    public function getTestCases() : array;
-
     public function getName() : string;
 
     public function set(string $key, mixed $value) : void;

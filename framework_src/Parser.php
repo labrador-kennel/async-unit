@@ -45,7 +45,7 @@ final class Parser {
     }
 
     public function parse(string|array $dirs) : ParserResult {
-        $testSuiteModel = new TestSuiteModel();
+        $testSuites = [];
         $plugins = [];
         $dirs = is_string($dirs) ? [$dirs] : $dirs;
         $parseState = new stdClass();
@@ -54,13 +54,15 @@ final class Parser {
         foreach ($this->parseDirs($dirs, $parseState) as $model) {
             if ($model instanceof TestCaseModel) {
                 $parseState->totalTestCaseCount++;
-                $testSuiteModel->addTestCaseModel($model);
+                $testSuites[0]->addTestCaseModel($model);
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
+            } else if ($model instanceof TestSuiteModel) {
+                $testSuites[] = $model;
             }
         }
 
-        return new ParserResult([$testSuiteModel], $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+        return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
     }
 
     private function parseDirs(array $dirs, stdClass $state) : Generator {
@@ -96,6 +98,15 @@ final class Parser {
             // We need to make sure there aren't any class methods that could be annotated but not extending
             // the correct TestCase or TestSuite
             $this->validateAnnotatedMethodsExtendsTestCase($classMethods);
+
+            $testSuiteClasses = $this->filterClassImplementsTestSuite($asyncUnitVisitor->getClasses());
+            if (empty($testSuiteClasses)) {
+                yield new TestSuiteModel(DefaultTestSuite::class);
+            } else {
+                foreach ($testSuiteClasses as $testSuiteClass) {
+                    yield new TestSuiteModel($testSuiteClass->namespacedName->toString());
+                }
+            }
 
             $testCaseClasses = $this->filterClassExtendsTestCase($asyncUnitVisitor->getClasses());
             foreach ($testCaseClasses as $testCaseClass) {
@@ -166,6 +177,21 @@ final class Parser {
      * @param Class_[] $classes
      * @return Class_[]
      */
+    private function filterClassImplementsTestSuite(array $classes) : array {
+        $testSuites = [];
+        foreach ($classes as $class) {
+            if ($this->doesClassImplementTestSuite($class)) {
+                $testSuites[] = $class;
+            }
+        }
+
+        return $testSuites;
+    }
+
+    /**
+     * @param Class_[] $classes
+     * @return Class_[]
+     */
     private function filterClassExtendsTestCase(array $classes) : array {
         $testCases = [];
         foreach ($classes as $class) {
@@ -202,6 +228,10 @@ final class Parser {
         // static analysis... this method is certainly easier but blurs the line between compilation
         // and runtime a little bit. tl;dr Should compilation step be able to autoload classes?
         return is_subclass_of($class->namespacedName->toString(), TestCase::class);
+    }
+
+    private function doesClassImplementTestSuite(Class_ $class) : bool {
+        return is_subclass_of($class->namespacedName->toString(), TestSuite::class);
     }
 
     /**

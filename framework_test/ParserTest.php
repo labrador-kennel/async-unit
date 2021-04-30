@@ -25,6 +25,14 @@ class ParserTest extends PHPUnitTestCase {
         $this->subject = new Parser();
     }
 
+    private function implicitDefaultTestSuitePath(string $path) : string {
+        return $this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $path;
+    }
+
+    private function explicitTestsuitePath(string $path) : string {
+        return $this->acmeSrcDir . '/ExplicitTestSuite/' . $path;
+    }
+
     public function testErrorConditionsNoTestsTestCase() {
         $this->expectException(TestCompilationException::class);
         $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\NoTestsTestCase\\BadTestCase". There were no #[Test] found.');
@@ -82,16 +90,16 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testDefaultTestSuiteName() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $this->assertSame('Default TestSuite', $testSuite->getName());
+        $this->assertSame(DefaultTestSuite::class, $testSuite->getTestSuiteClass());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/SingleTest')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -107,7 +115,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTest() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTest')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTest'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -127,7 +135,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteHasNotTestCaseObject() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasNotTestCaseObject')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('HasNotTestCaseObject'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -146,7 +154,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTestCase() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/MultipleTestCase')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTestCase'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -170,7 +178,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingImplicitDefaultTestSuiteExtendedTestCases() {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExtendedTestCases')->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -216,7 +224,7 @@ class ParserTest extends PHPUnitTestCase {
      * @dataProvider hooksProvider
      */
     public function testParsingSimpleTestCaseHasHooks(string $testCaseGetter, string $subNamespace, string $methodName) {
-        $testSuites = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $subNamespace)->getTestSuiteModels();
+        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath($subNamespace))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
@@ -230,7 +238,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingCustomAssertionPlugins() {
-        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasAssertionPlugin');
+        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasAssertionPlugin'));
 
         $this->assertCount(2, $results->getPluginModels());
 
@@ -241,7 +249,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testParsingDataProvider() {
-        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/HasDataProvider');
+        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasDataProvider'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
         $testSuite = $results->getTestSuiteModels()[0];
@@ -257,8 +265,17 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
     }
 
+    public function testExplicitTestSuiteDefaultExplicitTestSuite() {
+        $results = $this->subject->parse($this->explicitTestsuitePath('DefaultExplicitTestSuite'));
+
+        $this->assertCount(1, $results->getTestSuiteModels());
+        $testSuite = $results->getTestSuiteModels()[0];
+
+        $this->assertSame('Acme\\DemoSuites\\ExplicitTestSuite\\DefaultExplicitTestSuite\\MyTestSuite', $testSuite->getTestSuiteClass());
+    }
+
     public function testParsingResultTelemetry() {
-        $results = $this->subject->parse($this->acmeSrcDir . '/ImplicitDefaultTestSuite/ExtendedTestCases');
+        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
 
         $this->assertEquals(1, $results->getTestSuiteCount());
         $this->assertEquals(3, $results->getTotalTestCaseCount());
