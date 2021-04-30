@@ -2,10 +2,12 @@
 
 namespace Cspray\Labrador\AsyncUnit\CliTool;
 
+use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Parser;
+use Cspray\Labrador\AsyncUnit\TestFrameworkApplication;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\Engine;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -33,6 +35,13 @@ class AsyncUnitFrameworkRunner {
         });
 
         (new DefaultResultPrinter($this->version))->registerEvents($emitter, $symfonyStyle);
+
+        /** @var TestFrameworkApplication $app */
+        $app = $injector->make(Application::class);
+
+        foreach ($parserResults->getPluginModels() as $pluginModel) {
+            $app->registerPlugin($pluginModel->getPluginClass());
+        }
 
         $injector->execute(Engine::class . '::run');
         return !$hasFailedTests;

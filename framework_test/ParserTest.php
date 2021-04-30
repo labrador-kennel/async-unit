@@ -5,13 +5,13 @@ namespace Cspray\Labrador\AsyncUnit;
 use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin;
 use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Model\PluginModel;
+use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
- * @covers \Cspray\Labrador\AsyncUnit\Internal\Parser
+ * @covers \Cspray\Labrador\AsyncUnit\Parser
  */
 class ParserTest extends PHPUnitTestCase {
 

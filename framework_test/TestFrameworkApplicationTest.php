@@ -12,7 +12,6 @@ use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
-use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\EnvironmentType;
@@ -161,7 +160,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function testTestProcessingEventsEmitted() {
         Loop::run(function() {
             [$state, $application] = $this->getStateAndApplication([dirname(__DIR__) . '/acme_src/ImplicitDefaultTestSuite/SingleTest']);
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function() use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($state) {

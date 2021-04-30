@@ -2,9 +2,8 @@
 
 namespace Cspray\Labrador\AsyncUnit\Constraint;
 
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncUnit\TestSuite;
+use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use stdClass;

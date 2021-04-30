@@ -1,7 +1,10 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
+/**
+ * @internal
+ */
 trait LastAssertionCalledTrait {
 
     private ?string $lastAssertionFile = null;

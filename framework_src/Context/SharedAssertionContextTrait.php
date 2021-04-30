@@ -11,7 +11,6 @@ trait SharedAssertionContextTrait {
 
     private bool $isNot = false;
 
-
     public function getAssertionCount() : int {
         return $this->count;
     }

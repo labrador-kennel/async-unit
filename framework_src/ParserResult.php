@@ -2,12 +2,9 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-use Cspray\Labrador\AsyncUnit\Internal\Model\PluginModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Model\PluginModel;
+use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 
-/**
- * @internal
- */
 final class ParserResult {
 
     public function __construct(

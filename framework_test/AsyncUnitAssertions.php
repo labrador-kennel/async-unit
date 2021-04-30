@@ -4,8 +4,8 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Constraint\TestCaseModelHasTestMethod;
 use Cspray\Labrador\AsyncUnit\Constraint\TestSuiteModelHasTestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Internal\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 
 trait AsyncUnitAssertions {
 

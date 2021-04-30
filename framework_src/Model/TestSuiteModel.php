@@ -1,16 +1,12 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal\Model;
+namespace Cspray\Labrador\AsyncUnit\Model;
 
-/**
- * @internal
- */
 class TestSuiteModel {
 
     private array $testCaseModels = [];
 
     public function __construct() {
-
     }
 
     public function getName() : string {

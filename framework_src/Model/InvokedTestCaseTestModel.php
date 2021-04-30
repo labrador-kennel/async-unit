@@ -1,16 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal\Model;
+namespace Cspray\Labrador\AsyncUnit\Model;
 
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\TestCase;
 
-/**
- * @internal
- */
 class InvokedTestCaseTestModel {
 
     public function __construct(

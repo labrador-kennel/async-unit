@@ -1,11 +1,13 @@
 <?php declare(strict_types=1);
 
-
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
 use PhpParser\Node\Attribute;
 use PhpParser\Node\AttributeGroup;
 
+/**
+ * @internal
+ */
 trait AttributeGroupTraverser {
 
     private function findAttribute(string $attributeType, AttributeGroup... $attributeGroups) : ?Attribute {
