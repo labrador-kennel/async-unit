@@ -118,11 +118,6 @@ final class Parser {
                 $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getTestCaseClass(), $state);
 
                 foreach ($classMethods as $classMethod) {
-                    // Our visitor gets all the class methods so this might be valid that this isn't extending the
-                    // TestCase. The TestSuite may have stubs or other helper classes that shouldn't be a part of this
-                    if ($classMethod->getAttribute('parent')->namespacedName->toString() !== $testCaseClass->namespacedName->toString()) {
-                        continue;
-                    }
                     if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
                         if (!$classMethod->isStatic()) {
                             $msg = sprintf(
