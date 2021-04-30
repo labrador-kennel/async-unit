@@ -16,6 +16,7 @@ use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 class ParserTest extends PHPUnitTestCase {
 
     use AsyncUnitAssertions;
+    use UsesAcmeSrc;
 
     private string $acmeSrcDir;
     private Parser $subject;
@@ -25,13 +26,6 @@ class ParserTest extends PHPUnitTestCase {
         $this->subject = new Parser();
     }
 
-    private function implicitDefaultTestSuitePath(string $path) : string {
-        return $this->acmeSrcDir . '/ImplicitDefaultTestSuite/' . $path;
-    }
-
-    private function explicitTestsuitePath(string $path) : string {
-        return $this->acmeSrcDir . '/ExplicitTestSuite/' . $path;
-    }
 
     public function testErrorConditionsNoTestsTestCase() {
         $this->expectException(TestCompilationException::class);
@@ -272,6 +266,7 @@ class ParserTest extends PHPUnitTestCase {
         $testSuite = $results->getTestSuiteModels()[0];
 
         $this->assertSame('Acme\\DemoSuites\\ExplicitTestSuite\\DefaultExplicitTestSuite\\MyTestSuite', $testSuite->getTestSuiteClass());
+        $this->assertTestCaseClassBelongsToTestSuite('Acme\\DemoSuites\\ExplicitTestSuite\\DefaultExplicitTestSuite\\MyTestCase', $testSuite);
     }
 
     public function testParsingResultTelemetry() {

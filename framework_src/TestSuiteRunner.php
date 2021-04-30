@@ -33,6 +33,8 @@ final class TestSuiteRunner {
     public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
         return call(function() use($testSuiteModels) {
             foreach ($testSuiteModels as $testSuiteModel) {
+                $testSuiteClass = $testSuiteModel->getTestSuiteClass();
+                $testSuite = new $testSuiteClass();
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
                     $testCaseClass = $testCaseModel->getTestCaseClass();
                     foreach ($testCaseModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
@@ -54,13 +56,13 @@ final class TestSuiteRunner {
                     foreach ($testCaseModel->getTestMethodModels() as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */
-                        [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass);
+                        [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass, $testSuite);
                         if ($testMethodModel->getDataProvider() !== null) {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCaseObject->$dataProvider();
                             foreach ($dataSets as $args) {
                                 yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel, $args);
-                                [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass);
+                                [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass, $testSuite);
                             }
                         } else {
                             yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel);
@@ -171,7 +173,7 @@ final class TestSuiteRunner {
         return $this->reflectionCache[$class];
     }
 
-    private function invokeTestCaseConstructor(string $testCaseClass) : array {
+    private function invokeTestCaseConstructor(string $testCaseClass, TestSuite $testSuite) : array {
         /** @var TestCase $testCaseObject */
         $reflectionClass = $this->getReflectionClass($testCaseClass);
         $testCaseObject = $reflectionClass->newInstanceWithoutConstructor();
@@ -192,6 +194,7 @@ final class TestSuiteRunner {
 
         $testCaseConstructor->invoke(
             $testCaseObject,
+            $testSuite,
             $assertionContext,
             $asyncAssertionContext
         );
