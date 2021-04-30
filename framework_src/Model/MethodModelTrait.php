@@ -1,10 +1,7 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal\Model;
+namespace Cspray\Labrador\AsyncUnit\Model;
 
-/**
- * @internal
- */
 trait MethodModelTrait {
 
     public function __construct(

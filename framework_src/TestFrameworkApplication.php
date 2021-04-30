@@ -5,7 +5,6 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
@@ -13,9 +12,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
-use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncUnit\Internal\InternalEventNames;
-use Cspray\Labrador\AsyncUnit\Internal\TestSuiteRunner;
+use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
 use Cspray\Labrador\Plugin\Pluggable;
 use stdClass;
 use function Amp\call;
@@ -47,7 +44,7 @@ final class TestFrameworkApplication extends AbstractApplication {
             $testRunState->totalAssertionCount = 0;
             $testRunState->totalAsyncAssertionCount = 0;
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) use($testRunState) {
+            $this->emitter->on(Events::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) use($testRunState) {
                 $testRunState->testsInvoked++;
                 $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getAssertionCount();
                 $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getAsyncAssertionCount();
@@ -68,13 +65,11 @@ final class TestFrameworkApplication extends AbstractApplication {
                 }
             });
 
-            $testSuites = $this->parserResult->getTestSuiteModels();
-
             yield $this->emitter->emit(
                 new TestProcessingStartedEvent($this->getPreRunSummary())
             );
 
-            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            yield $this->testSuiteRunner->runTestSuites(...$this->parserResult->getTestSuiteModels());
 
             yield $this->emitter->emit(
                 new TestProcessingFinishedEvent($this->getPostRunSummary($testRunState))

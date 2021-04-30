@@ -1,22 +1,18 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal;
+namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
 use Amp\Success;
-use Cspray\Labrador\AsyncUnit\Parser;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
-use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
-use Cspray\Labrador\AsyncUnit\Internal\Event\TestInvokedEvent;
-use Cspray\Labrador\AsyncUnit\Internal\Model\InvokedTestCaseTestModel;
+use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
@@ -34,7 +30,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     private TestSuiteRunner $testSuiteRunner;
 
     public function setUp() : void {
-        $this->acmeSrcDir = dirname(__DIR__, 2) . '/acme_src';
+        $this->acmeSrcDir = dirname(__DIR__) . '/acme_src';
         $this->parser = new Parser();
         $this->emitter = new AmpEventEmitter();
         $this->customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
@@ -47,7 +43,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -68,7 +64,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -98,7 +94,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -128,7 +124,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -158,7 +154,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -188,7 +184,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -219,7 +215,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -250,7 +246,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -274,7 +270,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
                 $state->events[] = $event;
             });
 
@@ -293,7 +289,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
                 $state->events[] = $event;
             });
 
@@ -312,7 +308,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
                 $state->events[] = $event;
             });
 
@@ -331,7 +327,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function ($event) use ($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
                 $state->events[] = $event;
             });
 
@@ -350,7 +346,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -379,7 +375,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -417,7 +413,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(InternalEventNames::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
                 $state->events[] = $event;
             });
 

@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\Internal\NodeVisitor;
+namespace Cspray\Labrador\AsyncUnit\NodeVisitor;
 
 use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Internal\AttributeGroupTraverser;
+use Cspray\Labrador\AsyncUnit\AttributeGroupTraverser;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;

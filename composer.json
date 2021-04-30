@@ -27,7 +27,8 @@
       "Cspray\\Labrador\\AsyncUnit\\": "framework_test",
       "Cspray\\Labrador\\AsyncUnit\\CliTool\\": "cli_tool_test",
       "Acme\\DemoSuites\\": "acme_src",
-      "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src"
+      "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src",
+      "Acme\\Examples\\CustomAssertion\\": "examples/custom_assertion_src"
     }
   }
 }

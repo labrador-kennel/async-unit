@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsTrue;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals;
-use Cspray\Labrador\AsyncUnit\Internal\LastAssertionCalledTrait;
+use Cspray\Labrador\AsyncUnit\LastAssertionCalledTrait;
 
 /**
  * Represents an object created for every #[Test] that provides access to the Assertion API as well as the mechanism for

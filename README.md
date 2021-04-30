@@ -80,7 +80,7 @@ In your terminal you could use the provided CLI tool to run this test suite:
 vendor/bin/asyncunit run tests
 ```
 
-> See a similar example in action! With the repository on your local machine run the command and point at `examples/simple_equals_src`
+You can see more working examples in the `examples/` directory.
 
 ## What we are (or strive to be)...
 
