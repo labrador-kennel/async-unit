@@ -26,13 +26,13 @@ class TestSuiteModelHasTestCaseModelTest extends TestCase {
     }
 
     public function testPassingEmptyTestSuiteFails() {
-        $testSuite = new TestSuiteModel(DefaultTestSuite::class);
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $results = (new TestSuiteModelHasTestCaseModel(''))->evaluate($testSuite, returnResult: true);
         $this->assertFalse($results);
     }
 
     public function testTestSuiteHasTestCaseClassPasses() {
-        $testSuite = new TestSuiteModel(DefaultTestSuite::class);
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $testCaseModel = new TestCaseModel('TestCaseClass');
         $testSuite->addTestCaseModel($testCaseModel);
 
@@ -41,7 +41,7 @@ class TestSuiteModelHasTestCaseModelTest extends TestCase {
     }
 
     public function testTestSuiteDoesNotHaveTestCaseClassFails() {
-        $testSuite = new TestSuiteModel(DefaultTestSuite::class);
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $testCaseModel = new TestCaseModel('FooClass');
         $testSuite->addTestCaseModel($testCaseModel);
 

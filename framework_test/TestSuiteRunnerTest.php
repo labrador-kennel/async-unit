@@ -430,7 +430,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testExplicitTestSuiteDefaultExplicitTestSuite() {
         Loop::run(function() {
-            $dir = $this->explicitTestsuitePath('DefaultExplicitTestSuite');
+            $dir = $this->explicitTestsuitePath('AnnotatedDefaultTestSuite');
 
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
@@ -444,7 +444,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertCount(1, $state->events);
             $this->assertNull($state->events[0]->getTarget()->getFailureException());
-            $this->assertSame(ExplicitTestSuite\DefaultExplicitTestSuite\MyTestSuite::class, $state->events[0]->getTarget()->getTestCase()->getTestSuiteName());
+            $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $state->events[0]->getTarget()->getTestCase()->getTestSuiteName());
         });
     }
 

@@ -6,11 +6,17 @@ class TestSuiteModel {
 
     private array $testCaseModels = [];
 
-    public function __construct(private string $class) {
-    }
+    public function __construct(
+        private string $class,
+        private bool $isDefaultTestSuite
+    ) {}
 
     public function getTestSuiteClass() : string {
         return $this->class;
+    }
+
+    public function isDefaultTestSuite() : bool {
+        return $this->isDefaultTestSuite;
     }
 
     /**

@@ -2,12 +2,12 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin;
-use Acme\DemoSuites\ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
+use Acme\DemoSuites\ImplicitDefaultTestSuite;
+use Acme\DemoSuites\ExplicitTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 /**
@@ -98,7 +98,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $expectedTestCase = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\SingleTest\\MyTestCase';
+        $expectedTestCase = ImplicitDefaultTestSuite\SingleTest\MyTestCase::class;
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite($expectedTestCase, $testSuite);
 
@@ -113,7 +113,7 @@ class ParserTest extends PHPUnitTestCase {
 
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
-        $expectedTestCase = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTest\\MyTestCase';
+        $expectedTestCase = ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class;
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite(
             $expectedTestCase,
@@ -134,7 +134,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $expectedTestCase = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\HasNotTestCaseObject\\MyTestCase';
+        $expectedTestCase = ImplicitDefaultTestSuite\HasNotTestCaseObject\MyTestCase::class;
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite(
             $expectedTestCase,
@@ -153,9 +153,9 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $barTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BarTestCase';
-        $bazTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\BazTestCase';
-        $fooTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\MultipleTestCase\\FooTestCase';
+        $barTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BarTestCase::class;
+        $bazTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BazTestCase::class;
+        $fooTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\FooTestCase::class;
 
         $this->assertCount(3, $testSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite($barTestCaseClass, $testSuite);
@@ -177,9 +177,9 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $firstTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\ExtendedTestCases\\FirstTestCase';
-        $thirdTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\ExtendedTestCases\\ThirdTestCase';
-        $fifthTestCaseClass = 'Acme\\DemoSuites\\ImplicitDefaultTestSuite\\ExtendedTestCases\\FifthTestCase';
+        $firstTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FirstTestCase::class;
+        $thirdTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\ThirdTestCase::class;
+        $fifthTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FifthTestCase::class;
 
         $this->assertCount(3, $testSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite($firstTestCaseClass, $testSuite);
@@ -237,7 +237,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(2, $results->getPluginModels());
 
         $pluginNames = array_map(fn(PluginModel $pluginModel) => $pluginModel->getPluginClass(), $results->getPluginModels());
-        $expected = [MyCustomAssertionPlugin::class, MyOtherCustomAssertionPlugin::class];
+        $expected = [ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin::class, ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin::class];
 
         $this->assertEqualsCanonicalizing($expected, $pluginNames);
     }
@@ -251,7 +251,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $testCaseModel = $testSuite->getTestCaseModels()[0];
 
-        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\HasDataProvider\\MyTestCase', $testCaseModel->getTestCaseClass());
+        $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getTestCaseClass());
         $this->assertCount(1, $testCaseModel->getTestMethodModels());
         $testMethodModel = $testCaseModel->getTestMethodModels()[0];
 
@@ -259,14 +259,45 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
     }
 
-    public function testExplicitTestSuiteDefaultExplicitTestSuite() {
-        $results = $this->subject->parse($this->explicitTestsuitePath('DefaultExplicitTestSuite'));
+    public function testExplicitTestSuiteAnnotatedDefaultTestSuite() {
+        $results = $this->subject->parse($this->explicitTestsuitePath('AnnotatedDefaultTestSuite'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
         $testSuite = $results->getTestSuiteModels()[0];
 
-        $this->assertSame('Acme\\DemoSuites\\ExplicitTestSuite\\DefaultExplicitTestSuite\\MyTestSuite', $testSuite->getTestSuiteClass());
-        $this->assertTestCaseClassBelongsToTestSuite('Acme\\DemoSuites\\ExplicitTestSuite\\DefaultExplicitTestSuite\\MyTestCase', $testSuite);
+        $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $testSuite->getTestSuiteClass());
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestCase::class, $testSuite);
+    }
+
+    public function testExplicitTestSuiteTestCaseDefinesTestSuite() {
+        $results = $this->subject->parse($this->explicitTestsuitePath('TestCaseDefinesTestSuite'));
+
+        $this->assertCount(2, $results->getTestSuiteModels());
+
+        $firstTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class);
+        $this->assertCount(1, $firstTestSuite->getTestCaseModels());
+
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\FirstTestCase::class, $firstTestSuite);
+
+        $secondTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class);
+        $this->assertCount(2, $secondTestSuite->getTestCaseModels());
+
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\SecondTestCase::class, $secondTestSuite);
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\ThirdTestCase::class, $secondTestSuite);
+    }
+
+    public function testExplicitTestSuiteTestCaseDefinesAndTestCaseDefaultTestSuite() {
+        $results = $this->subject->parse($this->explicitTestsuitePath('TestCaseDefinedAndImplicitDefaultTestSuite'));
+
+        $this->assertCount(2, $results->getTestSuiteModels());
+
+        $defaultTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $this->assertCount(1, $defaultTestSuite->getTestCaseModels());
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\FirstTestCase::class, $defaultTestSuite);
+
+        $myTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\MyTestSuite::class);
+        $this->assertCount(1, $myTestSuite->getTestCaseModels());
+        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\SecondTestCase::class, $myTestSuite);
     }
 
     public function testParsingResultTelemetry() {
@@ -275,6 +306,20 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertEquals(1, $results->getTestSuiteCount());
         $this->assertEquals(3, $results->getTotalTestCaseCount());
         $this->assertEquals(9, $results->getTotalTestCount());
+    }
+
+    /**
+     * @param TestSuiteModel[] $testSuites
+     * @param string $testSuiteClassName
+     * @return TestSuiteModel
+     */
+    private function fetchTestSuiteModel(array $testSuites, string $testSuiteClassName) : TestSuiteModel {
+        foreach ($testSuites as $testSuite) {
+            if ($testSuite->getTestSuiteClass() === $testSuiteClassName) {
+                return $testSuite;
+            }
+        }
+        $this->fail('Expected the set of TestSuites to have a class matching . ' . $testSuiteClassName);
     }
 
     private function fetchTestCaseModel(TestSuiteModel $testSuite, string $className) : TestCaseModel {

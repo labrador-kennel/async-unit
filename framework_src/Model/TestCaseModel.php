@@ -12,9 +12,14 @@ class TestCaseModel {
 
     public function __construct(
         private string $testCaseClass,
+        private ?string $testSuiteClass = null
     ) {}
 
-    public function getTestCaseClass() {
+    public function getTestSuiteClass() : ?string {
+        return $this->testSuiteClass;
+    }
+
+    public function getTestCaseClass() : string {
         return $this->testCaseClass;
     }
 

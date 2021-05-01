@@ -2,12 +2,10 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-interface TestSuite {
+abstract class TestSuite {
 
-    public function getName() : string;
-
-    public function set(string $key, mixed $value) : void;
-
-    public function get(string $key) : mixed;
+    final public function getName() : string {
+        return static::class;
+    }
 
 }
