@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Constraint;
 
+use Cspray\Labrador\AsyncUnit\DefaultTestSuite;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\Exception\InvalidArgumentException;
@@ -25,13 +26,13 @@ class TestSuiteModelHasTestCaseModelTest extends TestCase {
     }
 
     public function testPassingEmptyTestSuiteFails() {
-        $testSuite = new TestSuiteModel();
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $results = (new TestSuiteModelHasTestCaseModel(''))->evaluate($testSuite, returnResult: true);
         $this->assertFalse($results);
     }
 
     public function testTestSuiteHasTestCaseClassPasses() {
-        $testSuite = new TestSuiteModel();
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $testCaseModel = new TestCaseModel('TestCaseClass');
         $testSuite->addTestCaseModel($testCaseModel);
 
@@ -40,7 +41,7 @@ class TestSuiteModelHasTestCaseModelTest extends TestCase {
     }
 
     public function testTestSuiteDoesNotHaveTestCaseClassFails() {
-        $testSuite = new TestSuiteModel();
+        $testSuite = new TestSuiteModel(DefaultTestSuite::class, true);
         $testCaseModel = new TestCaseModel('FooClass');
         $testSuite->addTestCaseModel($testCaseModel);
 

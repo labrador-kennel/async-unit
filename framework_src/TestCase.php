@@ -23,7 +23,15 @@ abstract class TestCase {
      * intentionally designed to lockdown the internal functionality required by the specification of the framework
      * while keeping open things that are useful in the context of writing unit tests.
      */
-    private function __construct(private AssertionContext $assertionContext, private AsyncAssertionContext $asyncAssertionContext) {}
+    private function __construct(
+        private TestSuite $testSuite,
+        private AssertionContext $assertionContext,
+        private AsyncAssertionContext $asyncAssertionContext
+    ) {}
+
+    final protected function testSuite() : TestSuite {
+        return $this->testSuite;
+    }
 
     final protected function assert() : AssertionContext {
         return $this->setAssertionFileAndLine($this->assertionContext, __FUNCTION__, debug_backtrace(10));

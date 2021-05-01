@@ -17,6 +17,8 @@ use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\NodeVisitor\AsyncUnitVisitor;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\Node\Stmt\ClassMethod;
@@ -45,7 +47,8 @@ final class Parser {
     }
 
     public function parse(string|array $dirs) : ParserResult {
-        $testSuiteModel = new TestSuiteModel();
+        $defaultTestSuite = null;
+        $nonDefaultTestSuites = [];
         $plugins = [];
         $dirs = is_string($dirs) ? [$dirs] : $dirs;
         $parseState = new stdClass();
@@ -54,13 +57,32 @@ final class Parser {
         foreach ($this->parseDirs($dirs, $parseState) as $model) {
             if ($model instanceof TestCaseModel) {
                 $parseState->totalTestCaseCount++;
-                $testSuiteModel->addTestCaseModel($model);
+                // There is only 1 TestSuite... either this is our implicit DefaultTestSuite or exactly 1 TestSuite
+                // was found and all TestCases are defined to it
+                if (is_null($model->getTestSuiteClass())) {
+                    $defaultTestSuite->addTestCaseModel($model);
+                } else {
+                    if ($defaultTestSuite->getTestSuiteClass() === $model->getTestSuiteClass()) {
+                        $defaultTestSuite->addTestCaseModel($model);
+                    } else {
+                        $nonDefaultTestSuites[$model->getTestSuiteClass()]->addTestCaseModel($model);
+                    }
+                }
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
+            } else if ($model instanceof TestSuiteModel) {
+                if ($model->isDefaultTestSuite()) {
+                    $defaultTestSuite = $model;
+                } else {
+                    $nonDefaultTestSuites[$model->getTestSuiteClass()] = $model;
+                }
             }
         }
-
-        return new ParserResult([$testSuiteModel], $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+        $testSuites = array_values($nonDefaultTestSuites);
+        if (!empty($defaultTestSuite->getTestCaseModels())) {
+            array_unshift($testSuites, $defaultTestSuite);
+        }
+        return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
     }
 
     private function parseDirs(array $dirs, stdClass $state) : Generator {
@@ -97,21 +119,42 @@ final class Parser {
             // the correct TestCase or TestSuite
             $this->validateAnnotatedMethodsExtendsTestCase($classMethods);
 
+            $testSuiteClasses = $this->filterClassImplementsTestSuite($asyncUnitVisitor->getClasses());
+            if (empty($testSuiteClasses)) {
+                yield new TestSuiteModel(DefaultTestSuite::class, true);
+            } else {
+                $hasDefaultTestSuite = false;
+                foreach ($testSuiteClasses as $testSuiteClass) {
+                    $defaultTestSuiteAttribute = $this->findAttribute(DefaultTestSuiteAttribute::class, ...$testSuiteClass->attrGroups);
+                    if (!$hasDefaultTestSuite && !is_null($defaultTestSuiteAttribute)) {
+                        $hasDefaultTestSuite = true;
+                    }
+                    yield new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
+                }
+                if (!$hasDefaultTestSuite) {
+                    yield new TestSuiteModel(DefaultTestSuite::class, true);
+                }
+            }
+
             $testCaseClasses = $this->filterClassExtendsTestCase($asyncUnitVisitor->getClasses());
             foreach ($testCaseClasses as $testCaseClass) {
                 if ($testCaseClass->isAbstract()) {
                     continue;
                 }
-                $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString());
+
+
+                $testSuiteAttribute = $this->findAttribute(TestSuiteAttribute::class, ...$testCaseClass->attrGroups);
+                $testSuiteClassName = null;
+                if (!is_null($testSuiteAttribute)) {
+                    // Right now we are making a huge assumption that the TestSuite is being specified by declaring it as a class constant, i.e. MyTestSuite::class
+                    $testSuiteClassName = $testSuiteAttribute->args[0]->value->class->toString();
+                }
+
+                $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString(), $testSuiteClassName);
 
                 $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getTestCaseClass(), $state);
 
                 foreach ($classMethods as $classMethod) {
-                    // Our visitor gets all the class methods so this might be valid that this isn't extending the
-                    // TestCase. The TestSuite may have stubs or other helper classes that shouldn't be a part of this
-                    if ($classMethod->getAttribute('parent')->namespacedName->toString() !== $testCaseClass->namespacedName->toString()) {
-                        continue;
-                    }
                     if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
                         if (!$classMethod->isStatic()) {
                             $msg = sprintf(
@@ -166,6 +209,21 @@ final class Parser {
      * @param Class_[] $classes
      * @return Class_[]
      */
+    private function filterClassImplementsTestSuite(array $classes) : array {
+        $testSuites = [];
+        foreach ($classes as $class) {
+            if ($this->doesClassImplementTestSuite($class)) {
+                $testSuites[] = $class;
+            }
+        }
+
+        return $testSuites;
+    }
+
+    /**
+     * @param Class_[] $classes
+     * @return Class_[]
+     */
     private function filterClassExtendsTestCase(array $classes) : array {
         $testCases = [];
         foreach ($classes as $class) {
@@ -202,6 +260,10 @@ final class Parser {
         // static analysis... this method is certainly easier but blurs the line between compilation
         // and runtime a little bit. tl;dr Should compilation step be able to autoload classes?
         return is_subclass_of($class->namespacedName->toString(), TestCase::class);
+    }
+
+    private function doesClassImplementTestSuite(Class_ $class) : bool {
+        return is_subclass_of($class->namespacedName->toString(), TestSuite::class);
     }
 
     /**
