@@ -6,6 +6,6 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 #[Attribute]
-class AfterEachTest {
+final class AfterEachTest {
 
 }

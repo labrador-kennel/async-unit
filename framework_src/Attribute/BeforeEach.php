@@ -5,6 +5,6 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_METHOD)]
-class BeforeEach {
+final class BeforeEach {
 
 }

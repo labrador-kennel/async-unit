@@ -4,8 +4,8 @@
          bootstrap="vendor/autoload.php"
          cacheResultFile=".phpunit.cache/test-results"
          executionOrder="depends,defects"
-         forceCoversAnnotation="true"
-         beStrictAboutCoversAnnotation="true"
+         forceCoversAnnotation="false"
+         beStrictAboutCoversAnnotation="false"
          beStrictAboutOutputDuringTests="true"
          beStrictAboutTodoAnnotatedTests="true"
          failOnRisky="true"
@@ -22,7 +22,14 @@
     <coverage cacheDirectory=".phpunit.cache/code-coverage"
               processUncoveredFiles="true">
         <include>
-            <directory suffix=".php">src</directory>
+            <directory suffix=".php">framework_src</directory>
+            <directory suffix=".php">cli_src</directory>
         </include>
+        <report>
+            <!--
+            <html outputDirectory="build/coverage/html" />
+            <php outputFile="build/coverage/coverage.php" />
+            -->
+        </report>
     </coverage>
 </phpunit>

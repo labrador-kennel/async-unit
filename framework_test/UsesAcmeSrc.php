@@ -12,7 +12,7 @@ trait UsesAcmeSrc {
         return $this->path('ImplicitDefaultTestSuite/' . $path);
     }
 
-    private function explicitTestsuitePath(string $path) : string {
+    private function explicitTestSuitePath(string $path) : string {
         return $this->path('ExplicitTestSuite/' . $path);
     }
 

@@ -5,9 +5,6 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull
- */
 class AssertIsNullTest extends AbstractAssertionTestCase {
 
     /**

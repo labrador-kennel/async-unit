@@ -6,7 +6,7 @@ use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\PreRunSummary;
 
-class TestProcessingStartedEvent extends StandardEvent {
+final class TestProcessingStartedEvent extends StandardEvent {
 
     public function __construct(PreRunSummary $preRunTestSummary) {
         parent::__construct(Events::TEST_PROCESSING_STARTED_EVENT, $preRunTestSummary);

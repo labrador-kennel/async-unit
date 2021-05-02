@@ -2,13 +2,11 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-final class TestCaseModel implements BeforeAllMethodAware, BeforeEachMethodAware, AfterEachMethodAware, AfterAllMethodAware {
+final class TestCaseModel {
+
+    use HookAware;
 
     private array $testMethodModels = [];
-    private array $beforeAllMethodModels = [];
-    private array $beforeEachMethodModels = [];
-    private array $afterAllMethodModels = [];
-    private array $afterEachMethodModels = [];
 
     public function __construct(
         private string $testCaseClass,
@@ -23,56 +21,15 @@ final class TestCaseModel implements BeforeAllMethodAware, BeforeEachMethodAware
         return $this->testCaseClass;
     }
 
+    public function addTestMethodModel(TestMethodModel $testMethodModel) : void {
+        $this->testMethodModels[] = $testMethodModel;
+    }
+
     /**
      * @return TestMethodModel[]
      */
     public function getTestMethodModels() : array {
         return $this->testMethodModels;
-    }
-
-    /**
-     * @return HookMethodModel[]
-     */
-    public function getBeforeAllMethodModels() : array {
-        return $this->beforeAllMethodModels;
-    }
-
-    /**
-     * @return HookMethodModel[]
-     */
-    public function getBeforeEachMethodModels() : array {
-        return $this->beforeEachMethodModels;
-    }
-
-    /**
-     * @return HookMethodModel[]
-     */
-    public function getAfterAllMethodModels() : array {
-        return $this->afterAllMethodModels;
-    }
-
-    public function getAfterEachMethodModels() : array {
-        return $this->afterEachMethodModels;
-    }
-
-    public function addTestMethodModel(TestMethodModel $testMethodModel) : void {
-        $this->testMethodModels[] = $testMethodModel;
-    }
-
-    public function addBeforeAllMethod(HookMethodModel $model) : void {
-        $this->beforeAllMethodModels[] = $model;
-    }
-
-    public function addBeforeEachMethod(HookMethodModel $model) : void {
-        $this->beforeEachMethodModels[] = $model;
-    }
-
-    public function addAfterAllMethod(HookMethodModel $model) : void {
-        $this->afterAllMethodModels[] = $model;
-    }
-
-    public function addAfterEachMethod(HookMethodModel $model) : void {
-        $this->afterEachMethodModels[] = $model;
     }
 
 }

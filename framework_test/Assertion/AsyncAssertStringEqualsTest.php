@@ -12,9 +12,6 @@ use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals
- */
 class AsyncAssertStringEqualsTest extends AbstractAsyncAssertionTestCase {
 
     /**

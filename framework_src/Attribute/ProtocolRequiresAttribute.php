@@ -6,7 +6,7 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS | Attribute::IS_REPEATABLE)]
-class ProtocolRequiresAttribute {
+final class ProtocolRequiresAttribute {
 
     public function __construct(
         private string $requiredAttribute

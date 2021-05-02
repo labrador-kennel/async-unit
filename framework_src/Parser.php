@@ -2,20 +2,10 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
-use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
-use Cspray\Labrador\AsyncUnit\Attribute\AfterEachTest;
-use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
-use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
-use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
-use Cspray\Labrador\AsyncUnit\Model\AfterAllMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\AfterEachMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\BeforeAllMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\BeforeEachMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\HookMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\HookModel;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
@@ -24,7 +14,6 @@ use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\NodeVisitor\AsyncUnitVisitor;
 use PhpParser\Node\Stmt\Class_;
-use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\NodeTraverser;
 use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\NodeConnectingVisitor;
@@ -76,11 +65,7 @@ final class Parser {
                 if (is_null($model->getTestSuiteClass())) {
                     $defaultTestSuite->addTestCaseModel($model);
                 } else {
-                    if ($defaultTestSuite->getClass() === $model->getTestSuiteClass()) {
-                        $defaultTestSuite->addTestCaseModel($model);
-                    } else {
-                        $nonDefaultTestSuites[$model->getTestSuiteClass()]->addTestCaseModel($model);
-                    }
+                    $nonDefaultTestSuites[$model->getTestSuiteClass()]->addTestCaseModel($model);
                 }
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
@@ -97,11 +82,7 @@ final class Parser {
         $asyncUnitVisitor = $this->doParseDirectories($dirs);
         $classMethods = $asyncUnitVisitor->getAnnotatedClassMethods();
 
-        // We need to make sure there aren't any class methods that could be annotated but not extending
-        // the correct TestCase or TestSuite
-        $this->validateAnnotatedMethodIsAsyncUnitType($classMethods);
-
-        $testSuiteClasses = $this->filterClassImplementsTestSuite($asyncUnitVisitor->getClasses());
+        $testSuiteClasses = $asyncUnitVisitor->getTestSuites();
         if (empty($testSuiteClasses)) {
             yield new TestSuiteModel(DefaultTestSuite::class, true);
         } else {
@@ -113,12 +94,12 @@ final class Parser {
                 }
                 $testSuiteModel = new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
 
-                $this->addBeforeAllMethods($testSuiteModel, $classMethods, self::DO_NOT_REQUIRE_HOOK_IS_STATIC);
-                $this->addBeforeEachMethods($testSuiteModel, $classMethods);
-                $this->addBeforeEachTestMethods($testSuiteModel, $classMethods);
-                $this->addAfterEachTestMethods($testSuiteModel, $classMethods);
-                $this->addAfterEachMethods($testSuiteModel, $classMethods);
-                $this->addAfterAllMethods($testSuiteModel, $classMethods, self::DO_NOT_REQUIRE_HOOK_IS_STATIC);
+                $this->addHooks($testSuiteModel, $classMethods, 'BeforeAll');
+                $this->addHooks($testSuiteModel, $classMethods, 'BeforeEach');
+                $this->addHooks($testSuiteModel, $classMethods, 'BeforeEachTest');
+                $this->addHooks($testSuiteModel, $classMethods, 'AfterEachTest');
+                $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
+                $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
 
                 yield $testSuiteModel;
             }
@@ -127,7 +108,7 @@ final class Parser {
             }
         }
 
-        $testCaseClasses = $this->filterClassExtendsTestCase($asyncUnitVisitor->getClasses());
+        $testCaseClasses = $asyncUnitVisitor->getTestCases();
         foreach ($testCaseClasses as $testCaseClass) {
             if ($testCaseClass->isAbstract()) {
                 continue;
@@ -151,15 +132,14 @@ final class Parser {
                 throw new TestCompilationException($msg);
             }
 
-            $this->addBeforeAllMethods($testCaseModel, $classMethods, self::REQUIRE_HOOK_IS_STATIC);
-            $this->addBeforeEachMethods($testCaseModel, $classMethods);
-            $this->addAfterEachMethods($testCaseModel, $classMethods);
-            $this->addAfterAllMethods($testCaseModel, $classMethods, self::REQUIRE_HOOK_IS_STATIC);
+            $this->addHooks($testCaseModel, $classMethods, 'BeforeAll');
+            $this->addHooks($testCaseModel, $classMethods, 'BeforeEach');
+            $this->addHooks($testCaseModel, $classMethods, 'AfterEach');
+            $this->addHooks($testCaseModel, $classMethods, 'AfterAll');
             yield $testCaseModel;
         }
 
-        $pluginClasses = $this->filterClassImplementsCustomAssertionPlugin($asyncUnitVisitor->getClasses());
-        foreach ($pluginClasses as $pluginClass) {
+        foreach ($asyncUnitVisitor->getPlugins() as $pluginClass) {
             yield new PluginModel($pluginClass->namespacedName->toString());
         }
     }
@@ -196,190 +176,18 @@ final class Parser {
         return $asyncUnitVisitor;
     }
 
-    /**
-     * @param Class_[] $classes
-     * @return Class_[]
-     */
-    private function filterClassImplementsTestSuite(array $classes) : array {
-        $testSuites = [];
-        foreach ($classes as $class) {
-            if ($this->doesClassImplementTestSuite($class)) {
-                $testSuites[] = $class;
-            }
-        }
-
-        return $testSuites;
-    }
-
-    /**
-     * @param Class_[] $classes
-     * @return Class_[]
-     */
-    private function filterClassExtendsTestCase(array $classes) : array {
-        $testCases = [];
-        foreach ($classes as $class) {
-            if ($this->doesClassExtendTestCase($class)) {
-                $testCases[] = $class;
-            }
-        }
-        return $testCases;
-    }
-
-    /**
-     * @param Class_[] $classes
-     * @return Class_[]
-     */
-    private function filterClassImplementsCustomAssertionPlugin(array $classes) : array {
-        $plugins = [];
-        foreach ($classes as $class) {
-            $classImplements = class_implements($class->namespacedName->toString());
-            if (in_array(CustomAssertionPlugin::class, $classImplements)) {
-                $plugins[] = $class;
-            }
-
-        }
-        return $plugins;
-    }
-
-    /**
-     * @param Class_ $class
-     * @return bool
-     */
-    private function doesClassExtendTestCase(Class_ $class) : bool {
-        // This is reliant on the class being autoloadable at time of parsing... need to decide
-        // whether or not we want to rely on this or actually parse through the extends chain using
-        // static analysis... this method is certainly easier but blurs the line between compilation
-        // and runtime a little bit. tl;dr Should compilation step be able to autoload classes?
-        return is_subclass_of($class->namespacedName->toString(), TestCase::class);
-    }
-
-    private function doesClassImplementTestSuite(Class_ $class) : bool {
-        return is_subclass_of($class->namespacedName->toString(), TestSuite::class);
-    }
-
-    /**
-     * @param BeforeAllMethodAware $model
-     * @param ClassMethod[] $classMethods
-     */
-    private function addBeforeAllMethods(BeforeAllMethodAware $model, array $classMethods, bool $requireMethodIsStatic) : void {
+    private function addHooks(TestSuiteModel|TestCaseModel $model, array $classMethods, string $hookType) : void {
+        $hookAttribute = sprintf('Cspray\\Labrador\\AsyncUnit\\Attribute\\%s', $hookType);
         foreach ($classMethods as $classMethod) {
             if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
                 continue;
             }
 
-            if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
-                if ($requireMethodIsStatic && !$classMethod->isStatic()) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[BeforeAll] hook.',
-                        $classMethod->getAttribute('parent')->namespacedName->toString(),
-                        $classMethod->name->toString()
-                    );
-                    throw new TestCompilationException($msg);
-                }
-                $model->addBeforeAllMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
+            if ($this->findAttribute($hookAttribute, ...$classMethod->attrGroups)) {
+                $model->addHook(new HookModel($classMethod, $hookType));
             }
         }
     }
-
-    /**
-     * @param BeforeEachMethodAware $model
-     * @param ClassMethod[] $classMethods
-     */
-    private function addBeforeEachMethods(BeforeEachMethodAware $model, array $classMethods) : void {
-        foreach ($classMethods as $classMethod) {
-            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
-                continue;
-            }
-
-            if ($this->findAttribute(BeforeEach::class, ...$classMethod->attrGroups)) {
-                $model->addBeforeEachMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
-            }
-        }
-    }
-
-    private function addBeforeEachTestMethods(TestSuiteModel $model, array $classMethods) : void {
-        foreach ($classMethods as $classMethod) {
-            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
-                continue;
-            }
-
-            if ($this->findAttribute(BeforeEachTest::class, ...$classMethod->attrGroups)) {
-                $model->addBeforeEachTestMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
-            }
-        }
-    }
-
-    private function addAfterEachTestMethods(TestSuiteModel $model, array $classMethods) : void {
-        foreach ($classMethods as $classMethod) {
-            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
-                continue;
-            }
-
-            if ($this->findAttribute(AfterEachTest::class, ...$classMethod->attrGroups)) {
-                $model->addAfterEachTestMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
-            }
-        }
-    }
-
-    /**
-     * @param AfterEachMethodAware $model
-     * @param ClassMethod[] $classMethods
-     */
-    private function addAfterEachMethods(AfterEachMethodAware $model, array $classMethods) : void {
-        foreach ($classMethods as $classMethod) {
-            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
-                continue;
-            }
-
-            if ($this->findAttribute(AfterEach::class, ...$classMethod->attrGroups)) {
-                $model->addAfterEachMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
-            }
-        }
-    }
-
-    /**
-     * @param AfterAllMethodAware $model
-     * @param ClassMethod[] $classMethods
-     */
-    private function addAfterAllMethods(AfterAllMethodAware $model, array $classMethods, bool $requireMethodIsStatic) : void {
-        foreach ($classMethods as $classMethod) {
-            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
-                continue;
-            }
-
-            if ($this->findAttribute(AfterAll::class, ...$classMethod->attrGroups)) {
-                if ($requireMethodIsStatic && !$classMethod->isStatic()) {
-                    $msg = sprintf(
-                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[AfterAll] hook.',
-                        $classMethod->getAttribute('parent')->namespacedName->toString(),
-                        $classMethod->name->toString()
-                    );
-                    throw new TestCompilationException($msg);
-                }
-
-                $model->addAfterAllMethod(new HookMethodModel(
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString()
-                ));
-            }
-        }
-    }
-
     private function addTestsToTestCaseModel(array $classes, array $classMethods, TestCaseModel $testCaseModel, string $className, stdClass $parseState) {
         foreach ($classMethods as $classMethod) {
             if (!$this->findAttribute(Test::class, ...$classMethod->attrGroups)) {
@@ -410,6 +218,7 @@ final class Parser {
      * @return Class_|null
      */
     private function getExtendedClass(array $classes, string $className) : ?Class_ {
+        // Find the Class_ object for the $className we're dealing with
         $foundClass = null;
         foreach ($classes as $class) {
             if ($class->namespacedName->toString() === $className) {
@@ -417,10 +226,13 @@ final class Parser {
                 break;
             }
         }
+
+        // Make sure the Class_ actually extends something
         if (is_null($foundClass->extends)) {
             return null;
         }
 
+        // Find the class that our Class_->extends matches
         foreach ($classes as $class) {
             if ($foundClass->extends->toString() === $class->namespacedName->toString()) {
                 return $class;
@@ -428,23 +240,6 @@ final class Parser {
         }
 
         return null;
-    }
-
-    /**
-     * @param ClassMethod[] $classMethods
-     */
-    private function validateAnnotatedMethodIsAsyncUnitType(array $classMethods) {
-        foreach ($classMethods as $classMethod) {
-            if (!$this->doesClassImplementTestSuite($classMethod->getAttribute('parent')) && !$this->doesClassExtendTestCase($classMethod->getAttribute('parent'))) {
-                $msg = sprintf(
-                    'Failure compiling "%s". The method "%s" is annotated with AsyncUnit attributes but this class does not extend "%s".',
-                    $classMethod->getAttribute('parent')->namespacedName->toString(),
-                    $classMethod->name->toString(),
-                    TestCase::class
-                );
-                throw new TestCompilationException($msg);
-            }
-        }
     }
 
 }

@@ -17,6 +17,7 @@ jobs:
         uses: php-actions/composer@v5
         with:
           php_version: 8
+          version: 2.0.13
       - name: PHP 8 tests
         uses: php-actions/phpunit@v2
         with:

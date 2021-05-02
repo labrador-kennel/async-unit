@@ -9,9 +9,6 @@ use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals
- */
 class AsyncAssertArrayEqualsTest extends AbstractAsyncAssertionTestCase {
 
     /**

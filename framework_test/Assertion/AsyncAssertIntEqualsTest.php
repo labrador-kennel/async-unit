@@ -10,9 +10,6 @@ use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertFloatEquals
- */
 class AsyncAssertIntEqualsTest extends AbstractAsyncAssertionTestCase {
     /**
      * @dataProvider nonIntProvider

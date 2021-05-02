@@ -10,9 +10,6 @@ use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext
- */
 class CustomAssertionContextTest extends TestCase {
 
     private CustomAssertionContext $subject;
