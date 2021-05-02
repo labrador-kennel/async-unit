@@ -6,6 +6,6 @@ interface AfterAllMethodAware {
 
     public function getClass() : string;
 
-    public function addAfterAllMethod(AfterAllMethodModel $afterAllMethodModel) : void;
+    public function addAfterAllMethod(HookMethodModel $model) : void;
 
 }

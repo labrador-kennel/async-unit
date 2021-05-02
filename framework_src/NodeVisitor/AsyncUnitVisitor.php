@@ -4,8 +4,10 @@ namespace Cspray\Labrador\AsyncUnit\NodeVisitor;
 
 use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\AttributeGroupTraverser;
 use PhpParser\Node;
@@ -52,7 +54,9 @@ class AsyncUnitVisitor extends NodeVisitorAbstract implements NodeVisitor {
             BeforeAll::class,
             BeforeEach::class,
             AfterAll::class,
-            AfterEach::class
+            AfterEach::class,
+            BeforeEachTest::class,
+            AfterEachTest::class
         ];
         foreach ($validAttributes as $validAttribute) {
             if (!is_null($this->findAttribute($validAttribute, ...$classMethod->attrGroups))) {

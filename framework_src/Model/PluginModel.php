@@ -2,7 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-class PluginModel {
+final class PluginModel {
 
     public function __construct(private string $pluginClass) {}
 

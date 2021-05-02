@@ -2,12 +2,14 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-class TestSuiteModel implements BeforeAllMethodAware, BeforeEachMethodAware, AfterEachMethodAware, AfterAllMethodAware {
+final class TestSuiteModel implements BeforeAllMethodAware, BeforeEachMethodAware, AfterEachMethodAware, AfterAllMethodAware {
 
     private array $testCaseModels = [];
     private array $beforeAllMethodModels = [];
     private array $beforeEachMethodModels = [];
+    private array $beforeEachTestMethodModels = [];
     private array $afterEachMethodModels = [];
+    private array $afterEachTestMethodModels = [];
     private array $afterAllMethodModels = [];
 
     public function __construct(
@@ -38,31 +40,47 @@ class TestSuiteModel implements BeforeAllMethodAware, BeforeEachMethodAware, Aft
         return $this->beforeAllMethodModels;
     }
 
-    public function addBeforeAllMethod(BeforeAllMethodModel $beforeAllMethodModel) : void {
-        $this->beforeAllMethodModels[] = $beforeAllMethodModel;
+    public function addBeforeAllMethod(HookMethodModel $model) : void {
+        $this->beforeAllMethodModels[] = $model;
     }
 
     public function getBeforeEachMethodModels() : array {
         return $this->beforeEachMethodModels;
     }
 
-    public function addBeforeEachMethod(BeforeEachMethodModel $beforeEachMethodModel) : void {
-        $this->beforeEachMethodModels[] = $beforeEachMethodModel;
+    public function addBeforeEachMethod(HookMethodModel $model) : void {
+        $this->beforeEachMethodModels[] = $model;
+    }
+
+    public function getBeforeEachTestMethodModels() : array {
+        return $this->beforeEachTestMethodModels;
+    }
+
+    public function addBeforeEachTestMethod(HookMethodModel $model) : void {
+        $this->beforeEachTestMethodModels[] = $model;
     }
 
     public function getAfterEachMethodModels() : array {
         return $this->afterEachMethodModels;
     }
 
-    public function addAfterEachMethod(AfterEachMethodModel $model) : void {
+    public function addAfterEachMethod(HookMethodModel $model) : void {
         $this->afterEachMethodModels[] = $model;
+    }
+
+    public function getAfterEachTestMethodModels() : array {
+        return $this->afterEachTestMethodModels;
+    }
+
+    public function addAfterEachTestMethod(HookMethodModel $model) : void {
+        $this->afterEachTestMethodModels[] = $model;
     }
 
     public function getAfterAllMethodModels() : array {
         return $this->afterAllMethodModels;
     }
 
-    public function addAfterAllMethod(AfterAllMethodModel $model) : void {
+    public function addAfterAllMethod(HookMethodModel $model) : void {
         $this->afterAllMethodModels[] = $model;
     }
 

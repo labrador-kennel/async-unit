@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 
-class InvokedTestCaseTestModel {
+final class InvokedTestCaseTestModel {
 
     public function __construct(
         private TestSuite $testSuite,

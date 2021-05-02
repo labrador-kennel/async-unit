@@ -4,19 +4,18 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Attribute\AfterAll;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEach;
+use Cspray\Labrador\AsyncUnit\Attribute\AfterEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\AfterAllMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\AfterAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\AfterEachMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\AfterEachMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\BeforeAllMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\BeforeAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\BeforeEachMethodAware;
-use Cspray\Labrador\AsyncUnit\Model\BeforeEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\HookMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
@@ -116,6 +115,8 @@ final class Parser {
 
                 $this->addBeforeAllMethods($testSuiteModel, $classMethods, self::DO_NOT_REQUIRE_HOOK_IS_STATIC);
                 $this->addBeforeEachMethods($testSuiteModel, $classMethods);
+                $this->addBeforeEachTestMethods($testSuiteModel, $classMethods);
+                $this->addAfterEachTestMethods($testSuiteModel, $classMethods);
                 $this->addAfterEachMethods($testSuiteModel, $classMethods);
                 $this->addAfterAllMethods($testSuiteModel, $classMethods, self::DO_NOT_REQUIRE_HOOK_IS_STATIC);
 
@@ -275,11 +276,10 @@ final class Parser {
                     );
                     throw new TestCompilationException($msg);
                 }
-                $beforeAllMethod = new BeforeAllMethodModel(
+                $model->addBeforeAllMethod(new HookMethodModel(
                     $classMethod->getAttribute('parent')->namespacedName->toString(),
                     $classMethod->name->toString()
-                );
-                $model->addBeforeAllMethod($beforeAllMethod);
+                ));
             }
         }
     }
@@ -295,11 +295,40 @@ final class Parser {
             }
 
             if ($this->findAttribute(BeforeEach::class, ...$classMethod->attrGroups)) {
-                $beforeEachMethod = new BeforeEachMethodModel(
+                $model->addBeforeEachMethod(new HookMethodModel(
                     $classMethod->getAttribute('parent')->namespacedName->toString(),
                     $classMethod->name->toString()
-                );
-                $model->addBeforeEachMethod($beforeEachMethod);
+                ));
+            }
+        }
+    }
+
+    private function addBeforeEachTestMethods(TestSuiteModel $model, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(BeforeEachTest::class, ...$classMethod->attrGroups)) {
+                $model->addBeforeEachTestMethod(new HookMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                ));
+            }
+        }
+    }
+
+    private function addAfterEachTestMethods(TestSuiteModel $model, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(AfterEachTest::class, ...$classMethod->attrGroups)) {
+                $model->addAfterEachTestMethod(new HookMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                ));
             }
         }
     }
@@ -315,11 +344,10 @@ final class Parser {
             }
 
             if ($this->findAttribute(AfterEach::class, ...$classMethod->attrGroups)) {
-                $afterEachMethod = new AfterEachMethodModel(
+                $model->addAfterEachMethod(new HookMethodModel(
                     $classMethod->getAttribute('parent')->namespacedName->toString(),
                     $classMethod->name->toString()
-                );
-                $model->addAfterEachMethod($afterEachMethod);
+                ));
             }
         }
     }
@@ -344,11 +372,10 @@ final class Parser {
                     throw new TestCompilationException($msg);
                 }
 
-                $afterAllMethod = new AfterAllMethodModel(
+                $model->addAfterAllMethod(new HookMethodModel(
                     $classMethod->getAttribute('parent')->namespacedName->toString(),
                     $classMethod->name->toString()
-                );
-                $model->addAfterAllMethod($afterAllMethod);
+                ));
             }
         }
     }

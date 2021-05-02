@@ -6,6 +6,6 @@ interface AfterEachMethodAware {
 
     public function getClass() : string;
 
-    public function addAfterEachMethod(AfterEachMethodModel $model) : void;
+    public function addAfterEachMethod(HookMethodModel $model) : void;
 
 }
