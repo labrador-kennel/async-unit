@@ -2,17 +2,20 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-class TestSuiteModel {
+class TestSuiteModel implements BeforeAllMethodAware, BeforeEachMethodAware, AfterEachMethodAware, AfterAllMethodAware {
 
     private array $testCaseModels = [];
     private array $beforeAllMethodModels = [];
+    private array $beforeEachMethodModels = [];
+    private array $afterEachMethodModels = [];
+    private array $afterAllMethodModels = [];
 
     public function __construct(
         private string $class,
         private bool $isDefaultTestSuite
     ) {}
 
-    public function getTestSuiteClass() : string {
+    public function getClass() : string {
         return $this->class;
     }
 
@@ -35,8 +38,32 @@ class TestSuiteModel {
         return $this->beforeAllMethodModels;
     }
 
-    public function addBeforeAllMethodModel(BeforeAllMethodModel $model) : void {
-        $this->beforeAllMethodModels[] = $model;
+    public function addBeforeAllMethod(BeforeAllMethodModel $beforeAllMethodModel) : void {
+        $this->beforeAllMethodModels[] = $beforeAllMethodModel;
+    }
+
+    public function getBeforeEachMethodModels() : array {
+        return $this->beforeEachMethodModels;
+    }
+
+    public function addBeforeEachMethod(BeforeEachMethodModel $beforeEachMethodModel) : void {
+        $this->beforeEachMethodModels[] = $beforeEachMethodModel;
+    }
+
+    public function getAfterEachMethodModels() : array {
+        return $this->afterEachMethodModels;
+    }
+
+    public function addAfterEachMethod(AfterEachMethodModel $model) : void {
+        $this->afterEachMethodModels[] = $model;
+    }
+
+    public function getAfterAllMethodModels() : array {
+        return $this->afterAllMethodModels;
+    }
+
+    public function addAfterAllMethod(AfterAllMethodModel $model) : void {
+        $this->afterAllMethodModels[] = $model;
     }
 
 }

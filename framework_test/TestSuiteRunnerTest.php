@@ -485,9 +485,88 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
             $this->assertCount(3, $state->events);
+
+            $testSuite = $state->events[0]->getTarget()->getTestSuite();
+            foreach ($state->events as $testInvokedEvent) {
+                $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestSuite());
+            }
+
             $allResults = array_map(fn(TestInvokedEvent $event) => $event->getTarget()->getFailureException(), $state->events);
             $this->assertSame([null, null, null], $allResults);
         });
     }
 
+    public function testExplicitTestSuiteBeforeEachTestSuiteHook() : void {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('BeforeEachTestSuiteHook');
+
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            $this->assertCount(1, $testSuites);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $this->assertCount(6, $state->events);
+
+            $testSuite = $state->events[0]->getTarget()->getTestSuite();
+            foreach ($state->events as $testInvokedEvent) {
+                $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestSuite());
+            }
+            $expected = ['AsyncUnit', 'AsyncUnit', 'AsyncUnit'];
+            $this->assertSame($expected, $testSuite->getState());
+        });
+    }
+
+    public function testExplicitTestSuiteAfterEachTestSuiteHook() : void {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('AfterEachTestSuiteHook');
+
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            $this->assertCount(1, $testSuites);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $this->assertCount(6, $state->events);
+
+            $testSuite = $state->events[0]->getTarget()->getTestSuite();
+            foreach ($state->events as $testInvokedEvent) {
+                $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestSuite());
+            }
+            $expected = ['AsyncUnit', 'AsyncUnit', 'AsyncUnit'];
+            $this->assertSame($expected, $testSuite->getState());
+        });
+    }
+
+    public function testExplicitTestSuiteAfterAllTestSuiteHook() : void {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('AfterAllTestSuiteHook');
+
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $this->assertCount(3, $state->events);
+
+            $testSuite = $state->events[0]->getTarget()->getTestSuite();
+            foreach ($state->events as $testInvokedEvent) {
+                $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestSuite());
+            }
+            $allResults = array_map(fn(TestInvokedEvent $event) => $event->getTarget()->getFailureException(), $state->events);
+            $this->assertSame([null, null, null], $allResults);
+            $this->assertSame(1, $testSuite->getCounter());
+        });
+    }
 }
