@@ -35,6 +35,11 @@ final class TestSuiteRunner {
             foreach ($testSuiteModels as $testSuiteModel) {
                 $testSuiteClass = $testSuiteModel->getTestSuiteClass();
                 $testSuite = new $testSuiteClass();
+
+                foreach ($testSuiteModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
+                    yield call([$testSuite, $beforeAllMethodModel->getMethod()]);
+                }
+
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
                     $testCaseClass = $testCaseModel->getTestCaseClass();
                     foreach ($testCaseModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {

@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 required to better support custom Assertions. When interacting with a custom Assertion we don't know what's expected,
 actual, or a custom error message. Assertions are now expected to pass everything they need to perform their task into 
 the constructor, including the actual value being asserted.
+  
+### Fixes
+
+- Fixes a problem where hooks were erroneously being invoked though the hook does not belong to the TestCase.
 
 ## 0.1.0 - 2021-04-18
 

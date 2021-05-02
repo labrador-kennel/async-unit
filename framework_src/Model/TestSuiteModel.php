@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Model;
 class TestSuiteModel {
 
     private array $testCaseModels = [];
+    private array $beforeAllMethodModels = [];
 
     public function __construct(
         private string $class,
@@ -28,6 +29,14 @@ class TestSuiteModel {
 
     public function addTestCaseModel(TestCaseModel $testCaseModel) : void {
         $this->testCaseModels[] = $testCaseModel;
+    }
+
+    public function getBeforeAllMethodModels() : array {
+        return $this->beforeAllMethodModels;
+    }
+
+    public function addBeforeAllMethodModel(BeforeAllMethodModel $model) : void {
+        $this->beforeAllMethodModels[] = $model;
     }
 
 }

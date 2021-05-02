@@ -13,6 +13,7 @@ use Cspray\Labrador\AsyncUnit\Model\AfterAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\AfterEachMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\BeforeAllMethodModel;
 use Cspray\Labrador\AsyncUnit\Model\BeforeEachMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\MethodModelTrait;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
@@ -129,7 +130,15 @@ final class Parser {
                     if (!$hasDefaultTestSuite && !is_null($defaultTestSuiteAttribute)) {
                         $hasDefaultTestSuite = true;
                     }
-                    yield new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
+                    $testSuiteModel = new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
+                    $filteredClassMethods = $this->filterClassMethodsToOwnedByClass($classMethods, $testSuiteModel->getTestSuiteClass());
+                    foreach ($filteredClassMethods as $classMethod) {
+                        if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
+                            $beforeAllMethod = new BeforeAllMethodModel($testSuiteClass->namespacedName->toString(), $classMethod->name->toString());
+                            $testSuiteModel->addBeforeAllMethodModel($beforeAllMethod);
+                        }
+                    }
+                    yield $testSuiteModel;
                 }
                 if (!$hasDefaultTestSuite) {
                     yield new TestSuiteModel(DefaultTestSuite::class, true);
@@ -142,7 +151,6 @@ final class Parser {
                     continue;
                 }
 
-
                 $testSuiteAttribute = $this->findAttribute(TestSuiteAttribute::class, ...$testCaseClass->attrGroups);
                 $testSuiteClassName = null;
                 if (!is_null($testSuiteAttribute)) {
@@ -153,39 +161,6 @@ final class Parser {
                 $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString(), $testSuiteClassName);
 
                 $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getTestCaseClass(), $state);
-
-                foreach ($classMethods as $classMethod) {
-                    if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
-                        if (!$classMethod->isStatic()) {
-                            $msg = sprintf(
-                                'Failure compiling "%s". The non-static method "%s" cannot be used as a #[BeforeAll] hook.',
-                                $testCaseClass->namespacedName->toString(),
-                                $classMethod->name->toString()
-                            );
-                            throw new TestCompilationException($msg);
-                        }
-                        $beforeAllMethod = new BeforeAllMethodModel($testCaseClass->namespacedName->toString(), $classMethod->name->toString());
-                        $testCaseModel->addBeforeAllMethodModel($beforeAllMethod);
-                    } else if ($this->findAttribute(BeforeEach::class, ...$classMethod->attrGroups)) {
-                        $beforeEachMethod = new BeforeEachMethodModel($testCaseClass->namespacedName->toString(), $classMethod->name->toString());
-                        $testCaseModel->addBeforeEachMethodModel($beforeEachMethod);
-                    } else if ($this->findAttribute(AfterEach::class, ...$classMethod->attrGroups)) {
-                        $afterEachMethod = new AfterEachMethodModel($testCaseClass->namespacedName->toString(), $classMethod->name->toString());
-                        $testCaseModel->addAfterEachMethodModel($afterEachMethod);
-                    } else if ($this->findAttribute(AfterAll::class, ...$classMethod->attrGroups)) {
-                        if (!$classMethod->isStatic()) {
-                            $msg = sprintf(
-                                'Failure compiling "%s". The non-static method "%s" cannot be used as a #[AfterAll] hook.',
-                                $testCaseClass->namespacedName->toString(),
-                                $classMethod->name->toString()
-                            );
-                            throw new TestCompilationException($msg);
-                        }
-                        $afterAllMethod = new AfterAllMethodModel($testCaseClass->namespacedName->toString(), $classMethod->name->toString());
-                        $testCaseModel->addAfterAllMethodModel($afterAllMethod);
-                    }
-                }
-
                 if (empty($testCaseModel->getTestMethodModels())) {
                     $msg = sprintf(
                         'Failure compiling "%s". There were no #[Test] found.',
@@ -194,7 +169,10 @@ final class Parser {
                     throw new TestCompilationException($msg);
                 }
 
-
+                $this->addBeforeAllMethodsToTestCase($testCaseModel, $classMethods);
+                $this->addBeforeEachMethodsToTestCase($testCaseModel, $classMethods);
+                $this->addAfterEachMethodsToTestCase($testCaseModel, $classMethods);
+                $this->addAfterAllMethodsToTestCase($testCaseModel, $classMethods);
                 yield $testCaseModel;
             }
 
@@ -203,6 +181,21 @@ final class Parser {
                 yield new PluginModel($pluginClass->namespacedName->toString());
             }
         }
+    }
+
+    /**
+     * @param ClassMethod[] $classMethods
+     * @param string $class
+     * @return array
+     */
+    private function filterClassMethodsToOwnedByClass(array $classMethods, string $class) : array {
+        $filtered = [];
+        foreach ($classMethods as $classMethod) {
+            if ($classMethod->getAttribute('parent')->namespacedName->toString() === $class) {
+                $filtered[] = $classMethod;
+            }
+        }
+        return $filtered;
     }
 
     /**
@@ -267,11 +260,102 @@ final class Parser {
     }
 
     /**
-     * @param Class_[] $classes
-     * @param ClassMethod[] $classMethods
      * @param TestCaseModel $testCaseModel
-     * @param string $className
+     * @param ClassMethod[] $classMethods
      */
+    private function addBeforeAllMethodsToTestCase(TestCaseModel $testCaseModel, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($testCaseModel->getTestCaseClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(BeforeAll::class, ...$classMethod->attrGroups)) {
+                if (!$classMethod->isStatic()) {
+                    $msg = sprintf(
+                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[BeforeAll] hook.',
+                        $classMethod->getAttribute('parent')->namespacedName->toString(),
+                        $classMethod->name->toString()
+                    );
+                    throw new TestCompilationException($msg);
+                }
+                $beforeAllMethod = new BeforeAllMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                );
+                $testCaseModel->addBeforeAllMethodModel($beforeAllMethod);
+            }
+        }
+    }
+
+    /**
+     * @param TestCaseModel $testCaseModel
+     * @param ClassMethod[] $classMethods
+     */
+    private function addBeforeEachMethodsToTestCase(TestCaseModel $testCaseModel, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($testCaseModel->getTestCaseClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(BeforeEach::class, ...$classMethod->attrGroups)) {
+                $beforeEachMethod = new BeforeEachMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                );
+                $testCaseModel->addBeforeEachMethodModel($beforeEachMethod);
+            }
+        }
+    }
+
+    /**
+     * @param TestCaseModel $testCaseModel
+     * @param ClassMethod[] $classMethods
+     */
+    private function addAfterEachMethodsToTestCase(TestCaseModel $testCaseModel, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($testCaseModel->getTestCaseClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(AfterEach::class, ...$classMethod->attrGroups)) {
+                $afterEachMethod = new AfterEachMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                );
+                $testCaseModel->addAfterEachMethodModel($afterEachMethod);
+            }
+        }
+    }
+
+    /**
+     * @param TestCaseModel $testCaseModel
+     * @param ClassMethod[] $classMethods
+     */
+    private function addAfterAllMethodsToTestCase(TestCaseModel $testCaseModel, array $classMethods) : void {
+        foreach ($classMethods as $classMethod) {
+            if ($testCaseModel->getTestCaseClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
+                continue;
+            }
+
+            if ($this->findAttribute(AfterAll::class, ...$classMethod->attrGroups)) {
+                if (!$classMethod->isStatic()) {
+                    $msg = sprintf(
+                        'Failure compiling "%s". The non-static method "%s" cannot be used as a #[AfterAll] hook.',
+                        $classMethod->getAttribute('parent')->namespacedName->toString(),
+                        $classMethod->name->toString()
+                    );
+                    throw new TestCompilationException($msg);
+                }
+
+                $afterAllMethod = new AfterAllMethodModel(
+                    $classMethod->getAttribute('parent')->namespacedName->toString(),
+                    $classMethod->name->toString()
+                );
+                $testCaseModel->addAfterAllMethodModel($afterAllMethod);
+            }
+        }
+    }
+
     private function addTestsToTestCaseModel(array $classes, array $classMethods, TestCaseModel $testCaseModel, string $className, stdClass $parseState) {
         foreach ($classMethods as $classMethod) {
             if (!$this->findAttribute(Test::class, ...$classMethod->attrGroups)) {
@@ -327,7 +411,7 @@ final class Parser {
      */
     private function validateAnnotatedMethodsExtendsTestCase(array $classMethods) {
         foreach ($classMethods as $classMethod) {
-            if (!$this->doesClassExtendTestCase($classMethod->getAttribute('parent'))) {
+            if (!$this->doesClassImplementTestSuite($classMethod->getAttribute('parent')) && !$this->doesClassExtendTestCase($classMethod->getAttribute('parent'))) {
                 $msg = sprintf(
                     'Failure compiling "%s". The method "%s" is annotated with AsyncUnit attributes but this class does not extend "%s".',
                     $classMethod->getAttribute('parent')->namespacedName->toString(),

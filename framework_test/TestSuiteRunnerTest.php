@@ -448,4 +448,46 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteMultipleBeforeAllHooks() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('MultipleBeforeAllHooks');
+
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+                 $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $this->assertCount(2, $state->events);
+            $allResults = array_map(
+                fn(TestInvokedEvent $testInvokedEvent) => $testInvokedEvent->getTarget()->getTestCase()->getState(),
+                $state->events
+            );
+            $this->assertEqualsCanonicalizing(
+                [ImplicitDefaultTestSuite\MultipleBeforeAllHooks\FirstTestCase::class, ImplicitDefaultTestSuite\MultipleBeforeAllHooks\SecondTestCase::class],
+                $allResults
+            );
+        });
+    }
+
+    public function testExplicitTestSuiteBeforeAllTestSuiteHook() : void {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('BeforeAllTestSuiteHook');
+
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+                 $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $this->assertCount(3, $state->events);
+            $allResults = array_map(fn(TestInvokedEvent $event) => $event->getTarget()->getFailureException(), $state->events);
+            $this->assertSame([null, null, null], $allResults);
+        });
+    }
+
 }
