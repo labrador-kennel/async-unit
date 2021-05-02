@@ -89,7 +89,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $this->assertSame(DefaultTestSuite::class, $testSuite->getTestSuiteClass());
+        $this->assertSame(DefaultTestSuite::class, $testSuite->getClass());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
@@ -251,7 +251,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $testCaseModel = $testSuite->getTestCaseModels()[0];
 
-        $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getTestCaseClass());
+        $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getClass());
         $this->assertCount(1, $testCaseModel->getTestMethodModels());
         $testMethodModel = $testCaseModel->getTestMethodModels()[0];
 
@@ -265,7 +265,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $results->getTestSuiteModels());
         $testSuite = $results->getTestSuiteModels()[0];
 
-        $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $testSuite->getTestSuiteClass());
+        $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $testSuite->getClass());
         $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestCase::class, $testSuite);
     }
 
@@ -315,7 +315,7 @@ class ParserTest extends PHPUnitTestCase {
      */
     private function fetchTestSuiteModel(array $testSuites, string $testSuiteClassName) : TestSuiteModel {
         foreach ($testSuites as $testSuite) {
-            if ($testSuite->getTestSuiteClass() === $testSuiteClassName) {
+            if ($testSuite->getClass() === $testSuiteClassName) {
                 return $testSuite;
             }
         }
@@ -324,7 +324,7 @@ class ParserTest extends PHPUnitTestCase {
 
     private function fetchTestCaseModel(TestSuiteModel $testSuite, string $className) : TestCaseModel {
         foreach ($testSuite->getTestCaseModels() as $testCaseModel) {
-            if ($testCaseModel->getTestCaseClass() === $className) {
+            if ($testCaseModel->getClass() === $className) {
                 return $testCaseModel;
             }
         }

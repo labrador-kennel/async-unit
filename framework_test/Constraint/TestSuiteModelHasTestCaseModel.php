@@ -21,7 +21,7 @@ class TestSuiteModelHasTestCaseModel extends Constraint {
             return false;
         }
 
-        $testCaseClasses = array_map(fn(TestCaseModel $model) => $model->getTestCaseClass(), $testCases);
+        $testCaseClasses = array_map(fn(TestCaseModel $model) => $model->getClass(), $testCases);
         return in_array($this->expectedClass, $testCaseClasses, true);
     }
 

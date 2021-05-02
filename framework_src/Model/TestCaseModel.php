@@ -2,7 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-class TestCaseModel {
+class TestCaseModel implements BeforeAllMethodAware, BeforeEachMethodAware, AfterEachMethodAware, AfterAllMethodAware {
 
     private array $testMethodModels = [];
     private array $beforeAllMethodModels = [];
@@ -19,7 +19,7 @@ class TestCaseModel {
         return $this->testSuiteClass;
     }
 
-    public function getTestCaseClass() : string {
+    public function getClass() : string {
         return $this->testCaseClass;
     }
 
@@ -59,19 +59,19 @@ class TestCaseModel {
         $this->testMethodModels[] = $testMethodModel;
     }
 
-    public function addBeforeAllMethodModel(BeforeAllMethodModel $beforeAllMethodModel) : void {
+    public function addBeforeAllMethod(BeforeAllMethodModel $beforeAllMethodModel) : void {
         $this->beforeAllMethodModels[] = $beforeAllMethodModel;
     }
 
-    public function addBeforeEachMethodModel(BeforeEachMethodModel $beforeEachMethodModel) : void {
+    public function addBeforeEachMethod(BeforeEachMethodModel $beforeEachMethodModel) : void {
         $this->beforeEachMethodModels[] = $beforeEachMethodModel;
     }
 
-    public function addAfterAllMethodModel(AfterAllMethodModel $afterAllMethodModel) : void {
+    public function addAfterAllMethod(AfterAllMethodModel $afterAllMethodModel) : void {
         $this->afterAllMethodModels[] = $afterAllMethodModel;
     }
 
-    public function addAfterEachMethodModel(AfterEachMethodModel $afterEachMethodModel) : void {
+    public function addAfterEachMethod(AfterEachMethodModel $afterEachMethodModel) : void {
         $this->afterEachMethodModels[] = $afterEachMethodModel;
     }
 

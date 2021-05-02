@@ -33,10 +33,20 @@ final class TestSuiteRunner {
     public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
         return call(function() use($testSuiteModels) {
             foreach ($testSuiteModels as $testSuiteModel) {
-                $testSuiteClass = $testSuiteModel->getTestSuiteClass();
+                $testSuiteClass = $testSuiteModel->getClass();
                 $testSuite = new $testSuiteClass();
+
+                foreach ($testSuiteModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
+                    yield call([$testSuite, $beforeAllMethodModel->getMethod()]);
+                }
+
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
-                    $testCaseClass = $testCaseModel->getTestCaseClass();
+                    $testCaseClass = $testCaseModel->getClass();
+
+                    foreach ($testSuiteModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
+                        yield call([$testSuite, $beforeEachMethodModel->getMethod()]);
+                    }
+
                     foreach ($testCaseModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
                         try {
                             yield call([$testCaseClass, $beforeAllMethodModel->getMethod()]);
@@ -61,11 +71,28 @@ final class TestSuiteRunner {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCaseObject->$dataProvider();
                             foreach ($dataSets as $args) {
-                                yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel, $args);
+                                yield $this->invokeTest(
+                                    $testSuite,
+                                    $testCaseObject,
+                                    $assertionContext,
+                                    $asyncAssertionContext,
+                                    $testSuiteModel,
+                                    $testCaseModel,
+                                    $testMethodModel,
+                                    $args
+                                );
                                 [$testCaseObject, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseClass, $testSuite);
                             }
                         } else {
-                            yield $this->invokeTest($testCaseObject, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel);
+                            yield $this->invokeTest(
+                                $testSuite,
+                                $testCaseObject,
+                                $assertionContext,
+                                $asyncAssertionContext,
+                                $testSuiteModel,
+                                $testCaseModel,
+                                $testMethodModel
+                            );
                         }
                     }
 
@@ -84,14 +111,32 @@ final class TestSuiteRunner {
                             throw new TestCaseTearDownException($msg, previous: $throwable);
                         }
                     }
+
+                    foreach ($testSuiteModel->getAfterEachMethodModels() as $afterEachMethodModel) {
+                        yield call([$testSuite, $afterEachMethodModel->getMethod()]);
+                    }
+                }
+
+                foreach ($testSuiteModel->getAfterAllMethodModels() as $afterAllMethodModel) {
+                    yield call([$testSuite, $afterAllMethodModel->getMethod()]);
                 }
             }
         });
         // yield the instantiated object and name of invoked method
     }
 
-    private function invokeTest(TestCase $testCase, AssertionContext $assertionContext, AsyncAssertionContext $asyncAssertionContext, TestCaseModel $testCaseModel, TestMethodModel $testMethodModel, array $args = []) : Promise {
-        return call(function() use($testCase, $assertionContext, $asyncAssertionContext, $testCaseModel, $testMethodModel, $args) {
+    private function invokeTest(
+        TestSuite $testSuite,
+        TestCase $testCase,
+        AssertionContext $assertionContext,
+        AsyncAssertionContext $asyncAssertionContext,
+        TestSuiteModel $testSuiteModel,
+        TestCaseModel $testCaseModel,
+        TestMethodModel $testMethodModel,
+        array $args = []
+    ) : Promise {
+        return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+
             foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
                 try {
                     yield call([$testCase, $beforeEachMethodModel->getMethod()]);
@@ -134,6 +179,7 @@ final class TestSuiteRunner {
                 $failureException = new TestFailedException($msg, previous: $throwable);
             } finally {
                 $invokedModel = new InvokedTestCaseTestModel(
+                    $testSuite,
                     $testCase,
                     $testMethodModel->getMethod(),
                     $assertionContext->getAssertionCount(),
@@ -157,6 +203,7 @@ final class TestSuiteRunner {
                     throw new TestTearDownException($msg);
                 }
             }
+
 
             yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
 

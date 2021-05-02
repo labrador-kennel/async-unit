@@ -18,7 +18,7 @@ class TestCaseModelHasTestMethod extends Constraint {
                 TestCaseModelHasTestMethod::class
             ));
         }
-        if ($this->testClass !== $other->getTestCaseClass()) {
+        if ($this->testClass !== $other->getClass()) {
             return false;
         }
         $testMethods = $other->getTestMethodModels();

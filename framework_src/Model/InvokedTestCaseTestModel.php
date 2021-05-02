@@ -5,16 +5,22 @@ namespace Cspray\Labrador\AsyncUnit\Model;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\TestCase;
+use Cspray\Labrador\AsyncUnit\TestSuite;
 
 class InvokedTestCaseTestModel {
 
     public function __construct(
+        private TestSuite $testSuite,
         private TestCase $testCase,
         private string $method,
         private int $assertionCount,
         private int $asyncAssertionCount,
         private ?TestFailedException $exception = null
     ) {}
+
+    public function getTestSuite() : TestSuite {
+        return $this->testSuite;
+    }
 
     public function getTestCase() : TestCase {
         return $this->testCase;
