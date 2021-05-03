@@ -31,21 +31,21 @@ final class TestCaseModel implements BeforeAllMethodAware, BeforeEachMethodAware
     }
 
     /**
-     * @return BeforeAllMethodModel[]
+     * @return HookMethodModel[]
      */
     public function getBeforeAllMethodModels() : array {
         return $this->beforeAllMethodModels;
     }
 
     /**
-     * @return BeforeEachMethodModel[]
+     * @return HookMethodModel[]
      */
     public function getBeforeEachMethodModels() : array {
         return $this->beforeEachMethodModels;
     }
 
     /**
-     * @return AfterAllMethodModel[]
+     * @return HookMethodModel[]
      */
     public function getAfterAllMethodModels() : array {
         return $this->afterAllMethodModels;
@@ -67,12 +67,12 @@ final class TestCaseModel implements BeforeAllMethodAware, BeforeEachMethodAware
         $this->beforeEachMethodModels[] = $model;
     }
 
-    public function addAfterAllMethod(HookMethodModel $afterAllMethodModel) : void {
-        $this->afterAllMethodModels[] = $afterAllMethodModel;
+    public function addAfterAllMethod(HookMethodModel $model) : void {
+        $this->afterAllMethodModels[] = $model;
     }
 
-    public function addAfterEachMethod(HookMethodModel $afterEachMethodModel) : void {
-        $this->afterEachMethodModels[] = $afterEachMethodModel;
+    public function addAfterEachMethod(HookMethodModel $model) : void {
+        $this->afterEachMethodModels[] = $model;
     }
 
 }
