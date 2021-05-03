@@ -2,7 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
-class TestMethodModel {
+final class TestMethodModel {
 
     use MethodModelTrait;
 

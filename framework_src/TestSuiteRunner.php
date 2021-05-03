@@ -136,6 +136,9 @@ final class TestSuiteRunner {
         array $args = []
     ) : Promise {
         return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+            foreach ($testSuiteModel->getBeforeEachTestMethodModels() as $hook) {
+                yield call([$testSuite, $hook->getMethod()]);
+            }
 
             foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
                 try {
@@ -204,6 +207,9 @@ final class TestSuiteRunner {
                 }
             }
 
+            foreach ($testSuiteModel->getAfterEachTestMethodModels() as $hook) {
+                yield call([$testSuite, $hook->getMethod()]);
+            }
 
             yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
 

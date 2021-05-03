@@ -6,6 +6,6 @@ interface BeforeEachMethodAware {
 
     public function getClass() : string;
 
-    public function addBeforeEachMethod(BeforeEachMethodModel $beforeEachMethodModel) : void;
+    public function addBeforeEachMethod(HookMethodModel $model) : void;
 
 }
