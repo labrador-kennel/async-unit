@@ -10,6 +10,8 @@ use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
 use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
@@ -268,12 +270,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeAll');
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
-            $state = new \stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
-                $state->events[] = $event;
-            });
 
             $this->expectException(TestCaseSetUpException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeAll\MyTestCase::class;
@@ -287,12 +283,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterAll');
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
-            $state = new \stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
-                $state->events[] = $event;
-            });
 
             $this->expectException(TestCaseTearDownException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterAll\MyTestCase::class;
@@ -306,12 +296,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeEach');
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
-            $state = new \stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
-                $state->events[] = $event;
-            });
 
             $this->expectException(TestSetUpException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeEach\MyTestCase::class;
@@ -325,16 +309,88 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterEach');
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
-            $state = new \stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_INVOKED, function ($event) use ($state) {
-                $state->events[] = $event;
-            });
 
             $this->expectException(TestTearDownException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterEach\MyTestCase::class;
             $this->expectExceptionMessage('Failed tearing down "' . $class . '::afterEach" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the object afterEach".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeAll() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteBeforeAll');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestSuiteSetUpException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeAll\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwException" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in TestSuite".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEach() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteBeforeEach');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestSuiteSetUpException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEach\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachException" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "TestSuite BeforeEach".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEach() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteAfterEach');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestSuiteTearDownException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEach\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachException" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterEach".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEachTest() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteAfterEachTest');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestTearDownException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEachTest\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachTestException" #[AfterEachTest] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterEachTest".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEachTest() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteBeforeEachTest');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestSetUpException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEachTest\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachTestException" #[BeforeEachTest] hook with exception of type "RuntimeException" with code 0 and message "TestSuite BeforeEachTest".');
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterAll() {
+        Loop::run(function() {
+            $dir = $this->explicitTestsuitePath('ExceptionThrowingTestSuiteAfterAll');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+
+            $this->expectException(TestSuiteTearDownException::class);
+            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterAll\MyTestSuite::class;
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwException" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterAll".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });

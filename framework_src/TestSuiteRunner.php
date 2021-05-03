@@ -12,6 +12,8 @@ use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
+use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
@@ -37,14 +39,38 @@ final class TestSuiteRunner {
                 $testSuite = new $testSuiteClass();
 
                 foreach ($testSuiteModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
-                    yield call([$testSuite, $beforeAllMethodModel->getMethod()]);
+                    try {
+                        yield call([$testSuite, $beforeAllMethodModel->getMethod()]);
+                    } catch (Throwable $throwable) {
+                        $msg = sprintf(
+                            'Failed setting up "%s::%s" #[BeforeAll] hook with exception of type "%s" with code %d and message "%s".',
+                            $testSuiteClass,
+                            $beforeAllMethodModel->getMethod(),
+                            $throwable::class,
+                            $throwable->getCode(),
+                            $throwable->getMessage()
+                        );
+                        throw new TestSuiteSetUpException($msg, previous: $throwable);
+                    }
                 }
 
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
                     $testCaseClass = $testCaseModel->getClass();
 
                     foreach ($testSuiteModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
-                        yield call([$testSuite, $beforeEachMethodModel->getMethod()]);
+                        try {
+                            yield call([$testSuite, $beforeEachMethodModel->getMethod()]);
+                        } catch (Throwable $throwable) {
+                            $msg = sprintf(
+                                'Failed setting up "%s::%s" #[BeforeEach] hook with exception of type "%s" with code %d and message "%s".',
+                                $testSuiteClass,
+                                $beforeEachMethodModel->getMethod(),
+                                $throwable::class,
+                                $throwable->getCode(),
+                                $throwable->getMessage()
+                            );
+                            throw new TestSuiteSetUpException($msg, previous: $throwable);
+                        }
                     }
 
                     foreach ($testCaseModel->getBeforeAllMethodModels() as $beforeAllMethodModel) {
@@ -52,7 +78,7 @@ final class TestSuiteRunner {
                             yield call([$testCaseClass, $beforeAllMethodModel->getMethod()]);
                         } catch (Throwable $throwable) {
                             $msg = sprintf(
-                                'Failed setting up "%s::%s" #[BeforeAll] hook with exception of type "%s" with code %s and message "%s".',
+                                'Failed setting up "%s::%s" #[BeforeAll] hook with exception of type "%s" with code %d and message "%s".',
                                 $testCaseClass,
                                 $beforeAllMethodModel->getMethod(),
                                 $throwable::class,
@@ -101,7 +127,7 @@ final class TestSuiteRunner {
                             yield call([$testCaseClass, $afterAllMethodModel->getMethod()]);
                         } catch (Throwable $throwable) {
                             $msg = sprintf(
-                                'Failed tearing down "%s::%s" #[AfterAll] hook with exception of type "%s" with code %s and message "%s".',
+                                'Failed tearing down "%s::%s" #[AfterAll] hook with exception of type "%s" with code %d and message "%s".',
                                 $testCaseClass,
                                 $afterAllMethodModel->getMethod(),
                                 $throwable::class,
@@ -113,12 +139,36 @@ final class TestSuiteRunner {
                     }
 
                     foreach ($testSuiteModel->getAfterEachMethodModels() as $afterEachMethodModel) {
-                        yield call([$testSuite, $afterEachMethodModel->getMethod()]);
+                        try {
+                            yield call([$testSuite, $afterEachMethodModel->getMethod()]);
+                        } catch (Throwable $throwable) {
+                            $msg = sprintf(
+                                'Failed tearing down "%s::%s" #[AfterEach] hook with exception of type "%s" with code %d and message "%s".',
+                                $testSuiteClass,
+                                $afterEachMethodModel->getMethod(),
+                                $throwable::class,
+                                $throwable->getCode(),
+                                $throwable->getMessage()
+                            );
+                            throw new TestSuiteTearDownException($msg, previous: $throwable);
+                        }
                     }
                 }
 
                 foreach ($testSuiteModel->getAfterAllMethodModels() as $afterAllMethodModel) {
-                    yield call([$testSuite, $afterAllMethodModel->getMethod()]);
+                    try {
+                        yield call([$testSuite, $afterAllMethodModel->getMethod()]);
+                    } catch (Throwable $throwable) {
+                        $msg = sprintf(
+                            'Failed tearing down "%s::%s" #[AfterAll] hook with exception of type "%s" with code %d and message "%s".',
+                            $testSuiteClass,
+                            $afterAllMethodModel->getMethod(),
+                            $throwable::class,
+                            $throwable->getCode(),
+                            $throwable->getMessage()
+                        );
+                        throw new TestSuiteTearDownException($msg, previous: $throwable);
+                    }
                 }
             }
         });
@@ -137,7 +187,19 @@ final class TestSuiteRunner {
     ) : Promise {
         return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
             foreach ($testSuiteModel->getBeforeEachTestMethodModels() as $hook) {
-                yield call([$testSuite, $hook->getMethod()]);
+                try {
+                    yield call([$testSuite, $hook->getMethod()]);
+                } catch (Throwable $throwable) {
+                    $msg = sprintf(
+                        'Failed setting up "%s::%s" #[BeforeEachTest] hook with exception of type "%s" with code %d and message "%s".',
+                        $testSuite::class,
+                        $hook->getMethod(),
+                        $throwable::class,
+                        $throwable->getCode(),
+                        $throwable->getMessage()
+                    );
+                    throw new TestSetupException($msg, previous: $throwable);
+                }
             }
 
             foreach ($testCaseModel->getBeforeEachMethodModels() as $beforeEachMethodModel) {
@@ -145,14 +207,14 @@ final class TestSuiteRunner {
                     yield call([$testCase, $beforeEachMethodModel->getMethod()]);
                 } catch (Throwable $throwable) {
                     $msg = sprintf(
-                        'Failed setting up "%s::%s" #[BeforeEach] hook with exception of type "%s" with code %s and message "%s".',
+                        'Failed setting up "%s::%s" #[BeforeEach] hook with exception of type "%s" with code %d and message "%s".',
                         $testCase::class,
                         $beforeEachMethodModel->getMethod(),
                         $throwable::class,
                         $throwable->getCode(),
                         $throwable->getMessage()
                     );
-                    throw new TestSetupException($msg);
+                    throw new TestSetupException($msg, previous: $throwable);
                 }
             }
 
@@ -196,19 +258,30 @@ final class TestSuiteRunner {
                     yield call([$testCase, $afterEachMethodModel->getMethod()]);
                 } catch (Throwable $throwable) {
                     $msg = sprintf(
-                        'Failed tearing down "%s::%s" #[AfterEach] hook with exception of type "%s" with code %s and message "%s".',
+                        'Failed tearing down "%s::%s" #[AfterEach] hook with exception of type "%s" with code %d and message "%s".',
                         $testCase::class,
                         $afterEachMethodModel->getMethod(),
                         $throwable::class,
                         $throwable->getCode(),
                         $throwable->getMessage()
                     );
-                    throw new TestTearDownException($msg);
+                    throw new TestTearDownException($msg, previous: $throwable);
                 }
             }
 
             foreach ($testSuiteModel->getAfterEachTestMethodModels() as $hook) {
-                yield call([$testSuite, $hook->getMethod()]);
+                try {
+                    yield call([$testSuite, $hook->getMethod()]);
+                } catch (Throwable $throwable) {
+                    throw new TestTearDownException(sprintf(
+                        'Failed tearing down "%s::%s" #[AfterEachTest] hook with exception of type "%s" with code %d and message "%s".',
+                        $testSuite::class,
+                        $hook->getMethod(),
+                        $throwable::class,
+                        $throwable->getCode(),
+                        $throwable->getMessage()
+                    ));
+                }
             }
 
             yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
