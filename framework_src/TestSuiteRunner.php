@@ -17,7 +17,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use ReflectionClass;
 use Throwable;
@@ -124,7 +124,7 @@ final class TestSuiteRunner {
         AsyncAssertionContext $asyncAssertionContext,
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
-        TestMethodModel $testMethodModel,
+        TestModel $testMethodModel,
         array $args = []
     ) : Promise {
         return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {

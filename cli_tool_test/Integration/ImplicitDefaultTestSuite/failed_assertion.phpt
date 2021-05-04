@@ -19,7 +19,7 @@ X
 There was 1 failure:
 
 1) Acme\DemoSuites\ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::alwaysFails
-Failed asserting 'foo' (string) equals 'bar' (string)
+Failed comparing actual value 'bar' equals 'foo'
 
 %s/acme_src/ImplicitDefaultTestSuite/FailedAssertion/MyTestCase.php:12
 

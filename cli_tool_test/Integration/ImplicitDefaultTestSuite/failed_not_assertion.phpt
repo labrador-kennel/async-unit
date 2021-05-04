@@ -19,7 +19,7 @@ X
 There was 1 failure:
 
 1) Acme\DemoSuites\ImplicitDefaultTestSuite\FailedNotAssertion\MyTestCase::checkFailedNotAssertion
-Failed asserting 'foo' (string) does not equal 'foo' (string)
+Failed comparing actual value 'foo' does not equal 'foo'
 
 %s/acme_src/ImplicitDefaultTestSuite/FailedNotAssertion/MyTestCase.php:12
 

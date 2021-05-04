@@ -13,5 +13,4 @@ interface TestResult {
     public function isSuccessful() : bool;
 
     public function getFailureException() : TestFailedException|AssertionFailedException;
-
 }

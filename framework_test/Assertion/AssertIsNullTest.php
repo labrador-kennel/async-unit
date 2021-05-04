@@ -10,15 +10,15 @@ class AssertIsNullTest extends AbstractAssertionTestCase {
     /**
      * @dataProvider nonNullProvider
      */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
+    public function testBadTypes($value) {
+        $this->runBadTypeAssertions($value);
     }
 
     protected function getAssertion($value, $actual) : Assertion {
         return new AssertIsNull($actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return null;
     }
 
@@ -30,26 +30,15 @@ class AssertIsNullTest extends AbstractAssertionTestCase {
         return 'NULL';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new class($actual) implements AssertionComparisonDisplay {
-
-            public function __construct(private $actual) {}
-
-            public function toString() : string {
-                return sprintf('asserting %s (%s) is null', var_export($this->actual, true), gettype($this->actual));
-            }
-
-            public function toNotString() : string {
-                // TODO: Implement toNotString() method.
-            }
-        };
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\NullUnaryOperandSummary::class;
     }
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is null.', $actualType);
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\NullUnaryOperandSummary::class;
     }
 
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeMessage(gettype($actual));
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\NullUnaryOperandDetails::class;
     }
 }

@@ -3,40 +3,29 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\TrueAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\FalseUnaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\FalseUnaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertIsFalse extends AbstractAssertionEquals implements Assertion {
+class AssertIsFalse extends AbstractAssertion implements Assertion {
 
-    public function __construct(private mixed $actual) {}
+    public function __construct(mixed $actual) {
+        parent::__construct(false, $actual);
+    }
 
     protected function isValidType(mixed $actual) : bool {
         return is_bool($actual);
     }
 
-    protected function getExpectedType() : string {
-        return 'boolean';
+    protected function getSummary() : AssertionMessage {
+        return new FalseUnaryOperandSummary($this->getActual());
     }
 
-    protected function getExpected() : bool {
-        return false;
+    protected function getDetails() : AssertionMessage {
+        return new FalseUnaryOperandDetails($this->getActual());
     }
 
-    protected function getActual() : mixed {
-        return $this->actual;
-    }
-
-    protected function getInvalidTypeAssertionString(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is false.', $actualType);
-    }
-
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeAssertionString(gettype($actual));
-    }
-
-    protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {
-        return new FalseAssertionComparisonDisplay($actual);
+    protected function getInvalidTypeSummary() : AssertionMessage {
+        return new FalseUnaryOperandSummary($this->getActual());
     }
 }

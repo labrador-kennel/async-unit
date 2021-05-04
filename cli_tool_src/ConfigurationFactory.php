@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool;
+namespace Cspray\Labrador\AsyncUnitCli;
 
-use Cspray\Labrador\AsyncUnit\CliTool\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnitCli\Exception\InvalidConfigurationException;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Uri;
 use Opis\JsonSchema\Validator;

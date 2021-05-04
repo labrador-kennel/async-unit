@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\TestResult;
 final class TestPassedEvent extends StandardEvent {
 
     public function __construct(TestResult $target, array $data = []) {
-        parent::__construct(Events::TEST_PASSED_EVENT, $target, $data);
+        parent::__construct(Events::TEST_PASSED, $target, $data);
     }
 
     public function getTarget() : TestResult {

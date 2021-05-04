@@ -19,7 +19,7 @@ class AssertIntEqualsTest extends AbstractAssertionTestCase {
         return new AssertIntEquals($value, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return 1234;
     }
 
@@ -31,7 +31,15 @@ class AssertIntEqualsTest extends AbstractAssertionTestCase {
         return 'integer';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
+    }
+
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
     }
 }

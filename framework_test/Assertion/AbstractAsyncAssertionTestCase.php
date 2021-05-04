@@ -23,17 +23,11 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
 
     abstract protected function getExpectedType() : string;
 
-    abstract protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay;
+    abstract protected function getInvalidTypeAssertionMessageClass() : string;
 
-    protected function getAssertionString($actual) : string {
-        return 'comparing that 2 ' . $this->getExpectedType() . 's are equal to one another';
-    }
+    abstract protected function getSummaryAssertionMessageClass() : string;
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf(
-            'asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType()
-        );
-    }
+    abstract protected function getDetailsAssertionMessageClass() : string;
 
     public function runBadTypeAssertions(mixed $value, string $type) {
         Loop::run(function() use($value, $type) {
@@ -41,8 +35,8 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert();
 
             $this->assertFalse($results->isSuccessful());
-            $this->assertSame($this->getInvalidTypeMessage(gettype($value)), $results->getAssertionString());
-            $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
+            $this->assertInstanceOf($this->getInvalidTypeAssertionMessageClass(), $results->getSummary());
+            $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
         });
     }
 
@@ -52,8 +46,8 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert();
 
             $this->assertTrue($results->isSuccessful());
-            $this->assertSame($this->getAssertionString($this->getExpectedValue()), $results->getAssertionString());
-            $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getExpectedValue())->toString(), $results->getComparisonDisplay()->toString());
+            $this->assertInstanceOf($this->getSummaryAssertionMessageClass(), $results->getSummary());
+            $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
         });
     }
 
@@ -63,8 +57,8 @@ abstract class AbstractAsyncAssertionTestCase extends TestCase {
             $results = yield $subject->assert();
 
             $this->assertFalse($results->isSuccessful());
-            $this->assertSame($this->getAssertionString($this->getBadValue()), $results->getAssertionString());
-            $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
+            $this->assertInstanceOf($this->getSummaryAssertionMessageClass(), $results->getSummary());
+            $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
         });
     }
 

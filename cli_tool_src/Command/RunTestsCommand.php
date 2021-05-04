@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool\Command;
+namespace Cspray\Labrador\AsyncUnitCli\Command;
 
-use Cspray\Labrador\AsyncUnit\CliTool\AsyncUnitFrameworkRunner;
+use Cspray\Labrador\AsyncUnitCli\AsyncUnitFrameworkRunner;
+use Cspray\Labrador\AsyncUnitCli\SymfonyConsoleTerminalOutput;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RunTestsCommand extends Command {
 
@@ -34,7 +34,7 @@ class RunTestsCommand extends Command {
             $directories[] = $this->cwd . '/' . $testDir;
         }
 
-        $isOk = $this->frameworkRunner->run($directories, new SymfonyStyle($input, $output));
+        $isOk = $this->frameworkRunner->run($directories, new SymfonyConsoleTerminalOutput($output));
         return $isOk ? Command::SUCCESS : Command::FAILURE;
     }
 

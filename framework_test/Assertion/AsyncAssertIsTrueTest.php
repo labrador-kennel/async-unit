@@ -5,6 +5,8 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 use Amp\Coroutine;
 use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\TrueAssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
@@ -34,15 +36,16 @@ class AsyncAssertIsTrueTest extends AbstractAsyncAssertionTestCase {
         return 'boolean';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new TrueAssertionComparisonDisplay($actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return TrueUnaryOperandSummary::class;
     }
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
+    protected function getSummaryAssertionMessageClass() : string {
+        return TrueUnaryOperandSummary::class;
     }
 
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeMessage(gettype($actual));
+    protected function getDetailsAssertionMessageClass() : string {
+        return TrueUnaryOperandDetails::class;
     }
+
 }

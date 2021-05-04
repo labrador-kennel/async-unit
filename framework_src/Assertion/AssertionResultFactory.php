@@ -2,72 +2,53 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+use Cspray\Labrador\AsyncUnit\AssertionMessage;
 use Cspray\Labrador\AsyncUnit\AssertionResult;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 final class AssertionResultFactory {
 
     private function __construct() {}
 
-    public static function validAssertion(
-        string $assertionString,
-        string $notAssertionString,
-        AssertionComparisonDisplay $assertionComparisonDisplay
-    ) : AssertionResult {
-        return new class($assertionString, $notAssertionString, $assertionComparisonDisplay) implements AssertionResult {
+    public static function validAssertion(AssertionMessage $summary, AssertionMessage $details) : AssertionResult {
+        return new class($summary, $details) implements AssertionResult {
 
-            public function __construct(
-                private string $assertionString,
-                private string $notAssertionString,
-                private AssertionComparisonDisplay $assertionComparisonDisplay
-            ) {}
+            public function __construct(private AssertionMessage $summary, private AssertionMessage $details) {}
 
             public function isSuccessful() : bool {
                 return true;
             }
 
-            public function getAssertionString() : string {
-                return $this->assertionString;
+            public function getSummary() : AssertionMessage {
+                return $this->summary;
             }
 
-            public function getNotAssertionString() : string {
-                return $this->notAssertionString;
+            public function getDetails() : AssertionMessage {
+                return $this->details;
             }
-
-            public function getComparisonDisplay() : AssertionComparisonDisplay {
-                return $this->assertionComparisonDisplay;
-            }
-
         };
     }
 
     public static function invalidAssertion(
-        string $assertionString,
-        string $notAssertionString,
-        AssertionComparisonDisplay $comparisonDisplay
+        AssertionMessage $summary,
+        AssertionMessage $details
     ) : AssertionResult {
-        return new class($assertionString, $notAssertionString, $comparisonDisplay) implements AssertionResult {
+        return new class($summary, $details) implements AssertionResult {
 
             public function __construct(
-                private string $assertionString,
-                private string $notAssertionString,
-                private AssertionComparisonDisplay $comparisonDisplay
+                private AssertionMessage $summary,
+                private AssertionMessage $details
             ) {}
 
             public function isSuccessful() : bool {
                 return false;
             }
 
-            public function getAssertionString() : string {
-                return $this->assertionString;
+            public function getSummary() : AssertionMessage {
+                return $this->summary;
             }
 
-            public function getNotAssertionString() : string {
-                return $this->notAssertionString;
-            }
-
-            public function getComparisonDisplay() : AssertionComparisonDisplay {
-                return $this->comparisonDisplay;
+            public function getDetails() : AssertionMessage {
+                return $this->details;
             }
         };
     }

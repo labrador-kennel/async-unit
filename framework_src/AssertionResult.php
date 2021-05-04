@@ -16,10 +16,8 @@ interface AssertionResult {
 
     public function isSuccessful() : bool;
 
-    public function getAssertionString() : string;
+    public function getSummary() : AssertionMessage;
 
-    public function getNotAssertionString() : string;
-
-    public function getComparisonDisplay() : AssertionComparisonDisplay;
+    public function getDetails() : AssertionMessage;
 
 }

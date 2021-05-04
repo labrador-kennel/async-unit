@@ -19,7 +19,7 @@ class AssertFloatEqualsTest extends AbstractAssertionTestCase {
         return new AssertFloatEquals($value, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return 9876.54;
     }
 
@@ -31,7 +31,15 @@ class AssertFloatEqualsTest extends AbstractAssertionTestCase {
         return 'double';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
+    }
+
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
     }
 }

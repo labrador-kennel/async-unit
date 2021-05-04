@@ -658,16 +658,16 @@
         },
         {
             "name": "opis/json-schema",
-            "version": "2.0.1",
+            "version": "2.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/opis/json-schema.git",
-                "reference": "2ddccb522482fadea41064f7c65fa942cb9fcb59"
+                "reference": "a53152a70c2fe1f122da7bed7c37c01802dcf50c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/opis/json-schema/zipball/2ddccb522482fadea41064f7c65fa942cb9fcb59",
-                "reference": "2ddccb522482fadea41064f7c65fa942cb9fcb59",
+                "url": "https://api.github.com/repos/opis/json-schema/zipball/a53152a70c2fe1f122da7bed7c37c01802dcf50c",
+                "reference": "a53152a70c2fe1f122da7bed7c37c01802dcf50c",
                 "shasum": ""
             },
             "require": {
@@ -717,9 +717,9 @@
             ],
             "support": {
                 "issues": "https://github.com/opis/json-schema/issues",
-                "source": "https://github.com/opis/json-schema/tree/2.0.1"
+                "source": "https://github.com/opis/json-schema/tree/2.1.0"
             },
-            "time": "2021-04-21T15:34:32+00:00"
+            "time": "2021-05-04T13:16:45+00:00"
         },
         {
             "name": "opis/string",

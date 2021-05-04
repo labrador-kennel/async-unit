@@ -1,9 +1,9 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool;
+namespace Cspray\Labrador\AsyncUnitCli;
 
-use Cspray\Labrador\AsyncUnit\CliTool\Command\RunTestsCommand;
-use Cspray\Labrador\AsyncUnit\CliTool\Command\RunTestsFromConfigurationCommand;
+use Cspray\Labrador\AsyncUnitCli\Command\RunTestsCommand;
+use Cspray\Labrador\AsyncUnitCli\Command\RunTestsFromConfigurationCommand;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
