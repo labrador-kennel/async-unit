@@ -8,9 +8,6 @@ use Cspray\Labrador\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Constraint\TestCaseModelHasTestMethod
- */
 class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testPassingNonTestCaseThrowsException() {

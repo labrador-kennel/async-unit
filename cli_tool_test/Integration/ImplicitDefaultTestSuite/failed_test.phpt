@@ -65,6 +65,10 @@ An unexpected Cspray\Labrador\AsyncUnit\Exception\TestFailedException was thrown
 %s
 %s
 %s
+%s
+%s
+%s
+%s
 
 FAILURES
 Tests: 1, Failures: 1, Assertions: 0, Async Assertions: 0

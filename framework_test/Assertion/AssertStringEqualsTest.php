@@ -7,9 +7,6 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExpo
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertStringEquals
- */
 class AssertStringEqualsTest extends AbstractAssertionTestCase {
 
     /**

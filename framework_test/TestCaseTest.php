@@ -2,7 +2,6 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-use Amp\Delayed;
 use Amp\Loop;
 use Amp\Success;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
@@ -15,9 +14,6 @@ use Cspray\Labrador\AsyncUnit\Stub\CustomAssertionTestCase;
 use Cspray\Labrador\AsyncUnit\Stub\FailingTestCase;
 use function Amp\call;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\TestCase
- */
 class TestCaseTest extends \PHPUnit\Framework\TestCase {
 
     public function testFailingAssertionHasFileAndLine() {
@@ -194,7 +190,7 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         $constructor = $reflectedSubject->getConstructor();
         $constructor->setAccessible(true);
         $subject = $reflectedSubject->newInstanceWithoutConstructor();
-        $constructor->invoke($subject, new DefaultTestSuite(), $assertionContext, $asyncAssertionContext);
+        $constructor->invoke($subject, (new \ReflectionClass(DefaultTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext);
 
         return [$subject, $assertionContext, $asyncAssertionContext, $customAssertionContext];
     }

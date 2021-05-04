@@ -10,9 +10,6 @@ use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Parser
- */
 class ParserTest extends PHPUnitTestCase {
 
     use AsyncUnitAssertions;
@@ -50,36 +47,35 @@ class ParserTest extends PHPUnitTestCase {
 
     public function testErrorConditionsTestAttributeOnNotTestCase() {
         $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\TestAttributeOnNotTestCase\\BadTestCase". The method "ensureSomething" is annotated with AsyncUnit attributes but this class does not extend "' . TestCase::class . '".');
+        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\TestAttributeOnNotTestCase\\BadTestCase". The method "ensureSomething" is annotated with #[Test] but this class does not extend "' . TestCase::class . '".');
 
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/TestAttributeOnNotTestCase');
     }
 
     public function testErrorConditionsBeforeAllAttributeOnNotTestCaseOrTestSuite() {
         $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with AsyncUnit attributes but this class does not extend "' . TestCase::class . '".');
+        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeAllAttributeOnNotTestCaseOrTestSuite');
     }
 
     public function testErrorConditionsAfterAllAttributeOnNotTestCaseOrTestSuite() {
         $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with AsyncUnit attributes but this class does not extend "' . TestCase::class . '".');
+        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterAllAttributeOnNotTestCaseOrTestSuite');
     }
 
     public function testErrorConditionsAfterEachAttributeOnNotTestCaseOrTestSuite() {
         $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with AsyncUnit attributes but this class does not extend "' . TestCase::class . '".');
+        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterEachAttributeOnNotTestCaseOrTestSuite');
     }
 
     public function testErrorConditionsBeforeEachAttributeOnNotTestCaseOrTestSuite() {
         $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with AsyncUnit attributes but this class does not extend "' . TestCase::class . '".');
-
+        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeEachAttributeOnNotTestCaseOrTestSuite');
     }
 
@@ -207,17 +203,17 @@ class ParserTest extends PHPUnitTestCase {
 
     public function hooksProvider() {
         return [
-            ['getBeforeAllMethodModels', 'HasSingleBeforeAllHook', 'beforeAll'],
-            ['getBeforeEachMethodModels', 'HasSingleBeforeEachHook', 'beforeEach'],
-            ['getAfterAllMethodModels', 'HasSingleAfterAllHook', 'afterAll'],
-            ['getAfterEachMethodModels', 'HasSingleAfterEachHook', 'afterEach']
+            ['BeforeAll', 'HasSingleBeforeAllHook', 'beforeAll'],
+            ['BeforeEach', 'HasSingleBeforeEachHook', 'beforeEach'],
+            ['AfterAll', 'HasSingleAfterAllHook', 'afterAll'],
+            ['AfterEach', 'HasSingleAfterEachHook', 'afterEach']
         ];
     }
 
     /**
      * @dataProvider hooksProvider
      */
-    public function testParsingSimpleTestCaseHasHooks(string $testCaseGetter, string $subNamespace, string $methodName) {
+    public function testParsingSimpleTestCaseHasHooks(string $hookType, string $subNamespace, string $methodName) {
         $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath($subNamespace))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);
@@ -226,9 +222,9 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuite->getTestCaseModels());
         $myTestCase = $testSuite->getTestCaseModels()[0];
 
-        $this->assertCount(1, $myTestCase->$testCaseGetter());
-        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->$testCaseGetter()[0]->getClass());
-        $this->assertSame($methodName, $myTestCase->$testCaseGetter()[0]->getMethod());
+        $this->assertCount(1, $myTestCase->getHooks($hookType));
+        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->getHooks($hookType)[0]->getClass());
+        $this->assertSame($methodName, $myTestCase->getHooks($hookType)[0]->getMethod());
     }
 
     public function testParsingCustomAssertionPlugins() {
@@ -260,7 +256,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testExplicitTestSuiteAnnotatedDefaultTestSuite() {
-        $results = $this->subject->parse($this->explicitTestsuitePath('AnnotatedDefaultTestSuite'));
+        $results = $this->subject->parse($this->explicitTestSuitePath('AnnotatedDefaultTestSuite'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
         $testSuite = $results->getTestSuiteModels()[0];
@@ -270,7 +266,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testExplicitTestSuiteTestCaseDefinesTestSuite() {
-        $results = $this->subject->parse($this->explicitTestsuitePath('TestCaseDefinesTestSuite'));
+        $results = $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinesTestSuite'));
 
         $this->assertCount(2, $results->getTestSuiteModels());
 
@@ -287,7 +283,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     public function testExplicitTestSuiteTestCaseDefinesAndTestCaseDefaultTestSuite() {
-        $results = $this->subject->parse($this->explicitTestsuitePath('TestCaseDefinedAndImplicitDefaultTestSuite'));
+        $results = $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinedAndImplicitDefaultTestSuite'));
 
         $this->assertCount(2, $results->getTestSuiteModels());
 

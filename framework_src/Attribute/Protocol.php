@@ -5,6 +5,6 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_CLASS)]
-class Protocol {
+final class Protocol {
 
 }

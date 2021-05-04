@@ -10,9 +10,6 @@ use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse
- */
 class AsyncAssertIsNullTest extends AbstractAsyncAssertionTestCase {
 
     /**

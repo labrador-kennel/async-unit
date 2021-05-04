@@ -29,7 +29,7 @@ abstract class TestCase {
         private AsyncAssertionContext $asyncAssertionContext
     ) {}
 
-    final protected function testSuite() : TestSuite {
+    final public function testSuite() : TestSuite {
         return $this->testSuite;
     }
 

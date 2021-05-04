@@ -6,9 +6,6 @@ use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\Assertion\AssertFloatEquals
- */
 class AssertFloatEqualsTest extends AbstractAssertionTestCase {
 
     /**
