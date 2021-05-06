@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+## 0.3.0 - 2021-05-05
+
+### Added
+
 - Adds initial implementation of an explicit TestSuite. [#50](https://github.com/labrador-kennel/async-unit/pull/50)
 - Invoke all existing hooks for an explicit TestSuite. Adds `#[BeforeEachTest]` and `#[AfterEachTest]` hooks for the 
   TestSuite to have access to invoking hooks around each test. [#54](https://github.com/labrador-kennel/async-unit/pull/54)
