@@ -51,7 +51,7 @@ abstract class TestCase {
 
     private function setAssertionFileAndLine(AssertionContext|AsyncAssertionContext $context, string $method, array $backtrace) {
         foreach ($backtrace as $trace) {
-            if (!isset($trace['class']) || !isset($trace['function'])) {
+            if (!isset($trace['class']) && !isset($trace['function'])) {
                 continue;
             }
             if ($trace['class'] === self::class && $trace['function'] === $method) {

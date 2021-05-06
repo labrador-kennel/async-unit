@@ -13,11 +13,12 @@ use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
+use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
-use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
@@ -46,14 +47,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            $this->assertInstanceOf(TestInvokedEvent::class, $state->events[0]);
+            $this->assertInstanceOf(TestProcessedEvent::class, $state->events[0]);
             $this->assertInstanceOf(TestResult::class, $state->events[0]->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\SingleTest\MyTestCase::class, $state->events[0]->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingHappens', $state->events[0]->getTarget()->getTestMethod());
@@ -67,7 +68,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -76,14 +77,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(3, $state->events);
 
             $ensureSomethingHappensMethod = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingHappensMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingHappensMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingHappensMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class, $ensureSomethingHappensMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingHappens', $ensureSomethingHappensMethod->getTarget()->getTestMethod());
             $this->assertEquals([ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappens'], $ensureSomethingHappensMethod->getTarget()->getTestCase()->getInvokedMethods());
             
             $ensureSomethingHappensTwiceMethod = $state->events[1];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingHappensTwiceMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingHappensTwiceMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingHappensTwiceMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class, $ensureSomethingHappensTwiceMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingHappensTwice', $ensureSomethingHappensTwiceMethod->getTarget()->getTestMethod());
@@ -97,7 +98,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -106,14 +107,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(2, $state->events);
 
             $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
             $this->assertEquals(['beforeAll', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
 
             $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
@@ -127,7 +128,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -136,14 +137,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(2, $state->events);
 
             $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
             $this->assertEquals(['beforeEach', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
 
             $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
@@ -157,7 +158,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -166,14 +167,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(2, $state->events);
 
             $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
             $this->assertEquals(['afterAll', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
 
             $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
@@ -187,7 +188,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -196,14 +197,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(2, $state->events);
 
             $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
             $this->assertEquals(['ensureSomething', 'afterEach'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
 
             $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestInvokedEvent::class, $ensureSomethingMethod);
+            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
             $this->assertInstanceOf(TestResult::class, $ensureSomethingMethod->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
@@ -218,27 +219,27 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            /** @var TestInvokedEvent $testInvokedEvent */
+            /** @var TestProcessedEvent $testInvokedEvent */
             $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
             $this->assertInstanceOf(TestResult::class, $testInvokedEvent->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
             $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getTestMethod());
 
-            $this->assertNotNull($testInvokedEvent->getTarget()->getFailureException());
+            $this->assertNotNull($testInvokedEvent->getTarget()->getException());
             $expectedMsg = 'An unexpected exception of type "Exception" with code 0 and message "Test failure" was thrown from #[Test] ' . ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class . '::throwsException';
-            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getFailureException()->getMessage());
-            $this->assertSame(0, $testInvokedEvent->getTarget()->getFailureException()->getCode());
-            $this->assertInstanceOf(\Exception::class, $testInvokedEvent->getTarget()->getFailureException()->getPrevious());
-            $this->assertSame('Test failure', $testInvokedEvent->getTarget()->getFailureException()->getPrevious()->getMessage());
-            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getPrevious()->getFile());
+            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getException()->getMessage());
+            $this->assertSame(0, $testInvokedEvent->getTarget()->getException()->getCode());
+            $this->assertInstanceOf(\Exception::class, $testInvokedEvent->getTarget()->getException()->getPrevious());
+            $this->assertSame('Test failure', $testInvokedEvent->getTarget()->getException()->getPrevious()->getMessage());
+            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getException()->getPrevious()->getFile());
         });
     }
 
@@ -249,16 +250,16 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            /** @var TestInvokedEvent $testInvokedEvent */
+            /** @var TestProcessedEvent $testInvokedEvent */
             $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
             $this->assertInstanceOf(TestResult::class, $testInvokedEvent->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTestWithAfterEachHook\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
             $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getTestMethod());
@@ -403,25 +404,26 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            /** @var TestInvokedEvent $testInvokedEvent */
+            /** @var TestProcessedEvent $testInvokedEvent */
             $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
             $this->assertInstanceOf(TestResult::class, $testInvokedEvent->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
             $this->assertSame('ensureSomethingFails', $testInvokedEvent->getTarget()->getTestMethod());
+            $this->assertFalse($testInvokedEvent->getTarget()->isDisabled());
 
-            $this->assertNotNull($testInvokedEvent->getTarget()->getFailureException());
+            $this->assertNotNull($testInvokedEvent->getTarget()->getException());
             $expectedMsg = 'Something barfed';
-            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getFailureException()->getMessage());
-            $this->assertSame(0, $testInvokedEvent->getTarget()->getFailureException()->getCode());
-            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getFailureException()->getFile());
+            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getException()->getMessage());
+            $this->assertSame(0, $testInvokedEvent->getTarget()->getException()->getCode());
+            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getException()->getFile());
         });
     }
 
@@ -432,7 +434,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -452,14 +454,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            /** @var TestInvokedEvent $testInvokedEvent */
+            /** @var TestProcessedEvent $testInvokedEvent */
             $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestInvokedEvent::class, $testInvokedEvent);
+            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
             $this->assertInstanceOf(TestResult::class, $testInvokedEvent->getTarget());
             $this->assertInstanceOf(ImplicitDefaultTestSuite\CustomAssertions\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
             $this->assertSame('ensureCustomAssertionsPass', $testInvokedEvent->getTarget()->getTestMethod());
 
-            $this->assertNull($testInvokedEvent->getTarget()->getFailureException());
+            $this->assertNull($testInvokedEvent->getTarget()->getException());
         });
     }
 
@@ -470,7 +472,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -478,7 +480,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertCount(3, $state->events);
 
-            /** @var TestInvokedEvent $firstEvent */
+            /** @var TestProcessedEvent $firstEvent */
             $firstEvent = $state->events[0];
             $this->assertSame(1, $firstEvent->getTarget()->getTestCase()->getCounter());
         });
@@ -492,14 +494,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $state = new \stdClass();
             $state->events = [];
 
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
 
             $this->assertCount(1, $state->events);
-            $this->assertNull($state->events[0]->getTarget()->getFailureException());
+            $this->assertNull($state->events[0]->getTarget()->getException());
             $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $state->events[0]->getTarget()->getTestCase()->getTestSuiteName());
         });
     }
@@ -511,14 +513,14 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                  $state->events[] = $event;
             });
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
             $this->assertCount(2, $state->events);
             $allResults = array_map(
-                fn(TestInvokedEvent $testInvokedEvent) => $testInvokedEvent->getTarget()->getTestCase()->getState(),
+                fn(TestProcessedEvent $testInvokedEvent) => $testInvokedEvent->getTarget()->getTestCase()->getState(),
                 $state->events
             );
             $this->assertEqualsCanonicalizing(
@@ -535,7 +537,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                  $state->events[] = $event;
             });
 
@@ -547,7 +549,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
                 $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestCase()->testSuite());
             }
 
-            $allResults = array_map(fn(TestInvokedEvent $event) => $event->getTarget()->getFailureException(), $state->events);
+            $allResults = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->getException(), $state->events);
             $this->assertSame([null, null, null], $allResults);
         });
     }
@@ -559,7 +561,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -584,7 +586,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -609,7 +611,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -634,7 +636,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -659,7 +661,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->events = [];
-            $this->emitter->on(Events::TEST_INVOKED, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
                 $state->events[] = $event;
             });
 
@@ -670,7 +672,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             foreach ($state->events as $testInvokedEvent) {
                 $this->assertSame($testSuite, $testInvokedEvent->getTarget()->getTestCase()->testSuite());
             }
-            $allResults = array_map(fn(TestInvokedEvent $event) => $event->getTarget()->getFailureException(), $state->events);
+            $allResults = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->getException(), $state->events);
             $this->assertSame([null, null, null], $allResults);
             $this->assertSame(1, $testSuite->getCounter());
         });
@@ -683,7 +685,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->data = [];
-            $this->emitter->on(Events::TEST_INVOKED, function() use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
             $this->emitter->on(Events::TEST_PASSED, function() use($state) {
@@ -703,7 +705,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
             $state = new \stdClass();
             $state->data = [];
-            $this->emitter->on(Events::TEST_INVOKED, function() use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
             $this->emitter->on(Events::TEST_FAILED, function() use($state) {
@@ -756,5 +758,79 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertInstanceOf(TestCaseStartedEvent::class, $state->events[0]);
             $this->assertInstanceOf(TestCaseFinishedEvent::class, $state->events[1]);
         });
+    }
+
+    public function testTestMethodIsNotInvokedWhenDisabled() : void {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(2, $state->events);
+        });
+    }
+
+    public function testTestResultWhenTestDisabled() : void {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+            $disabledTestResult = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class, 'skippedTest');
+
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class, $disabledTestResult->getTarget()->getTestCase());
+            $this->assertSame('skippedTest', $disabledTestResult->getTarget()->getTestMethod());
+            $this->assertFalse($disabledTestResult->getTarget()->isSuccessful());
+            $this->assertTrue($disabledTestResult->getTarget()->isDisabled());
+            $this->assertInstanceOf(TestDisabledException::class, $disabledTestResult->getTarget()->getException());
+            $expected = sprintf(
+                '%s::%s has been marked disabled via annotation',
+                ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class,
+                'skippedTest'
+            );
+            $this->assertSame($expected, $disabledTestResult->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteHandleNonPhpFiles() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('HandleNonPhpFiles');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+        });
+    }
+
+    /**
+     * @param TestProcessedEvent[] $events
+     * @param string $testClass
+     * @param string $method
+     * @return TestProcessedEvent
+     */
+    private function fetchTestProcessedEventForTest(array $events, string $testClass, string $method) : TestProcessedEvent {
+        foreach ($events as $event) {
+            if ($event->getTarget()->getTestCase()::class === $testClass && $event->getTarget()->getTestMethod() === $method) {
+                return $event;
+            }
+        }
+        $this->fail('Expected events to have a TestCase and method matching ' . $testClass . '::' . $method);
     }
 }

@@ -12,16 +12,6 @@ abstract class AbstractAssertion implements Assertion {
 
     final public function assert() : AssertionResult {
         if (!$this->isValidType($this->actual)) {
-            $summaryToString = sprintf(
-                'asserting value with type "%s" is comparable to type "%s"',
-                gettype($this->actual),
-                gettype($this->expected)
-            );
-            $summaryNotString = sprintf(
-                'asserting value with type "%s" is not comparable to type "%s"',
-                gettype($this->expected),
-                gettype($this->actual)
-            );
             return AssertionResultFactory::invalidAssertion(
                 $this->getInvalidTypeSummary(),
                 $this->getDetails()
@@ -47,20 +37,6 @@ abstract class AbstractAssertion implements Assertion {
 
     protected function getActual() : mixed {
         return $this->actual;
-    }
-
-    private function createAssertionMessage(string $toString, string $toNotString) : AssertionMessage {
-        return new class($toString, $toNotString) implements AssertionMessage {
-            public function __construct(private string $toString, private string $toNotString) {}
-
-            public function toString() : string {
-                return $this->toString;
-            }
-
-            public function toNotString() : string {
-                return $this->toNotString;
-            }
-        };
     }
 
 }

@@ -8,10 +8,10 @@ use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncUnit\TestResult;
 
-final class TestInvokedEvent extends StandardEvent implements Event {
+final class TestProcessedEvent extends StandardEvent implements Event {
 
     public function __construct(TestResult $target, array $data = []) {
-        parent::__construct(Events::TEST_INVOKED, $target, $data);
+        parent::__construct(Events::TEST_PROCESSED, $target, $data);
     }
 
     public function getTarget() : TestResult {

@@ -114,7 +114,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
                 ImplicitDefaultTestSuite\NoAssertions\MyTestCase::class,
                 'noAssertions'
             );
-            $this->assertSame($msg, $testResult->getFailureException()->getMessage());
+            $this->assertSame($msg, $testResult->getException()->getMessage());
         });
     }
 
@@ -138,7 +138,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function testTestProcessingEventsEmitted() {
         Loop::run(function() {
             [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
-            $this->emitter->on(Events::TEST_INVOKED, function() use($state) {
+            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function() use($state) {

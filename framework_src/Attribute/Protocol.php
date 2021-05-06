@@ -4,6 +4,11 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 
 use Attribute;
 
+/**
+ * Class Protocol
+ * @package Cspray\Labrador\AsyncUnit\Attribute
+ * @codeCoverageIgnore
+ */
 #[Attribute(Attribute::TARGET_CLASS)]
 final class Protocol {
 

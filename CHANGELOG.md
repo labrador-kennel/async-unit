@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added a `#[Disabled]` Attribute that allows for annotating a test to not run. 
+
+### Changed
+
+- **Breaking Change!** Renamed `TestInvokedEvent` -> `TestProcessedEvent` to better signify that the test might not have actually 
+been invoked if it was disabled.
+
 ## 0.3.0 - 2021-05-05
 
 ### Added

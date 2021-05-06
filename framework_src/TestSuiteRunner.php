@@ -10,13 +10,14 @@ use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
+use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
@@ -137,6 +138,17 @@ final class TestSuiteRunner {
         array $args = []
     ) : Promise {
         return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+            if ($testMethodModel->isDisabled()) {
+                $msg = sprintf(
+                    '%s::%s has been marked disabled via annotation',
+                    $testCaseModel->getClass(),
+                    $testMethodModel->getMethod()
+                );
+                $exception = new TestDisabledException($msg);
+                yield $this->emitter->emit(new TestProcessedEvent($this->getDisabledTestResult($testCase, $testMethodModel->getMethod(), $exception)));
+                return;
+            }
+
             yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeEachTest', TestSetupException::class);
             yield $this->invokeHooks($testCase, $testCaseModel, 'BeforeEach', TestSetupException::class);
 
@@ -171,15 +183,17 @@ final class TestSuiteRunner {
             yield $this->invokeHooks($testCase, $testCaseModel, 'AfterEach', TestTearDownException::class);
             yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterEachTest', TestTearDownException::class);
 
-            yield $this->emitter->emit(new TestInvokedEvent($testResult));
+            yield $this->emitter->emit(new TestProcessedEvent($testResult));
 
             if ($testResult->isSuccessful()) {
                 yield $this->emitter->emit(new TestPassedEvent($testResult));
             } else {
                 yield $this->emitter->emit(new TestFailedEvent($testResult));
             }
+
             unset($testCase);
             unset($failureException);
+            unset($testResult);
         });
     }
 
@@ -189,6 +203,37 @@ final class TestSuiteRunner {
         }
 
         return $this->reflectionCache[$class];
+    }
+
+    private function getDisabledTestResult(TestCase $testCase, string $testMethod, TestDisabledException $exception) {
+        return new class($testCase, $testMethod, $exception) implements TestResult {
+
+            public function __construct(
+                private TestCase $testCase,
+                private string $testMethod,
+                private TestDisabledException $exception
+            ) {}
+
+            public function getTestCase() : TestCase {
+                return $this->testCase;
+            }
+
+            public function getTestMethod() : string {
+                return $this->testMethod;
+            }
+
+            public function isSuccessful() : bool {
+                return false;
+            }
+
+            public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
+                return $this->exception;
+            }
+
+            public function isDisabled() : bool {
+                return true;
+            }
+        };
     }
 
     private function getTestResult(
@@ -216,8 +261,12 @@ final class TestSuiteRunner {
                 return is_null($this->testFailedException);
             }
 
-            public function getFailureException() : TestFailedException|AssertionFailedException|null {
+            public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
                 return $this->testFailedException;
+            }
+
+            public function isDisabled() : bool {
+                return false;
             }
         };
     }

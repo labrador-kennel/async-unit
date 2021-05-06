@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
+use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
@@ -207,6 +208,11 @@ final class Parser {
                     $testMethodModel->setDataProvider($dataProviderAttribute->args[0]->value->value);
                 }
 
+                $disabledAttribute = $this->findAttribute(Disabled::class, ...$classMethod->attrGroups);
+                if (!is_null($disabledAttribute)) {
+                    $testMethodModel->markDisabled();
+                }
+
                 $parseState->totalTestCount++;
                 $testCaseModel->addTestMethodModel($testMethodModel);
             }
@@ -232,11 +238,6 @@ final class Parser {
                 $foundClass = $class;
                 break;
             }
-        }
-
-        // Make sure the Class_ actually extends something
-        if (is_null($foundClass->extends)) {
-            return null;
         }
 
         // Find the class that our Class_->extends matches

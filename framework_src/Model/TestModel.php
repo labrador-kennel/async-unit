@@ -7,6 +7,15 @@ final class TestModel {
     use MethodModelTrait;
 
     private ?string $dataProvider = null;
+    private bool $isDisabled = false;
+
+    public function isDisabled() : bool {
+        return $this->isDisabled;
+    }
+
+    public function markDisabled() : void {
+        $this->isDisabled = true;
+    }
 
     public function getDataProvider() : ?string {
         return $this->dataProvider;

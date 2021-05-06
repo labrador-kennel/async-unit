@@ -4,6 +4,11 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 
 use Attribute;
 
+/**
+ * Class DataProvider
+ * @package Cspray\Labrador\AsyncUnit\Attribute
+ * @codeCoverageIgnore
+ */
 #[Attribute(Attribute::TARGET_METHOD)]
 final class DataProvider {
 

@@ -69,7 +69,7 @@ final class DefaultResultPrinter {
                     $failedTestEvent->getTarget()->getTestCase()::class,
                     $failedTestEvent->getTarget()->getTestMethod()
                 ));
-                $exception = $failedTestEvent->getTarget()->getFailureException();
+                $exception = $failedTestEvent->getTarget()->getException();
                 if ($exception instanceof AssertionFailedException) {
                     yield $output->write($failedTestEvent->getTarget()->getFailureException()->getDetailedMessage() . "\n");
                     yield $output->write("\n");

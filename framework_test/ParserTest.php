@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
+use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
@@ -312,6 +313,23 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertSame(ImplicitDefaultTestSuite\HasResultPrinterPlugin\MyResultPrinterPlugin::class, $pluginModel->getPluginClass());
     }
 
+    public function testParsingTestAsDisabled() {
+        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
+
+        $this->assertCount(1, $results->getTestSuiteModels());
+        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class);
+
+        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::checkSomething', $testCase);
+        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::skippedTest', $testCase);
+
+        $checkSomething = $this->fetchTestModel($testCase, 'checkSomething');
+        $skippedTest = $this->fetchTestModel($testCase, 'skippedTest');
+
+        $this->assertFalse($checkSomething->isDisabled());
+        $this->assertTrue($skippedTest->isDisabled());
+    }
+
     /**
      * @param TestSuiteModel[] $testSuites
      * @param string $testSuiteClassName
@@ -333,6 +351,15 @@ class ParserTest extends PHPUnitTestCase {
             }
         }
         $this->fail('Expected TestSuite to have TestCase ' . $className);
+    }
+
+    private function fetchTestModel(TestCaseModel $model, string $methodName) : TestModel {
+        foreach ($model->getTestMethodModels() as $testMethodModel) {
+            if ($testMethodModel->getMethod() === $methodName) {
+                return $testMethodModel;
+            }
+        }
+        $this->fail('Expected TestCase to have test ' . $methodName);
     }
 
 

@@ -6,7 +6,6 @@ use Cspray\Labrador\AsyncEvent\Event;
 use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\TestCase;
 
 class TestCaseFinishedEvent extends StandardEvent implements Event {
 
