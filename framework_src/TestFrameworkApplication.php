@@ -46,22 +46,10 @@ final class TestFrameworkApplication extends AbstractApplication {
 
             $this->emitter->on(Events::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) use($testRunState) {
                 $testRunState->testsInvoked++;
-                $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getAssertionCount();
-                $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getAsyncAssertionCount();
-
-                $invokedTestModel = $testInvokedEvent->getTarget();
-                $testPassed = is_null($testInvokedEvent->getTarget()->getFailureException());
-                $testResult = $this->getTestResult(
-                    $invokedTestModel->getTestCase(),
-                    $invokedTestModel->getMethod(),
-                    $testInvokedEvent->getTarget()->getFailureException()
-                );
-
-                if ($testPassed) {
-                    yield $this->emitter->emit(new TestPassedEvent($testResult));
-                } else {
+                $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAssertionCount();
+                $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAsyncAssertionCount();
+                if (!$testInvokedEvent->getTarget()->isSuccessful()) {
                     $testRunState->failedTests++;
-                    yield $this->emitter->emit(new TestFailedEvent($testResult));
                 }
             });
 

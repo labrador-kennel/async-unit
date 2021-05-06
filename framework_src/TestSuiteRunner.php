@@ -7,7 +7,14 @@ use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
+use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
+use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
@@ -15,7 +22,6 @@ use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
-use Cspray\Labrador\AsyncUnit\Model\InvokedTestCaseTestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
@@ -39,10 +45,11 @@ final class TestSuiteRunner {
                 /** @var TestSuite $testSuite */
                 $testSuite = (new ReflectionClass($testSuiteClass))->newInstanceWithoutConstructor();
 
+                yield $this->emitter->emit(new TestSuiteStartedEvent($testSuiteModel));
                 yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeAll', TestSuiteSetUpException::class);
 
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
-
+                    yield $this->emitter->emit(new TestCaseStartedEvent($testCaseModel));
                     yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeEach', TestSuiteSetUpException::class);
                     yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'BeforeAll', TestCaseSetUpException::class, [$testSuite]);
 
@@ -81,9 +88,11 @@ final class TestSuiteRunner {
 
                     yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'AfterAll', TestCaseTearDownException::class, [$testSuite]);
                     yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterEach', TestSuiteTearDownException::class);
+                    yield $this->emitter->emit(new TestCaseFinishedEvent($testCaseModel));
                 }
 
                 yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterAll', TestSuiteTearDownException::class);
+                yield $this->emitter->emit(new TestSuiteFinishedEvent($testSuiteModel));
             }
         });
     }
@@ -156,20 +165,19 @@ final class TestSuiteRunner {
                 );
                 $failureException = new TestFailedException($msg, previous: $throwable);
             } finally {
-                $invokedModel = new InvokedTestCaseTestModel(
-                    $testCase,
-                    $testMethodModel->getMethod(),
-                    $assertionContext->getAssertionCount(),
-                    $asyncAssertionContext->getAssertionCount(),
-                    $failureException
-                );
+                $testResult = $this->getTestResult($testCase, $testCaseMethod, $failureException);
             }
 
             yield $this->invokeHooks($testCase, $testCaseModel, 'AfterEach', TestTearDownException::class);
             yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterEachTest', TestTearDownException::class);
 
-            yield $this->emitter->emit(new TestInvokedEvent($invokedModel));
+            yield $this->emitter->emit(new TestInvokedEvent($testResult));
 
+            if ($testResult->isSuccessful()) {
+                yield $this->emitter->emit(new TestPassedEvent($testResult));
+            } else {
+                yield $this->emitter->emit(new TestFailedEvent($testResult));
+            }
             unset($testCase);
             unset($failureException);
         });
@@ -181,6 +189,37 @@ final class TestSuiteRunner {
         }
 
         return $this->reflectionCache[$class];
+    }
+
+    private function getTestResult(
+        TestCase $testCase,
+        string $method,
+        ?TestFailedException $testFailedException
+    ) : TestResult {
+        return new class($testCase, $method, $testFailedException) implements TestResult {
+
+            public function __construct(
+                private TestCase $testCase,
+                private string $method,
+                private ?TestFailedException $testFailedException
+            ) {}
+
+            public function getTestCase() : TestCase {
+                return $this->testCase;
+            }
+
+            public function getTestMethod() : string {
+                return $this->method;
+            }
+
+            public function isSuccessful() : bool {
+                return is_null($this->testFailedException);
+            }
+
+            public function getFailureException() : TestFailedException|AssertionFailedException|null {
+                return $this->testFailedException;
+            }
+        };
     }
 
     private function invokeTestCaseConstructor(string $testCaseClass, TestSuite $testSuite) : array {
