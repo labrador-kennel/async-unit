@@ -11,7 +11,6 @@ use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
-use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\EnvironmentType;
@@ -116,26 +115,6 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
                 'noAssertions'
             );
             $this->assertSame($msg, $testResult->getFailureException()->getMessage());
-        });
-    }
-
-    public function testGettingFailureExceptionFromValidTestResultThrowsException() {
-        Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
-            yield $application->start();
-
-            $this->assertCount(1, $state->passed->events);
-            $this->assertCount(0, $state->failed->events);
-            /** @var TestPassedEvent $event */
-            $event = $state->passed->events[0];
-            $this->assertInstanceOf(TestPassedEvent::class, $event);
-
-            $testResult = $event->getTarget();
-
-            $this->expectException(InvalidStateException::class);
-            $this->expectExceptionMessage('Attempted to access a TestFailedException on a successful TestResult.');
-
-            $testResult->getFailureException();
         });
     }
 

@@ -94,30 +94,25 @@ final class Parser {
         $asyncUnitVisitor = $this->doParseDirectories($dirs);
         $classMethods = $asyncUnitVisitor->getAnnotatedClassMethods();
 
-        $testSuiteClasses = $asyncUnitVisitor->getTestSuites();
-        if (empty($testSuiteClasses)) {
+        $hasDefaultTestSuite = false;
+        foreach ($asyncUnitVisitor->getTestSuites() as $testSuiteClass) {
+            $defaultTestSuiteAttribute = $this->findAttribute(DefaultTestSuiteAttribute::class, ...$testSuiteClass->attrGroups);
+            if (!$hasDefaultTestSuite && !is_null($defaultTestSuiteAttribute)) {
+                $hasDefaultTestSuite = true;
+            }
+            $testSuiteModel = new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
+
+            $this->addHooks($testSuiteModel, $classMethods, 'BeforeAll');
+            $this->addHooks($testSuiteModel, $classMethods, 'BeforeEach');
+            $this->addHooks($testSuiteModel, $classMethods, 'BeforeEachTest');
+            $this->addHooks($testSuiteModel, $classMethods, 'AfterEachTest');
+            $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
+            $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
+
+            yield $testSuiteModel;
+        }
+        if (!$hasDefaultTestSuite) {
             yield new TestSuiteModel(DefaultTestSuite::class, true);
-        } else {
-            $hasDefaultTestSuite = false;
-            foreach ($testSuiteClasses as $testSuiteClass) {
-                $defaultTestSuiteAttribute = $this->findAttribute(DefaultTestSuiteAttribute::class, ...$testSuiteClass->attrGroups);
-                if (!$hasDefaultTestSuite && !is_null($defaultTestSuiteAttribute)) {
-                    $hasDefaultTestSuite = true;
-                }
-                $testSuiteModel = new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
-
-                $this->addHooks($testSuiteModel, $classMethods, 'BeforeAll');
-                $this->addHooks($testSuiteModel, $classMethods, 'BeforeEach');
-                $this->addHooks($testSuiteModel, $classMethods, 'BeforeEachTest');
-                $this->addHooks($testSuiteModel, $classMethods, 'AfterEachTest');
-                $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
-                $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
-
-                yield $testSuiteModel;
-            }
-            if (!$hasDefaultTestSuite) {
-                yield new TestSuiteModel(DefaultTestSuite::class, true);
-            }
         }
 
         $testCaseClasses = $asyncUnitVisitor->getTestCases();

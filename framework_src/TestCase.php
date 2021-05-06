@@ -33,6 +33,14 @@ abstract class TestCase {
         return $this->testSuite;
     }
 
+    final public function getAssertionCount() : int {
+        return $this->assertionContext->getAssertionCount();
+    }
+
+    final public function getAsyncAssertionCount() : int {
+        return $this->asyncAssertionContext->getAssertionCount();
+    }
+
     final protected function assert() : AssertionContext {
         return $this->setAssertionFileAndLine($this->assertionContext, __FUNCTION__, debug_backtrace(10));
     }

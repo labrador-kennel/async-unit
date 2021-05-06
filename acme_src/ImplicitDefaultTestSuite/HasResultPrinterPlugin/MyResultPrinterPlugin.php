@@ -13,7 +13,7 @@ class MyResultPrinterPlugin implements ResultPrinterPlugin {
     public function registerEvents(EventEmitter $emitter, TestOutput $output) : void {
         $emitter->on(Events::TEST_INVOKED, function(TestInvokedEvent $event) use($output) {
             $output->writeln($event->getTarget()->getTestCase()::class);
-            $output->writeln($event->getTarget()->getMethod());
+            $output->writeln($event->getTarget()->getTestMethod());
         });
     }
 
