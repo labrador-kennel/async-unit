@@ -3,38 +3,30 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\NullAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertIsNull extends AbstractAssertionEquals implements Assertion {
+class AssertIsNull extends AbstractAssertion implements Assertion {
 
-    public function __construct(private mixed $actual) {}
+    public function __construct(mixed $actual) {
+        parent::__construct(null, $actual);
+    }
 
     protected function isValidType(mixed $actual) : bool {
         return is_null($actual);
     }
 
-    protected function getExpectedType() : string {
-        return 'NULL';
+    protected function getSummary() : AssertionMessage {
+        return new NullUnaryOperandSummary($this->getActual());
     }
 
-    protected function getExpected() : mixed {
-        return null;
+    protected function getDetails() : AssertionMessage {
+        return new NullUnaryOperandDetails($this->getActual());
     }
 
-    protected function getActual() : mixed {
-        return $this->actual;
+    protected function getInvalidTypeSummary() : AssertionMessage {
+        return new NullUnaryOperandSummary($this->getActual());
     }
 
-    protected function getInvalidTypeAssertionString(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is null.', $actualType);
-    }
-
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeAssertionString(gettype($actual));
-    }
-
-    protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {
-        return new NullAssertionComparisonDisplay($actual);
-    }
 }

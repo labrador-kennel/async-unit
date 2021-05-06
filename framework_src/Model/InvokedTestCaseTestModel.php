@@ -7,6 +7,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 
+// TODO Make sure that this gets removed and the place that it is being used in the TestSuiteRunner is refactored to use a TestResult instead
 final class InvokedTestCaseTestModel {
 
     public function __construct(

@@ -3,31 +3,27 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertFloatEquals extends AbstractAssertionEquals implements Assertion {
-
-    public function __construct(private float $expected, private mixed $actual) {}
+class AssertFloatEquals extends AbstractAssertion implements Assertion {
 
     protected function isValidType(mixed $actual) : bool {
         return is_float($actual);
     }
 
-    protected function getExpectedType() : string {
-        return 'double';
+    protected function getSummary() : AssertionMessage {
+        // TODO: Implement getSummary() method.
+        return new BinaryOperandSummary($this->getExpected(), $this->getActual());
     }
 
-    protected function getExpected() : float {
-        return $this->expected;
+    protected function getDetails() : AssertionMessage {
+        // TODO: Implement getDetails() method.
+        return new BinaryOperandSummary($this->getExpected(), $this->getActual());
+    }
+    protected function getInvalidTypeSummary() : AssertionMessage {
+        return new InvalidTypeBinaryOperandSummary($this->getExpected(), $this->getActual());
     }
 
-    protected function getActual() : mixed {
-        return $this->actual;
-    }
-
-    protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($this->getExpected(), $actual);
-    }
 }

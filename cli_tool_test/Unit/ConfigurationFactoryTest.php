@@ -1,14 +1,11 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool\Unit;
+namespace Cspray\Labrador\AsyncUnitCli\Unit;
 
-use Cspray\Labrador\AsyncUnit\CliTool\ConfigurationFactory;
-use Cspray\Labrador\AsyncUnit\CliTool\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
+use Cspray\Labrador\AsyncUnitCli\Exception\InvalidConfigurationException;
 use PHPUnit\Framework\TestCase;
 
-/**
- * @covers \Cspray\Labrador\AsyncUnit\CliTool\ConfigurationFactory
- */
 class ConfigurationFactoryTest extends TestCase {
 
     private ConfigurationFactory $subject;

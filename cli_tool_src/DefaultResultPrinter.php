@@ -1,14 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool;
+namespace Cspray\Labrador\AsyncUnitCli;
 
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
+use Cspray\Labrador\AsyncUnit\TestOutput;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
-use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class DefaultResultPrinter {
 
@@ -19,14 +18,14 @@ final class DefaultResultPrinter {
 
     public function __construct(private string $version) {}
 
-    public function registerEvents(EventEmitter $emitter, SymfonyStyle $output) : void {
-        $emitter->once(Events::TEST_PROCESSING_STARTED_EVENT, fn() => $this->testProcessingStarted($output));
-        $emitter->on(Events::TEST_PASSED_EVENT, fn() => $this->testPassed($output));
-        $emitter->on(Events::TEST_FAILED_EVENT, fn($event) => $this->testFailed($event, $output));
-        $emitter->once(Events::TEST_PROCESSING_FINISHED_EVENT, fn($event) => $this->testProcessingFinished($event, $output));
+    public function registerEvents(EventEmitter $emitter, TestOutput $output) : void {
+        $emitter->once(Events::TEST_PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
+        $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($output));
+        $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $output));
+        $emitter->once(Events::TEST_PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
     }
 
-    private function testProcessingStarted(SymfonyStyle $output) : void {
+    private function testProcessingStarted(TestOutput $output) : void {
         $inspirationalMessages = [
             'Let\'s run some asynchronous tests!',
             'Zoom, zoom... here we go!',
@@ -40,17 +39,18 @@ final class DefaultResultPrinter {
         $output->writeln('');
     }
 
-    private function testPassed(OutputInterface $output) : void {
+    private function testPassed(TestOutput $output) : void {
         $output->write('<fg=green>.</>');
     }
 
-    private function testFailed(TestFailedEvent $failedEvent, SymfonyStyle $output) : void {
+    private function testFailed(TestFailedEvent $failedEvent, TestOutput $output) : void {
         $this->failedTests[] = $failedEvent;
         $output->write('<fg=red>X</>');
     }
 
-    private function testProcessingFinished(TestProcessingFinishedEvent $event, SymfonyStyle $output) : void {
-        $output->newLine(2);
+    private function testProcessingFinished(TestProcessingFinishedEvent $event, TestOutput $output) : void {
+        $output->writeln('');
+        $output->writeln('');
         if ($event->getTarget()->getFailureTestCount() === 0) {
             $output->writeln('<fg=green>OK!</>');
             $output->writeln(sprintf(
@@ -61,7 +61,7 @@ final class DefaultResultPrinter {
             ));
         } else {
             $output->writeln(sprintf('There was %d failure:', $event->getTarget()->getFailureTestCount()));
-            $output->newLine();
+            $output->writeln('');
             foreach ($this->failedTests as $index => $failedTestEvent) {
                 $output->writeln(sprintf(
                     '%d) %s::%s',
@@ -72,13 +72,13 @@ final class DefaultResultPrinter {
                 $exception = $failedTestEvent->getTarget()->getFailureException();
                 if ($exception instanceof AssertionFailedException) {
                     $output->writeln($failedTestEvent->getTarget()->getFailureException()->getDetailedMessage());
-                    $output->newLine();
+                    $output->writeln('');
                     $output->writeln(sprintf(
                         '%s:%d',
                         $failedTestEvent->getTarget()->getFailureException()->getAssertionFailureFile(),
                         $failedTestEvent->getTarget()->getFailureException()->getAssertionFailureLine()
                     ));
-                    $output->newLine();
+                    $output->writeln('');
                 } else {
                     $output->writeln(sprintf(
                         'An unexpected %s was thrown in %s on line %d.',
@@ -86,11 +86,11 @@ final class DefaultResultPrinter {
                         $exception->getFile(),
                         $exception->getLine()
                     ));
-                    $output->newLine();
+                    $output->writeln('');
                     $output->writeln(sprintf('"%s"', $exception->getMessage()));
-                    $output->newLine();
+                    $output->writeln('');
                     $output->writeln($exception->getTraceAsString());
-                    $output->newLine();
+                    $output->writeln('');
                 }
             }
 

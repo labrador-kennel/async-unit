@@ -3,7 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit\Constraint;
 
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\Exception\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use stdClass;
@@ -31,7 +31,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testPassingMethodBelongsToTestCaseIsTrue() {
         $testCaseModel = new TestCaseModel('FooClass');
-        $testCaseModel->addTestMethodModel(new TestMethodModel('FooClass', 'method'));
+        $testCaseModel->addTestMethodModel(new TestModel('FooClass', 'method'));
 
         $result = (new TestCaseModelHasTestMethod('FooClass', 'method'))->evaluate($testCaseModel, returnResult: true);
 
@@ -40,7 +40,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testPassingMethodNotBelongsToTestCaseIsFalse() {
         $testCaseModel = new TestCaseModel('BarClass');
-        $testCaseModel->addTestMethodModel(new TestMethodModel('BarClass', 'ensureSomething'));
+        $testCaseModel->addTestMethodModel(new TestModel('BarClass', 'ensureSomething'));
 
         $result = (new TestCaseModelHasTestMethod('BarClass', 'ensureSomethingElse'))->evaluate($testCaseModel, returnResult: true);
 
@@ -49,7 +49,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testClassesDontMatchIsFalse() {
         $testCaseModel = new TestCaseModel('FooClass');
-        $testCaseModel->addTestMethodModel(new TestMethodModel('FooClass', 'ensureSomething'));
+        $testCaseModel->addTestMethodModel(new TestModel('FooClass', 'ensureSomething'));
 
         $result = (new TestCaseModelHasTestMethod('BarClass', 'ensureSomething'))->evaluate($testCaseModel, returnResult: true);
 

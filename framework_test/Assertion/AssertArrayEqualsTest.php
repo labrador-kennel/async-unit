@@ -5,22 +5,21 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertArrayEqualsTest extends AbstractAssertionTestCase {
 
     /**
      * @dataProvider nonArrayProvider
      */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
+    public function testBadTypes($value) {
+        $this->runBadTypeAssertions($value);
     }
 
     protected function getAssertion($value, $actual) : Assertion {
-        return new AssertArrayEquals(['a', 'b', 'c'], $actual);
+        return new AssertArrayEquals($value, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return ['a', 'b', 'c'];
     }
 
@@ -32,8 +31,15 @@ class AssertArrayEqualsTest extends AbstractAssertionTestCase {
         return 'array';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
     }
 
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+    }
 }

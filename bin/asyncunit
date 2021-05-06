@@ -5,8 +5,8 @@ namespace Cspray\Labrador\AsyncUnit;
 
 require_once dirname(__DIR__) . '/vendor/autoload.php';
 
-use Cspray\Labrador\AsyncUnit\CliTool\AsyncUnitCliApplication;
-use Cspray\Labrador\AsyncUnit\CliTool\ConfigurationFactory;
+use Cspray\Labrador\AsyncUnitCli\AsyncUnitCliApplication;
+use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Psr\Log\NullLogger;

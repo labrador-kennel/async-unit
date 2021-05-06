@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool\Exception;
+namespace Cspray\Labrador\AsyncUnitCli\Exception;
 
 use Cspray\Labrador\Exception\Exception as LabradorException;
 

@@ -304,6 +304,14 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertEquals(9, $results->getTotalTestCount());
     }
 
+    public function testParsingResultPrinterPlugin() {
+        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasResultPrinterPlugin'));
+
+        $this->assertCount(1, $results->getPluginModels());
+        $pluginModel = $results->getPluginModels()[0];
+        $this->assertSame(ImplicitDefaultTestSuite\HasResultPrinterPlugin\MyResultPrinterPlugin::class, $pluginModel->getPluginClass());
+    }
+
     /**
      * @param TestSuiteModel[] $testSuites
      * @param string $testSuiteClassName

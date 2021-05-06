@@ -3,14 +3,13 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Amp\Coroutine;
-use Amp\Loop;
 use Amp\Promise;
-use Amp\Success;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummaryTest;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
-use PHPUnit\Framework\TestCase;
 
 class AsyncAssertStringEqualsTest extends AbstractAsyncAssertionTestCase {
 
@@ -37,7 +36,15 @@ class AsyncAssertStringEqualsTest extends AbstractAsyncAssertionTestCase {
         return 'string';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return InvalidTypeBinaryOperandSummary::class;
+    }
+
+    protected function getSummaryAssertionMessageClass() : string {
+        return BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return BinaryOperandDetails::class;
     }
 }

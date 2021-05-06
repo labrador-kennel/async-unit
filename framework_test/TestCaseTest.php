@@ -25,13 +25,9 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $assertionException = $exception;
         } finally {
             $this->assertNotNull($assertionException);
-            $this->assertSame('Failed comparing that 2 strings are equal to one another', $assertionException->getMessage());
+            $this->assertSame('Failed asserting type "string" equals type "string"', $assertionException->getMessage());
             $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
             $this->assertSame(11, $assertionException->getAssertionFailureLine());
-            $this->assertEquals(
-                sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
-                $assertionException->getDetailedMessage()
-            );
         }
     }
 
@@ -47,10 +43,6 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $this->assertSame('my custom message', $assertionException->getMessage());
             $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
             $this->assertSame(19, $assertionException->getAssertionFailureLine());
-            $this->assertEquals(
-                sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
-                $assertionException->getDetailedMessage()
-            );
         }
     }
 
@@ -65,13 +57,9 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
                 $assertionException = $exception;
             } finally {
                 $this->assertNotNull($assertionException);
-                $this->assertSame('Failed comparing that 2 strings are equal to one another', $assertionException->getMessage());
+                $this->assertSame('Failed asserting type "string" equals type "string"', $assertionException->getMessage());
                 $this->assertSame(__DIR__ . '/Stub/FailingTestCase.php', $assertionException->getAssertionFailureFile());
                 $this->assertSame(15, $assertionException->getAssertionFailureLine());
-                $this->assertEquals(
-                    sprintf('Failed %s', (new BinaryVarExportAssertionComparisonDisplay('foo', 'bar'))->toString()),
-                    $assertionException->getDetailedMessage()
-                );
             }
         });
     }
@@ -103,7 +91,7 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
                 $assertionException = $exception;
             } finally {
                 $this->assertNotNull($assertionException);
-                $this->assertSame('Failed comparing that 2 strings are not equal to one another', $assertionException->getMessage());
+                $this->assertSame('Failed asserting type "string" does not equal type "string"', $assertionException->getMessage());
                 $this->assertSame(__DIR__ . '/Stub/AssertNotTestCase.php', $assertionException->getAssertionFailureFile());
                 $this->assertSame(15, $assertionException->getAssertionFailureLine());
             }

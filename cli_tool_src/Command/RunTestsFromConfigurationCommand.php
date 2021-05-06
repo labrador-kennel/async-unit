@@ -1,13 +1,13 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnit\CliTool\Command;
+namespace Cspray\Labrador\AsyncUnitCli\Command;
 
-use Cspray\Labrador\AsyncUnit\CliTool\AsyncUnitFrameworkRunner;
-use Cspray\Labrador\AsyncUnit\CliTool\ConfigurationFactory;
+use Cspray\Labrador\AsyncUnitCli\AsyncUnitFrameworkRunner;
+use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
+use Cspray\Labrador\AsyncUnitCli\SymfonyConsoleTerminalOutput;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
 
 class RunTestsFromConfigurationCommand extends Command {
 
@@ -32,7 +32,7 @@ class RunTestsFromConfigurationCommand extends Command {
 
         $configuration = $this->configurationFactory->make($this->configFile);
 
-        $isOk = $this->frameworkRunner->run($configuration->getTestDirectories(), new SymfonyStyle($input, $output));
+        $isOk = $this->frameworkRunner->run($configuration->getTestDirectories(), new SymfonyConsoleTerminalOutput($output));
 
         return $isOk ? Command::SUCCESS : Command::FAILURE;
     }

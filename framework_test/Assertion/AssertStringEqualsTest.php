@@ -20,7 +20,7 @@ class AssertStringEqualsTest extends AbstractAssertionTestCase {
         return new AssertStringEquals($value, $actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return 'async unit';
     }
 
@@ -32,8 +32,16 @@ class AssertStringEqualsTest extends AbstractAssertionTestCase {
         return 'string';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
+    }
+
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\BinaryOperandDetails::class;
     }
 
 }

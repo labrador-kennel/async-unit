@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\PostRunSummary;
 final class TestProcessingFinishedEvent extends StandardEvent {
 
     public function __construct(PostRunSummary $summary) {
-        parent::__construct(Events::TEST_PROCESSING_FINISHED_EVENT, $summary);
+        parent::__construct(Events::TEST_PROCESSING_FINISHED, $summary);
     }
 
     public function getTarget() : PostRunSummary {

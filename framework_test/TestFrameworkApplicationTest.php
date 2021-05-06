@@ -43,10 +43,10 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         $state->passed->events = [];
         $state->failed = new \stdClass();
         $state->failed->events = [];
-        $this->emitter->on(Events::TEST_PASSED_EVENT, function($event) use($state) {
+        $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
             $state->passed->events[] = $event;
         });
-        $this->emitter->on(Events::TEST_FAILED_EVENT, function($event) use($state) {
+        $this->emitter->on(Events::TEST_FAILED, function($event) use($state) {
             $state->failed->events[] = $event;
         });
 
@@ -162,10 +162,10 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $this->emitter->on(Events::TEST_INVOKED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
-            $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function() use($state) {
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function() use($state) {
                 $state->data[] = 'test processing finished';
             });
-            $this->emitter->on(Events::TEST_PROCESSING_STARTED_EVENT, function() use($state) {
+            $this->emitter->on(Events::TEST_PROCESSING_STARTED, function() use($state) {
                 $state->data[] = 'test processing started';
             });
 
@@ -178,7 +178,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function testTestProcessingStartedHasPreRunSummary() {
         Loop::run(function() {
             [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
-            $this->emitter->on(Events::TEST_PROCESSING_STARTED_EVENT, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSING_STARTED, function($event) use($state) {
                 $state->data[] = $event;
             });
 
@@ -197,7 +197,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function testTestProcessingFinishedHasPostRunSummary() {
         Loop::run(function() {
             [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
-            $this->emitter->on(Events::TEST_PROCESSING_FINISHED_EVENT, function($event) use($state) {
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function($event) use($state) {
                 $state->data[] = $event;
             });
 

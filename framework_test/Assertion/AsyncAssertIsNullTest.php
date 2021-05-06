@@ -6,6 +6,8 @@ use Amp\Coroutine;
 use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\NullAssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
@@ -35,15 +37,15 @@ class AsyncAssertIsNullTest extends AbstractAsyncAssertionTestCase {
         return 'NULL';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new NullAssertionComparisonDisplay($actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return NullUnaryOperandSummary::class;
     }
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is null.', $actualType);
+    protected function getSummaryAssertionMessageClass() : string {
+        return NullUnaryOperandSummary::class;
     }
 
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeMessage(gettype($actual));
+    protected function getDetailsAssertionMessageClass() : string {
+        return NullUnaryOperandDetails::class;
     }
 }

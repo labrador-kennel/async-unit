@@ -3,39 +3,29 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\TrueAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionResult;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandDetails;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertIsTrue extends AbstractAssertionEquals implements Assertion {
+class AssertIsTrue extends AbstractAssertion implements Assertion {
 
-    public function __construct(private mixed $actual) {}
+    public function __construct(mixed $actual) {
+        parent::__construct(true, $actual);
+    }
 
     protected function isValidType(mixed $actual) : bool {
         return is_bool($actual);
     }
 
-    protected function getExpectedType() : string {
-        return 'boolean';
+    protected function getSummary() : AssertionMessage {
+        return new TrueUnaryOperandSummary($this->getActual());
     }
 
-    protected function getExpected() : bool {
-        return true;
+    protected function getDetails() : AssertionMessage {
+        return new TrueUnaryOperandDetails($this->getActual());
     }
 
-    protected function getActual() : mixed {
-        return $this->actual;
-    }
-
-    protected function getInvalidTypeAssertionString(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
-    }
-
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeAssertionString(gettype($actual));
-    }
-
-    protected function getAssertionComparisonDisplay($actual) : AssertionComparisonDisplay {
-        return new TrueAssertionComparisonDisplay($actual);
+    protected function getInvalidTypeSummary() : AssertionMessage {
+        return new TrueUnaryOperandSummary($this->getActual());
     }
 }

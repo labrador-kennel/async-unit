@@ -3,22 +3,21 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertIsTrueTest extends AbstractAssertionTestCase {
 
     /**
      * @dataProvider nonBoolProvider
      */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
+    public function testBadTypes($value) {
+        $this->runBadTypeAssertions($value);
     }
 
     protected function getAssertion($value, $actual) : Assertion {
         return new AssertIsTrue($actual);
     }
 
-    protected function getExpectedValue() {
+    protected function getGoodValue() {
         return true;
     }
 
@@ -30,26 +29,15 @@ class AssertIsTrueTest extends AbstractAssertionTestCase {
         return 'boolean';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new class($actual) implements AssertionComparisonDisplay {
-
-            public function __construct(private $actual) {}
-
-            public function toString() : string {
-                return sprintf('asserting %s (%s) is true', var_export($this->actual, true), gettype($this->actual));
-            }
-
-            public function toNotString() : string {
-                // TODO: Implement toNotString() method.
-            }
-        };
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\TrueUnaryOperandSummary::class;
     }
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf('Failed asserting that a value with type "%s" is true.', $actualType);
+    protected function getSummaryAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\TrueUnaryOperandSummary::class;
     }
 
-    protected function getAssertionString($actual) : string {
-        return $this->getInvalidTypeMessage(gettype($actual));
+    protected function getDetailsAssertionMessageClass() : string {
+        return Assertion\AssertionMessage\TrueUnaryOperandDetails::class;
     }
 }

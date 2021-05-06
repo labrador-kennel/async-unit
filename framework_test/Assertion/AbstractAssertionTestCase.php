@@ -1,8 +1,6 @@
 <?php declare(strict_types=1);
 
-
 namespace Cspray\Labrador\AsyncUnit\Assertion;
-
 
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
@@ -14,49 +12,43 @@ abstract class AbstractAssertionTestCase extends TestCase {
 
     abstract protected function getAssertion($expected, $actual) : Assertion;
 
-    abstract protected function getExpectedValue();
+    abstract protected function getGoodValue();
 
     abstract protected function getBadValue();
 
     abstract protected function getExpectedType();
 
-    abstract protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay;
+    abstract protected function getInvalidTypeAssertionMessageClass() : string;
 
-    protected function getAssertionString($actual) : string {
-        return 'comparing that 2 ' . $this->getExpectedType() . 's are equal to one another';
-    }
+    abstract protected function getSummaryAssertionMessageClass() : string;
 
-    protected function getInvalidTypeMessage(string $actualType) : string {
-        return sprintf(
-            'asserting that a value with type "%s" is comparable to type "%s".', $actualType, $this->getExpectedType()
-        );
-    }
+    abstract protected function getDetailsAssertionMessageClass() : string;
 
-    public function runBadTypeAssertions(mixed $value, string $type) {
-        $subject = $this->getAssertion($this->getExpectedValue(), $value);
+    public function runBadTypeAssertions(mixed $actual) {
+        $subject = $this->getAssertion($this->getGoodValue(), $actual);
         $results = $subject->assert();
 
         $this->assertFalse($results->isSuccessful());
-        $this->assertSame($this->getInvalidTypeMessage($type), $results->getAssertionString());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $value)->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertInstanceOf($this->getInvalidTypeAssertionMessageClass(), $results->getSummary());
+        $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
     }
 
     public function testAssertGoodValueEqualsGoodValue() {
-        $subject = $this->getAssertion($this->getExpectedValue(), $this->getExpectedValue());
+        $subject = $this->getAssertion($this->getGoodValue(), $this->getGoodValue());
         $results = $subject->assert();
 
         $this->assertTrue($results->isSuccessful());
-        $this->assertSame($this->getAssertionString($this->getExpectedValue()), $results->getAssertionString());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getExpectedValue())->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertInstanceOf($this->getSummaryAssertionMessageClass(), $results->getSummary());
+        $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
     }
 
     public function testAssertGoodValueDoesNotEqualBadValueInformation() {
-        $subject = $this->getAssertion($this->getExpectedValue(), $this->getBadValue());
+        $subject = $this->getAssertion($this->getGoodValue(), $this->getBadValue());
         $results = $subject->assert();
 
         $this->assertFalse($results->isSuccessful());
-        $this->assertSame($this->getAssertionString($this->getBadValue()), $results->getAssertionString());
-        $this->assertSame($this->getExpectedAssertionComparisonDisplay($this->getExpectedValue(), $this->getBadValue())->toString(), $results->getComparisonDisplay()->toString());
+        $this->assertInstanceOf($this->getSummaryAssertionMessageClass(), $results->getSummary());
+        $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
     }
 
 }

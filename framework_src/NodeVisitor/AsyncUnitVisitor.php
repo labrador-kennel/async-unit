@@ -11,15 +11,16 @@ use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\AttributeGroupTraverser;
 use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
+use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use Cspray\Labrador\AsyncUnit\TestSuite;
-use PhpParser\Builder\Class_;
 use PhpParser\Node;
 use PhpParser\NodeVisitor;
 use PhpParser\NodeVisitorAbstract;
 
 /**
+ * Responsible for
  * @internal
  */
 final class AsyncUnitVisitor extends NodeVisitorAbstract implements NodeVisitor {
@@ -60,13 +61,20 @@ final class AsyncUnitVisitor extends NodeVisitorAbstract implements NodeVisitor 
     }
 
     public function enterNode(Node $node) {
+        $validPluginTypes = [
+            CustomAssertionPlugin::class,
+            ResultPrinterPlugin::class
+        ];
         if ($node instanceof Node\Stmt\Class_) {
             if (is_subclass_of($node->namespacedName->toString(), TestCase::class)) {
                 $this->testCases[] = $node;
             } else if (is_subclass_of($node->namespacedName->toString(), TestSuite::class)) {
                 $this->testSuites[] = $node;
-            } else if (is_subclass_of($node->namespacedName->toString(), CustomAssertionPlugin::class)) {
-                $this->plugins[] = $node;
+            }
+            foreach ($validPluginTypes as $validPluginType) {
+                if (is_subclass_of($node->namespacedName->toString(), $validPluginType)) {
+                    $this->plugins[] = $node;
+                }
             }
         } else if ($node instanceof Node\Stmt\ClassMethod) {
             if ($this->hasAnyAsyncUnitAttribute($node)) {

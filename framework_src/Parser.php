@@ -4,14 +4,14 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\HookModel;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
-use Cspray\Labrador\AsyncUnit\Model\TestMethodModel;
+use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
-use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\NodeVisitor\AsyncUnitVisitor;
 use PhpParser\Node\Stmt\Class_;
 use PhpParser\NodeTraverser;
@@ -26,10 +26,22 @@ use Generator;
 use SplFileInfo;
 use stdClass;
 
+/**
+ * Responsible for iterating over a directory of PHP source code, analyzing it for code annotated with AysncUnit
+ * Attributes, and converting them into the appropriate AsyncUnit Model.
+ *
+ * !! Synchronous Warning !!
+ *
+ * To simplify getting started this implementation currently makes use of blocking I/O structures provided by PHP
+ * natively. It is expected that the Parser will run BEFORE the Loop starts up or as one of the very first actions
+ * that happens after Loop startup. Ultimately parsing the code and ensuring there are no errors and there is something
+ * to process needs to be done before any application is able to run so this currently doesn't represent a primary
+ * concern. In future versions of this library the Parser may be refactored to use asynchronous I/O.
+ *
+ * @package Cspray\Labrador\AsyncUnit
+ * @see AsyncUnitVisitor
+ */
 final class Parser {
-
-    private const REQUIRE_HOOK_IS_STATIC = true;
-    private const DO_NOT_REQUIRE_HOOK_IS_STATIC = false;
 
     use AttributeGroupTraverser;
 
@@ -194,7 +206,7 @@ final class Parser {
                 continue;
             }
             if ($classMethod->getAttribute('parent')->namespacedName->toString() === $className) {
-                $testMethodModel = new TestMethodModel($testCaseModel->getClass(), $classMethod->name->toString());
+                $testMethodModel = new TestModel($testCaseModel->getClass(), $classMethod->name->toString());
                 $dataProviderAttribute = $this->findAttribute(DataProvider::class, ...$classMethod->attrGroups);
                 if (!is_null($dataProviderAttribute)) {
                     $testMethodModel->setDataProvider($dataProviderAttribute->args[0]->value->value);

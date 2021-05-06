@@ -21,12 +21,12 @@ final class TestCaseModel {
         return $this->testCaseClass;
     }
 
-    public function addTestMethodModel(TestMethodModel $testMethodModel) : void {
+    public function addTestMethodModel(TestModel $testMethodModel) : void {
         $this->testMethodModels[] = $testMethodModel;
     }
 
     /**
-     * @return TestMethodModel[]
+     * @return TestModel[]
      */
     public function getTestMethodModels() : array {
         return $this->testMethodModels;

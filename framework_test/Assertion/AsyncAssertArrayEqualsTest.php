@@ -4,8 +4,8 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
@@ -34,7 +34,15 @@ class AsyncAssertArrayEqualsTest extends AbstractAsyncAssertionTestCase {
         return 'array';
     }
 
-    protected function getExpectedAssertionComparisonDisplay($expected, $actual) : AssertionComparisonDisplay {
-        return new BinaryVarExportAssertionComparisonDisplay($expected, $actual);
+    protected function getInvalidTypeAssertionMessageClass() : string {
+        return InvalidTypeBinaryOperandSummary::class;
+    }
+
+    protected function getSummaryAssertionMessageClass() : string {
+        return BinaryOperandSummary::class;
+    }
+
+    protected function getDetailsAssertionMessageClass() : string {
+        return BinaryOperandSummary::class;
     }
 }

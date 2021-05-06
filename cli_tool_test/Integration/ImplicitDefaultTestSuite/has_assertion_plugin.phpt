@@ -12,7 +12,7 @@ echo PHP_EOL, 'Status: ', $statusCode, PHP_EOL;
 --EXPECTF--
 AsyncUnit v%s - %s
 
-Runtime: PHP 8.0.3
+Runtime: PHP 8.0.%d
 
 .
 
