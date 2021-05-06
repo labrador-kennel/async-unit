@@ -3,16 +3,19 @@
 
 namespace Cspray\Labrador\AsyncUnit\Protocol;
 
+
 use Amp\Coroutine;
 use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Attribute\Protocol;
 use Cspray\Labrador\AsyncUnit\Attribute\ProtocolRequiresAttribute;
+use Cspray\Labrador\AsyncUnit\TestSuite;
+use Generator;
 
-#[Protocol]
+#[Protocol([TestSuite::class])]
 #[ProtocolRequiresAttribute(BeforeAll::class)]
-interface BeforeAllProtocol {
+interface TestSuiteBeforeAllProtocol {
 
-    public static function beforeAll() : Promise|\Generator|Coroutine|null;
+    public function beforeAll() : Promise|Generator|Coroutine|null;
 
 }
