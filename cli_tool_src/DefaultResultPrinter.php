@@ -71,12 +71,12 @@ final class DefaultResultPrinter {
                 ));
                 $exception = $failedTestEvent->getTarget()->getException();
                 if ($exception instanceof AssertionFailedException) {
-                    yield $output->write($failedTestEvent->getTarget()->getFailureException()->getDetailedMessage() . "\n");
+                    yield $output->write($exception->getDetailedMessage() . "\n");
                     yield $output->write("\n");
                     yield $output->write(sprintf(
                         "%s:%d\n",
-                        $failedTestEvent->getTarget()->getFailureException()->getAssertionFailureFile(),
-                        $failedTestEvent->getTarget()->getFailureException()->getAssertionFailureLine()
+                        $exception->getAssertionFailureFile(),
+                        $exception->getAssertionFailureLine()
                     ));
                     yield $output->write("\n");
                 } else {
