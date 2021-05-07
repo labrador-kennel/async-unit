@@ -4,10 +4,10 @@ namespace Cspray\Labrador\AsyncUnitCli\Command;
 
 use Cspray\Labrador\AsyncUnitCli\AsyncUnitFrameworkRunner;
 use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
-use Cspray\Labrador\AsyncUnitCli\SymfonyConsoleTerminalOutput;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use function Amp\ByteStream\getStdout;
 
 class RunTestsFromConfigurationCommand extends Command {
 
@@ -32,7 +32,7 @@ class RunTestsFromConfigurationCommand extends Command {
 
         $configuration = $this->configurationFactory->make($this->configFile);
 
-        $isOk = $this->frameworkRunner->run($configuration->getTestDirectories(), new SymfonyConsoleTerminalOutput($output));
+        $isOk = $this->frameworkRunner->run($configuration->getTestDirectories(), getStdout());
 
         return $isOk ? Command::SUCCESS : Command::FAILURE;
     }

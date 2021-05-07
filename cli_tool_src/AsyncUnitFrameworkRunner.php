@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnitCli;
 
+use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
@@ -9,7 +10,6 @@ use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Parser;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplication;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
-use Cspray\Labrador\AsyncUnit\TestOutput;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Cspray\Labrador\Engine;
 
@@ -20,7 +20,7 @@ class AsyncUnitFrameworkRunner {
         private string $version
     ) {}
 
-    public function run(array $testDirs, TestOutput $terminalOutput) : bool {
+    public function run(array $testDirs, OutputStream $terminalOutput) : bool {
         $injector = $this->applicationObjectGraph->wireObjectGraph();
 
         /** @var Parser $parser */

@@ -11,7 +11,8 @@
     "cspray/labrador-async-event": "^2.3",
     "cspray/labrador": "^3.2.0-alpha3",
     "symfony/console": "^5.2",
-    "opis/json-schema": "^2.0"
+    "opis/json-schema": "^2.0",
+    "amphp/byte-stream": "^1.8"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5"

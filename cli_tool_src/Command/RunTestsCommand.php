@@ -8,6 +8,7 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use function Amp\ByteStream\getStdout;
 
 class RunTestsCommand extends Command {
 
@@ -34,7 +35,7 @@ class RunTestsCommand extends Command {
             $directories[] = $this->cwd . '/' . $testDir;
         }
 
-        $isOk = $this->frameworkRunner->run($directories, new SymfonyConsoleTerminalOutput($output));
+        $isOk = $this->frameworkRunner->run($directories, getStdout());
         return $isOk ? Command::SUCCESS : Command::FAILURE;
     }
 
