@@ -9,6 +9,7 @@ use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
@@ -47,12 +48,18 @@ final class TestSuiteRunner {
                 $testSuite = (new ReflectionClass($testSuiteClass))->newInstanceWithoutConstructor();
 
                 yield $this->emitter->emit(new TestSuiteStartedEvent($testSuiteModel));
-                yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeAll', TestSuiteSetUpException::class);
+                if (!$testSuiteModel->isDisabled()) {
+                    yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeAll', TestSuiteSetUpException::class);
+                }
 
                 foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
                     yield $this->emitter->emit(new TestCaseStartedEvent($testCaseModel));
-                    yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeEach', TestSuiteSetUpException::class);
-                    yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'BeforeAll', TestCaseSetUpException::class, [$testSuite]);
+                    if (!$testSuiteModel->isDisabled()) {
+                        yield $this->invokeHooks($testSuite, $testSuiteModel, 'BeforeEach', TestSuiteSetUpException::class);
+                    }
+                    if (!$testCaseModel->isDisabled()) {
+                        yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'BeforeAll', TestCaseSetUpException::class, [$testSuite]);
+                    }
 
                     foreach ($testCaseModel->getTestMethodModels() as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
@@ -87,12 +94,18 @@ final class TestSuiteRunner {
                         }
                     }
 
-                    yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'AfterAll', TestCaseTearDownException::class, [$testSuite]);
-                    yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterEach', TestSuiteTearDownException::class);
+                    if (!$testCaseModel->isDisabled()) {
+                        yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, 'AfterAll', TestCaseTearDownException::class, [$testSuite]);
+                    }
+                    if (!$testSuiteModel->isDisabled()) {
+                        yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterEach', TestSuiteTearDownException::class);
+                    }
                     yield $this->emitter->emit(new TestCaseFinishedEvent($testCaseModel));
                 }
 
-                yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterAll', TestSuiteTearDownException::class);
+                if (!$testSuiteModel->isDisabled()) {
+                    yield $this->invokeHooks($testSuite, $testSuiteModel, 'AfterAll', TestSuiteTearDownException::class);
+                }
                 yield $this->emitter->emit(new TestSuiteFinishedEvent($testSuiteModel));
             }
         });
@@ -139,13 +152,14 @@ final class TestSuiteRunner {
     ) : Promise {
         return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
             if ($testMethodModel->isDisabled()) {
-                $msg = sprintf(
-                    '%s::%s has been marked disabled via annotation',
-                    $testCaseModel->getClass(),
-                    $testMethodModel->getMethod()
-                );
+                $msg = $testMethodModel->getDisabledReason() ??
+                    $testCaseModel->getDisabledReason() ??
+                    $testSuiteModel->getDisabledReason() ??
+                    sprintf('%s::%s has been marked disabled via annotation', $testCaseModel->getClass(), $testMethodModel->getMethod());
                 $exception = new TestDisabledException($msg);
-                yield $this->emitter->emit(new TestProcessedEvent($this->getDisabledTestResult($testCase, $testMethodModel->getMethod(), $exception)));
+                $testResult = $this->getDisabledTestResult($testCase, $testMethodModel->getMethod(), $exception);
+                yield $this->emitter->emit(new TestProcessedEvent($testResult));
+                yield $this->emitter->emit(new TestDisabledEvent($testResult));
                 return;
             }
 

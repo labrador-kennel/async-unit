@@ -75,10 +75,18 @@ final class Parser {
                 }
             } else if ($model instanceof TestCaseModel) {
                 $parseState->totalTestCaseCount++;
+                $testCaseTestSuite = null;
                 if (is_null($model->getTestSuiteClass())) {
-                    $defaultTestSuite->addTestCaseModel($model);
+                    $testCaseTestSuite = $defaultTestSuite;
                 } else {
-                    $nonDefaultTestSuites[$model->getTestSuiteClass()]->addTestCaseModel($model);
+                    $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
+                }
+                $testCaseTestSuite->addTestCaseModel($model);
+                if ($testCaseTestSuite->isDisabled()) {
+                    $model->markDisabled();
+                    foreach ($model->getTestMethodModels() as $testMethodModel) {
+                        $testMethodModel->markDisabled();
+                    }
                 }
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
@@ -110,6 +118,14 @@ final class Parser {
             $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
             $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
 
+            if ($disabledAttribute = $this->findAttribute(Disabled::class, ...$testSuiteClass->attrGroups)) {
+                $reason = null;
+                if (count($disabledAttribute->args) === 1) {
+                    $reason = $disabledAttribute->args[0]->value->value;
+                }
+                $testSuiteModel->markDisabled($reason);
+            }
+
             yield $testSuiteModel;
         }
         if (!$hasDefaultTestSuite) {
@@ -130,6 +146,13 @@ final class Parser {
             }
 
             $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString(), $testSuiteClassName);
+            if ($disabledAttribute = $this->findAttribute(Disabled::class, ...$testCaseClass->attrGroups)) {
+                $reason = null;
+                if (count($disabledAttribute->args) === 1) {
+                    $reason = $disabledAttribute->args[0]->value->value;
+                }
+                $testCaseModel->markDisabled($reason);
+            }
 
             $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getClass(), $state);
             if (empty($testCaseModel->getTestMethodModels())) {
@@ -144,6 +167,7 @@ final class Parser {
             $this->addHooks($testCaseModel, $classMethods, 'BeforeEach');
             $this->addHooks($testCaseModel, $classMethods, 'AfterEach');
             $this->addHooks($testCaseModel, $classMethods, 'AfterAll');
+
             yield $testCaseModel;
         }
 
@@ -209,8 +233,12 @@ final class Parser {
                 }
 
                 $disabledAttribute = $this->findAttribute(Disabled::class, ...$classMethod->attrGroups);
-                if (!is_null($disabledAttribute)) {
-                    $testMethodModel->markDisabled();
+                if (!is_null($disabledAttribute) || $testCaseModel->isDisabled()) {
+                    $reason = null;
+                    if (!is_null($disabledAttribute) && count($disabledAttribute->args) === 1) {
+                        $reason = $disabledAttribute->args[0]->value->value;
+                    }
+                    $testMethodModel->markDisabled($reason);
                 }
 
                 $parseState->totalTestCount++;

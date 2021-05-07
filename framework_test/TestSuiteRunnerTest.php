@@ -5,10 +5,15 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Loop;
 use Amp\Success;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
+use Cspray\Labrador\AsyncEvent\Event;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
@@ -776,6 +781,26 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testTestMethodIsNotInvokedWhenTestCaseDisabled() : void {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabled');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
+                $state->events[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(3, $state->events);
+            $isDisabled = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->isDisabled(), $state->events);
+            $this->assertSame([true, true, true], $isDisabled);
+            $testCaseData = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->getTestCase()->getData(), $state->events);
+            $this->assertSame([[], [], []], $testCaseData);
+        });
+    }
+
     public function testTestResultWhenTestDisabled() : void {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
@@ -819,13 +844,177 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
-    /**
-     * @param TestProcessedEvent[] $events
-     * @param string $testClass
-     * @param string $method
-     * @return TestProcessedEvent
-     */
-    private function fetchTestProcessedEventForTest(array $events, string $testClass, string $method) : TestProcessedEvent {
+    public function testImplicitDefaultTestSuiteTestDisabledHookNotInvoked() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestDisabledHookNotInvoked');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(2, $state->events);
+
+            $disabledTestEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'disabledTest');
+
+            $this->assertTrue($disabledTestEvent->getTarget()->isDisabled());
+            $this->assertFalse($disabledTestEvent->getTarget()->isSuccessful());
+            $this->assertSame([], $disabledTestEvent->getTarget()->getTestCase()->getState());
+
+            $enabledTestEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'enabledTest');
+
+            $this->assertTrue($enabledTestEvent->getTarget()->isSuccessful());
+            $this->assertFalse($enabledTestEvent->getTarget()->isDisabled());
+            $this->assertSame(['before', 'enabled', 'after'], $enabledTestEvent->getTarget()->getTestCase()->getState());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestCaseDisabledHookNotInvoked() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledHookNotInvoked');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(2, $state->events);
+
+            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testOne');
+
+            $this->assertTrue($testOneEvent->getTarget()->isDisabled());
+            $this->assertFalse($testOneEvent->getTarget()->isSuccessful());
+            $this->assertSame([], $testOneEvent->getTarget()->getTestCase()->getState());
+
+            $testTwoEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testTwo');
+
+            $this->assertTrue($testTwoEvent->getTarget()->isDisabled());
+            $this->assertFalse($testTwoEvent->getTarget()->isSuccessful());
+            $this->assertSame([], $testTwoEvent->getTarget()->getTestCase()->getState());
+        });
+    }
+
+    public function testExplicitTestSuiteTestSuiteDisabledHookNotInvoked() {
+        Loop::run(function() {
+            $dir = $this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+
+            $testSomethingEvent = $this->fetchTestProcessedEventForTest($state->events, ExplicitTestSuite\TestSuiteDisabledHookNotInvoked\MyTestCase::class, 'testSomething');
+
+            $this->assertTrue($testSomethingEvent->getTarget()->isDisabled());
+            $this->assertFalse($testSomethingEvent->getTarget()->isSuccessful());
+
+            $this->assertSame([], $testSomethingEvent->getTarget()->getTestCase()->testSuite()->getState());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestDisabledCustomMessage() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestDisabledCustomMessage');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+
+            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class, 'testOne');
+
+            $this->assertTrue($testOneEvent->getTarget()->isDisabled());
+            $this->assertFalse($testOneEvent->getTarget()->isSuccessful());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
+            $this->assertSame('Not sure what we should do here yet', $testOneEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestCaseDisabledCustomMessage() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+
+            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledCustomMessage\MyTestCase::class, 'testOne');
+
+            $this->assertTrue($testOneEvent->getTarget()->isDisabled());
+            $this->assertFalse($testOneEvent->getTarget()->isSuccessful());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
+            $this->assertSame('The TestCase is disabled', $testOneEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testExplicitTestSuiteTestSuiteDisabledCustomMessage() {
+        Loop::run(function() {
+            $dir = $this->explicitTestSuitePath('TestSuiteDisabledCustomMessage');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+
+            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestCase::class, 'testOne');
+
+            $this->assertTrue($testOneEvent->getTarget()->isDisabled());
+            $this->assertFalse($testOneEvent->getTarget()->isSuccessful());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
+            $this->assertSame('The TestSuite is disabled', $testOneEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestDisabledEvents() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestDisabledEvents');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new \stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(3, $state->events);
+
+            $failingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testFailingFloatEquals');
+
+            $this->assertInstanceOf(TestFailedEvent::class, $failingEvent);
+            $this->assertFalse($failingEvent->getTarget()->isSuccessful());
+            $this->assertFalse($failingEvent->getTarget()->isDisabled());
+
+            $passingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsTrue');
+
+            $this->assertInstanceOf(TestPassedEvent::class, $passingEvent);
+            $this->assertTrue($passingEvent->getTarget()->isSuccessful());
+            $this->assertFalse($passingEvent->getTarget()->isDisabled());
+
+            $disabledEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsDisabled');
+
+            $this->assertInstanceOf(TestDisabledEvent::class, $disabledEvent);
+            $this->assertFalse($disabledEvent->getTarget()->isSuccessful());
+            $this->assertTrue($disabledEvent->getTarget()->isDisabled());
+        });
+    }
+
+    private function fetchTestProcessedEventForTest(array $events, string $testClass, string $method) : Event {
         foreach ($events as $event) {
             if ($event->getTarget()->getTestCase()::class === $testClass && $event->getTarget()->getTestMethod() === $method) {
                 return $event;

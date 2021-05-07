@@ -16,6 +16,8 @@ interface Events {
 
     const TEST_FAILED = 'labrador.asyncUnit.testFailed';
 
+    const TEST_DISABLED = 'labrador.asyncUnit.testDisabled';
+
     const TEST_CASE_FINISHED = 'labrador.asyncUnit.testCaseFinished';
 
     const TEST_SUITE_FINISHED = 'labrador.asyncUnit.testSuiteFinished';

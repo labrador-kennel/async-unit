@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Model;
 final class TestCaseModel {
 
     use HookAware;
+    use CanBeDisabledTrait;
 
     private array $testMethodModels = [];
 
