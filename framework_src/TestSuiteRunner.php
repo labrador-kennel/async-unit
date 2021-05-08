@@ -47,6 +47,7 @@ final class TestSuiteRunner {
 
     public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
         return call(function() use($testSuiteModels) {
+            $testSuiteModels = $this->randomizer->randomize($testSuiteModels);
             foreach ($testSuiteModels as $testSuiteModel) {
                 $testSuiteClass = $testSuiteModel->getClass();
                 /** @var TestSuite $testSuite */
@@ -57,7 +58,8 @@ final class TestSuiteRunner {
                     yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeAll(), TestSuiteSetUpException::class);
                 }
 
-                foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
+                $testCaseModels = $this->randomizer->randomize($testSuiteModel->getTestCaseModels());
+                foreach ($testCaseModels as $testCaseModel) {
                     yield $this->emitter->emit(new TestCaseStartedEvent($testCaseModel));
                     if (!$testSuiteModel->isDisabled()) {
                         yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeEach(), TestSuiteSetUpException::class);
@@ -66,7 +68,8 @@ final class TestSuiteRunner {
                         yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, HookType::BeforeAll(), TestCaseSetUpException::class, [$testSuite]);
                     }
 
-                    foreach ($testCaseModel->getTestMethodModels() as $testMethodModel) {
+                    $testMethodModels = $this->randomizer->randomize($testCaseModel->getTestMethodModels());
+                    foreach ($testMethodModels as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */
                         [$testCase, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite);

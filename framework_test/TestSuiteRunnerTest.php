@@ -1023,6 +1023,36 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testRandomizerIsUtilized() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('MultipleTest');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $randomizer = $this->getMockBuilder(Randomizer::class)->getMock();
+
+            $testSuiteRunner = new TestSuiteRunner(
+                $this->emitter,
+                $this->customAssertionContext,
+                $randomizer
+            );
+
+            $this->assertCount(1, $testSuites);
+            $randomizer->expects($this->exactly(3))
+                ->method('randomize')
+                ->withConsecutive(
+                    [$testSuites],
+                    [$testSuites[0]->getTestCaseModels()],
+                    [$testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()]
+                )
+                ->willReturnOnConsecutiveCalls(
+                    $testSuites,
+                    $testSuites[0]->getTestCaseModels(),
+                    $testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()
+                );
+
+            yield $testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
     private function fetchTestProcessedEventForTest(array $events, string $testClass, string $method) : Event {
         foreach ($events as $event) {
             if ($event->getTarget()->getTestCase()::class === $testClass && $event->getTarget()->getTestMethod() === $method) {
