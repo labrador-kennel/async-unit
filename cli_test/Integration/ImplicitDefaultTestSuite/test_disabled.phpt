@@ -16,6 +16,8 @@ Runtime: PHP 8.0.%d
 
 .D
 
+Time: %d:%f, Memory: %d.%d MB
+
 There was 1 disabled test:
 
 1) Acme\DemoSuites\ImplicitDefaultTestSuite\TestDisabled\MyTestCase::skippedTest

@@ -2,6 +2,8 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use SebastianBergmann\Timer\Duration;
+
 interface PostRunSummary {
 
     public function getTotalTestCount() : int;
@@ -15,5 +17,9 @@ interface PostRunSummary {
     public function getFailedTestCount() : int;
 
     public function getDisabledTestCount() : int;
+
+    public function getDuration() : Duration;
+
+    public function getMemoryUsageInBytes() : int;
 
 }
