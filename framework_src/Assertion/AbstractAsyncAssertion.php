@@ -21,5 +21,5 @@ abstract class AbstractAsyncAssertion implements AsyncAssertion {
         });
     }
 
-    abstract protected function getAssertion(mixed $resolvedResolvedActual) : Assertion;
+    abstract protected function getAssertion(mixed $resolvedActual) : Assertion;
 }

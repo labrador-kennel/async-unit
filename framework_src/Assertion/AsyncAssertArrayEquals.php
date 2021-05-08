@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
-class AsyncAssertArrayEquals extends AbstractAsyncAssertion implements AsyncAssertion {
+final class AsyncAssertArrayEquals extends AbstractAsyncAssertion implements AsyncAssertion {
 
     public function __construct(private array $expected, Promise|Generator|Coroutine $actual) {
         parent::__construct($actual);

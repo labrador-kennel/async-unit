@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\TestResult;
 
-class TestDisabledEvent extends StandardEvent implements Event {
+final class TestDisabledEvent extends StandardEvent implements Event {
 
     public function __construct(TestResult $testResult) {
         parent::__construct(Events::TEST_DISABLED, $testResult);

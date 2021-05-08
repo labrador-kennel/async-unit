@@ -13,7 +13,7 @@ use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Cspray\Labrador\Engine;
 
-class AsyncUnitFrameworkRunner {
+final class AsyncUnitFrameworkRunner {
 
     public function __construct(
         private TestFrameworkApplicationObjectGraph $applicationObjectGraph,

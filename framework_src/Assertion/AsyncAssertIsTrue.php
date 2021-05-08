@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
 
-class AsyncAssertIsTrue extends AbstractAsyncAssertion {
+final class AsyncAssertIsTrue extends AbstractAsyncAssertion {
 
     protected function getAssertion(mixed $resolvedActual) : Assertion {
         return new AssertIsTrue($resolvedActual);

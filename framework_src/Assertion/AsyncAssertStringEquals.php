@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 use function Amp\call;
 
-class AsyncAssertStringEquals extends AbstractAsyncAssertion implements AsyncAssertion {
+final class AsyncAssertStringEquals extends AbstractAsyncAssertion implements AsyncAssertion {
 
     public function __construct(private string $expected, Promise|Generator|Coroutine $actual) {
         parent::__construct($actual);

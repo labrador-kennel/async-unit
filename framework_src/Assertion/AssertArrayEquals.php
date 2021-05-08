@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnit\AssertionMessage;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
 
-class AssertArrayEquals extends AbstractAssertion implements Assertion {
+final class AssertArrayEquals extends AbstractAssertion implements Assertion {
 
     protected function isValidType(mixed $actual) : bool {
         return is_array($actual);

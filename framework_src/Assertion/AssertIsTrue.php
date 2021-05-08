@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandDetails
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertIsTrue extends AbstractAssertion implements Assertion {
+final class AssertIsTrue extends AbstractAssertion implements Assertion {
 
     public function __construct(mixed $actual) {
         parent::__construct(true, $actual);

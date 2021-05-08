@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 
-class TestCaseFinishedEvent extends StandardEvent implements Event {
+final class TestCaseFinishedEvent extends StandardEvent implements Event {
 
     public function __construct(TestCaseModel $target) {
         parent::__construct(Events::TEST_CASE_FINISHED, $target);

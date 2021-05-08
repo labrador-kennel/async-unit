@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertStringEquals extends AbstractAssertion implements Assertion {
+final class AssertStringEquals extends AbstractAssertion implements Assertion {
 
     protected function isValidType(mixed $actual) : bool {
         return is_string($actual);

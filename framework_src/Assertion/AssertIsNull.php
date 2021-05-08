@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandDetails
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandSummary;
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class AssertIsNull extends AbstractAssertion implements Assertion {
+final class AssertIsNull extends AbstractAssertion implements Assertion {
 
     public function __construct(mixed $actual) {
         parent::__construct(null, $actual);
