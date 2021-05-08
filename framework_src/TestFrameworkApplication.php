@@ -39,17 +39,20 @@ final class TestFrameworkApplication extends AbstractApplication {
         return call(function() {
 
             $testRunState = new stdClass();
-            $testRunState->testsInvoked = 0;
+            $testRunState->testsProcessed = 0;
             $testRunState->failedTests = 0;
+            $testRunState->disabledTests = 0;
             $testRunState->totalAssertionCount = 0;
             $testRunState->totalAsyncAssertionCount = 0;
 
             $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $testInvokedEvent) use($testRunState) {
-                $testRunState->testsInvoked++;
+                $testRunState->testsProcessed++;
                 $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAssertionCount();
                 $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAsyncAssertionCount();
                 if (TestState::Failed()->equals($testInvokedEvent->getTarget()->getState())) {
                     $testRunState->failedTests++;
+                } else if (TestState::Disabled()->equals($testInvokedEvent->getTarget()->getState())) {
+                    $testRunState->disabledTests++;
                 }
             });
 
@@ -89,20 +92,28 @@ final class TestFrameworkApplication extends AbstractApplication {
 
             public function __construct(private stdClass $testRunState) {}
 
-            public function getExecutedTestCount() : int {
-                return $this->testRunState->testsInvoked;
-            }
-
             public function getAssertionCount() : int {
                 return $this->testRunState->totalAssertionCount;
             }
 
-            public function getFailureTestCount() : int {
+            public function getAsyncAssertionCount() : int {
+                return $this->testRunState->totalAsyncAssertionCount;
+            }
+
+            public function getTotalTestCount() : int {
+                return $this->testRunState->testsProcessed;
+            }
+
+            public function getPassedTestCount() : int {
+                return $this->getTotalTestCount() - $this->getFailedTestCount() - $this->getDisabledTestCount();
+            }
+
+            public function getFailedTestCount() : int {
                 return $this->testRunState->failedTests;
             }
 
-            public function getAsyncAssertionCount() : int {
-                return $this->testRunState->totalAsyncAssertionCount;
+            public function getDisabledTestCount() : int {
+                return $this->testRunState->disabledTests;
             }
         };
     }

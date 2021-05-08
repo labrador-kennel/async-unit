@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnitCli;
 
 use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
@@ -17,12 +18,18 @@ final class DefaultResultPrinter {
      */
     private array $failedTests = [];
 
+    /**
+     * @var TestDisabledEvent[]
+     */
+    private array $disabledTests = [];
+
     public function __construct(private string $version) {}
 
     public function registerEvents(EventEmitter $emitter, OutputStream $output) : void {
         $emitter->once(Events::TEST_PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
         $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($output));
         $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $output));
+        $emitter->on(Events::TEST_DISABLED, fn($event) => $this->testDisabled($event, $output));
         $emitter->once(Events::TEST_PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
     }
 
@@ -44,6 +51,11 @@ final class DefaultResultPrinter {
         yield $output->write('.');
     }
 
+    private function testDisabled(TestDisabledEvent $disabledEvent, OutputStream $output) : Generator {
+        $this->disabledTests[] = $disabledEvent;
+        yield $output->write('D');
+    }
+
     private function testFailed(TestFailedEvent $failedEvent, OutputStream $output) : Generator {
         $this->failedTests[] = $failedEvent;
         yield $output->write('X');
@@ -51,16 +63,8 @@ final class DefaultResultPrinter {
 
     private function testProcessingFinished(TestProcessingFinishedEvent $event, OutputStream $output) : Generator {
         yield $output->write("\n\n");
-        if ($event->getTarget()->getFailureTestCount() === 0) {
-            yield $output->write("OK!\n");
-            yield $output->write(sprintf(
-                "Tests: %d, Assertions: %d, Async Assertions: %d\n",
-                $event->getTarget()->getExecutedTestCount(),
-                $event->getTarget()->getAssertionCount(),
-                $event->getTarget()->getAsyncAssertionCount()
-            ));
-        } else {
-            yield $output->write(sprintf("There was %d failure:\n", $event->getTarget()->getFailureTestCount()));
+        if ($event->getTarget()->getFailedTestCount() > 0) {
+            yield $output->write(sprintf("There was %d failure:\n", $event->getTarget()->getFailedTestCount()));
             yield $output->write("\n");
             foreach ($this->failedTests as $index => $failedTestEvent) {
                 yield $output->write(sprintf(
@@ -97,8 +101,39 @@ final class DefaultResultPrinter {
             yield $output->write("FAILURES\n");
             yield $output->write(sprintf(
                 "Tests: %d, Failures: %d, Assertions: %d, Async Assertions: %d\n",
-                $event->getTarget()->getExecutedTestCount(),
-                $event->getTarget()->getFailureTestCount(),
+                $event->getTarget()->getTotalTestCount(),
+                $event->getTarget()->getFailedTestCount(),
+                $event->getTarget()->getAssertionCount(),
+                $event->getTarget()->getAsyncAssertionCount()
+            ));
+        }
+
+        if ($event->getTarget()->getDisabledTestCount() > 0) {
+            yield $output->write(sprintf("There was %d disabled test:\n", $event->getTarget()->getDisabledTestCount()));
+            yield $output->write("\n");
+            foreach ($this->disabledTests as $index => $disabledEvent) {
+                yield $output->write(sprintf(
+                    "%d) %s::%s\n",
+                    $index + 1,
+                    $disabledEvent->getTarget()->getTestCase()::class,
+                    $disabledEvent->getTarget()->getTestMethod()
+                ));
+            }
+            yield $output->write("\n");
+            yield $output->write(sprintf(
+                "Tests: %d, Disabled Tests: %d, Assertions: %d, Async Assertions: %d\n",
+                $event->getTarget()->getTotalTestCount(),
+                $event->getTarget()->getDisabledTestCount(),
+                $event->getTarget()->getAssertionCount(),
+                $event->getTarget()->getAsyncAssertionCount()
+            ));
+        }
+
+        if ($event->getTarget()->getTotalTestCount() === $event->getTarget()->getPassedTestCount()) {
+            yield $output->write("OK!\n");
+            yield $output->write(sprintf(
+                "Tests: %d, Assertions: %d, Async Assertions: %d\n",
+                $event->getTarget()->getTotalTestCount(),
                 $event->getTarget()->getAssertionCount(),
                 $event->getTarget()->getAsyncAssertionCount()
             ));

@@ -42,11 +42,16 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         $state->passed->events = [];
         $state->failed = new \stdClass();
         $state->failed->events = [];
+        $state->disabled = new \stdClass();
+        $state->disabled->events = [];
         $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
             $state->passed->events[] = $event;
         });
         $this->emitter->on(Events::TEST_FAILED, function($event) use($state) {
             $state->failed->events[] = $event;
+        });
+        $this->emitter->on(Events::TEST_DISABLED, function($event) use($state) {
+            $state->disabled->events[] = $event;
         });
 
         $parserResult = $this->injector->make(Parser::class)->parse($dirs);
@@ -186,8 +191,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $testFinishedEvent = $state->data[0];
 
             $this->assertInstanceOf(TestProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame(9, $testFinishedEvent->getTarget()->getExecutedTestCount());
-            $this->assertSame(1, $testFinishedEvent->getTarget()->getFailureTestCount());
+            $this->assertSame(9, $testFinishedEvent->getTarget()->getTotalTestCount());
+            $this->assertSame(1, $testFinishedEvent->getTarget()->getFailedTestCount());
+            $this->assertSame(8, $testFinishedEvent->getTarget()->getPassedTestCount());
             $this->assertSame(18, $testFinishedEvent->getTarget()->getAssertionCount());
             $this->assertSame(4, $testFinishedEvent->getTarget()->getAsyncAssertionCount());
         });
@@ -248,6 +254,29 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $this->assertCount(0, $state->failed->events);
 
             $this->assertSame('AsyncUnit', $state->passed->events[0]->getTarget()->getTestCase()->getState());
+        });
+    }
+
+    public function testExplicitTestSuiteTestSuiteDisabledPostRunSummary() {
+        Loop::run(function() {
+            [$state, $application] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteDisabled')]);
+
+            $postRunSummary = null;
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$postRunSummary) {
+                $postRunSummary = $event->getTarget();
+            });
+
+            yield $application->start();
+            $this->assertCount(3, $state->disabled->events);
+            $this->assertCount(0, $state->passed->events);
+            $this->assertCount(0, $state->failed->events);
+
+            $this->assertInstanceOf(PostRunSummary::class, $postRunSummary);
+
+            $this->assertSame(3, $postRunSummary->getTotalTestCount());
+            $this->assertSame(0, $postRunSummary->getPassedTestCount());
+            $this->assertSame(0, $postRunSummary->getFailedTestCount());
+            $this->assertSame(3, $postRunSummary->getDisabledTestCount());
         });
     }
 

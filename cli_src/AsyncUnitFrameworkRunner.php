@@ -32,7 +32,7 @@ final class AsyncUnitFrameworkRunner {
         $emitter = $injector->make(EventEmitter::class);
         $hasFailedTests = false;
         $emitter->once(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$hasFailedTests) {
-            $hasFailedTests = $event->getTarget()->getFailureTestCount() !== 0;
+            $hasFailedTests = $event->getTarget()->getFailedTestCount() !== 0;
         });
 
         /** @var TestFrameworkApplication $app */

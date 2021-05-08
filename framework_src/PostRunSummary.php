@@ -4,12 +4,16 @@ namespace Cspray\Labrador\AsyncUnit;
 
 interface PostRunSummary {
 
-    public function getExecutedTestCount() : int;
+    public function getTotalTestCount() : int;
 
     public function getAssertionCount() : int;
 
     public function getAsyncAssertionCount() : int;
 
-    public function getFailureTestCount() : int;
+    public function getPassedTestCount() : int;
+
+    public function getFailedTestCount() : int;
+
+    public function getDisabledTestCount() : int;
 
 }
