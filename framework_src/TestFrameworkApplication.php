@@ -12,7 +12,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
-use Cspray\Labrador\AsyncUnit\Event\TestInvokedEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\Plugin\Pluggable;
 use stdClass;
 use function Amp\call;
@@ -39,17 +39,20 @@ final class TestFrameworkApplication extends AbstractApplication {
         return call(function() {
 
             $testRunState = new stdClass();
-            $testRunState->testsInvoked = 0;
+            $testRunState->testsProcessed = 0;
             $testRunState->failedTests = 0;
+            $testRunState->disabledTests = 0;
             $testRunState->totalAssertionCount = 0;
             $testRunState->totalAsyncAssertionCount = 0;
 
-            $this->emitter->on(Events::TEST_INVOKED, function(TestInvokedEvent $testInvokedEvent) use($testRunState) {
-                $testRunState->testsInvoked++;
+            $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $testInvokedEvent) use($testRunState) {
+                $testRunState->testsProcessed++;
                 $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAssertionCount();
                 $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAsyncAssertionCount();
-                if (!$testInvokedEvent->getTarget()->isSuccessful()) {
+                if (TestState::Failed()->equals($testInvokedEvent->getTarget()->getState())) {
                     $testRunState->failedTests++;
+                } else if (TestState::Disabled()->equals($testInvokedEvent->getTarget()->getState())) {
+                    $testRunState->disabledTests++;
                 }
             });
 
@@ -89,54 +92,28 @@ final class TestFrameworkApplication extends AbstractApplication {
 
             public function __construct(private stdClass $testRunState) {}
 
-            public function getExecutedTestCount() : int {
-                return $this->testRunState->testsInvoked;
-            }
-
             public function getAssertionCount() : int {
                 return $this->testRunState->totalAssertionCount;
-            }
-
-            public function getFailureTestCount() : int {
-                return $this->testRunState->failedTests;
             }
 
             public function getAsyncAssertionCount() : int {
                 return $this->testRunState->totalAsyncAssertionCount;
             }
-        };
-    }
 
-    private function getTestResult(
-        TestCase $testCase,
-        string $method,
-        ?TestFailedException $testFailedException
-    ) : TestResult {
-        return new class($testCase, $method, $testFailedException) implements TestResult {
-
-            public function __construct(
-                private TestCase $testCase,
-                private string $method,
-                private ?TestFailedException $testFailedException
-            ) {}
-
-            public function getTestCase() : TestCase {
-                return $this->testCase;
+            public function getTotalTestCount() : int {
+                return $this->testRunState->testsProcessed;
             }
 
-            public function getTestMethod() : string {
-                return $this->method;
+            public function getPassedTestCount() : int {
+                return $this->getTotalTestCount() - $this->getFailedTestCount() - $this->getDisabledTestCount();
             }
 
-            public function isSuccessful() : bool {
-                return is_null($this->testFailedException);
+            public function getFailedTestCount() : int {
+                return $this->testRunState->failedTests;
             }
 
-            public function getFailureException() : TestFailedException|AssertionFailedException {
-                if (is_null($this->testFailedException)) {
-                    throw new InvalidStateException('Attempted to access a TestFailedException on a successful TestResult.');
-                }
-                return $this->testFailedException;
+            public function getDisabledTestCount() : int {
+                return $this->testRunState->disabledTests;
             }
         };
     }

@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 
-class TestSuiteStartedEvent extends StandardEvent implements Event {
+final class TestSuiteStartedEvent extends StandardEvent implements Event {
 
     public function __construct(TestSuiteModel $target) {
         parent::__construct(Events::TEST_SUITE_STARTED, $target);

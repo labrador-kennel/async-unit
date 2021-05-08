@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Model;
 final class TestModel {
 
     use MethodModelTrait;
+    use CanBeDisabledTrait;
 
     private ?string $dataProvider = null;
 

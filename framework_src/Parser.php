@@ -3,8 +3,9 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
+use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite as TestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\HookModel;
@@ -74,10 +75,18 @@ final class Parser {
                 }
             } else if ($model instanceof TestCaseModel) {
                 $parseState->totalTestCaseCount++;
+                $testCaseTestSuite = null;
                 if (is_null($model->getTestSuiteClass())) {
-                    $defaultTestSuite->addTestCaseModel($model);
+                    $testCaseTestSuite = $defaultTestSuite;
                 } else {
-                    $nonDefaultTestSuites[$model->getTestSuiteClass()]->addTestCaseModel($model);
+                    $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
+                }
+                $testCaseTestSuite->addTestCaseModel($model);
+                if ($testCaseTestSuite->isDisabled()) {
+                    $model->markDisabled();
+                    foreach ($model->getTestMethodModels() as $testMethodModel) {
+                        $testMethodModel->markDisabled();
+                    }
                 }
             } else if ($model instanceof PluginModel) {
                 $plugins[] = $model;
@@ -109,10 +118,18 @@ final class Parser {
             $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
             $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
 
+            if ($disabledAttribute = $this->findAttribute(Disabled::class, ...$testSuiteClass->attrGroups)) {
+                $reason = null;
+                if (count($disabledAttribute->args) === 1) {
+                    $reason = $disabledAttribute->args[0]->value->value;
+                }
+                $testSuiteModel->markDisabled($reason);
+            }
+
             yield $testSuiteModel;
         }
         if (!$hasDefaultTestSuite) {
-            yield new TestSuiteModel(DefaultTestSuite::class, true);
+            yield new TestSuiteModel(ImplicitTestSuite::class, true);
         }
 
         $testCaseClasses = $asyncUnitVisitor->getTestCases();
@@ -124,11 +141,18 @@ final class Parser {
             $testSuiteAttribute = $this->findAttribute(TestSuiteAttribute::class, ...$testCaseClass->attrGroups);
             $testSuiteClassName = null;
             if (!is_null($testSuiteAttribute)) {
-                // Right now we are making a huge assumption that the TestSuite is being specified by declaring it as a class constant, i.e. MyTestSuite::class
+                // Right now we are making a huge assumption that the AttachToTestSuite is being specified by declaring it as a class constant, i.e. MyTestSuite::class
                 $testSuiteClassName = $testSuiteAttribute->args[0]->value->class->toString();
             }
 
             $testCaseModel = new TestCaseModel($testCaseClass->namespacedName->toString(), $testSuiteClassName);
+            if ($disabledAttribute = $this->findAttribute(Disabled::class, ...$testCaseClass->attrGroups)) {
+                $reason = null;
+                if (count($disabledAttribute->args) === 1) {
+                    $reason = $disabledAttribute->args[0]->value->value;
+                }
+                $testCaseModel->markDisabled($reason);
+            }
 
             $this->addTestsToTestCaseModel($testCaseClasses, $classMethods, $testCaseModel, $testCaseModel->getClass(), $state);
             if (empty($testCaseModel->getTestMethodModels())) {
@@ -143,6 +167,7 @@ final class Parser {
             $this->addHooks($testCaseModel, $classMethods, 'BeforeEach');
             $this->addHooks($testCaseModel, $classMethods, 'AfterEach');
             $this->addHooks($testCaseModel, $classMethods, 'AfterAll');
+
             yield $testCaseModel;
         }
 
@@ -207,6 +232,15 @@ final class Parser {
                     $testMethodModel->setDataProvider($dataProviderAttribute->args[0]->value->value);
                 }
 
+                $disabledAttribute = $this->findAttribute(Disabled::class, ...$classMethod->attrGroups);
+                if (!is_null($disabledAttribute) || $testCaseModel->isDisabled()) {
+                    $reason = null;
+                    if (!is_null($disabledAttribute) && count($disabledAttribute->args) === 1) {
+                        $reason = $disabledAttribute->args[0]->value->value;
+                    }
+                    $testMethodModel->markDisabled($reason);
+                }
+
                 $parseState->totalTestCount++;
                 $testCaseModel->addTestMethodModel($testMethodModel);
             }
@@ -232,11 +266,6 @@ final class Parser {
                 $foundClass = $class;
                 break;
             }
-        }
-
-        // Make sure the Class_ actually extends something
-        if (is_null($foundClass->extends)) {
-            return null;
         }
 
         // Find the class that our Class_->extends matches

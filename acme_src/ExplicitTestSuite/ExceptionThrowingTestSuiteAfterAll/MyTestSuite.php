@@ -12,7 +12,7 @@ class MyTestSuite extends TestSuite {
 
     #[AfterAll]
     public function throwException() {
-        throw new RuntimeException('TestSuite AfterAll');
+        throw new RuntimeException('AttachToTestSuite AfterAll');
     }
 
 }

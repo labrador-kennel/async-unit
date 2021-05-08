@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnitCli\Command\RunTestsFromConfigurationCommand;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
-class AsyncUnitCliApplication extends ConsoleApplication {
+final class AsyncUnitCliApplication extends ConsoleApplication {
 
     public function __construct(
         private ConfigurationFactory $configurationFactory,

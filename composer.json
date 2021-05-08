@@ -12,7 +12,8 @@
     "cspray/labrador": "^3.2.0-alpha3",
     "symfony/console": "^5.2",
     "opis/json-schema": "^2.0",
-    "amphp/byte-stream": "^1.8"
+    "amphp/byte-stream": "^1.8",
+    "cspray/yape": "^3.1"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5"
@@ -20,13 +21,13 @@
   "autoload": {
     "psr-4": {
       "Cspray\\Labrador\\AsyncUnit\\": "framework_src",
-      "Cspray\\Labrador\\AsyncUnitCli\\": "cli_tool_src"
+      "Cspray\\Labrador\\AsyncUnitCli\\": "cli_src"
     }
   },
   "autoload-dev": {
     "psr-4": {
       "Cspray\\Labrador\\AsyncUnit\\": "framework_test",
-      "Cspray\\Labrador\\AsyncUnitCli\\": "cli_tool_test",
+      "Cspray\\Labrador\\AsyncUnitCli\\": "cli_test",
       "Acme\\DemoSuites\\": "acme_src",
       "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src",
       "Acme\\Examples\\CustomAssertion\\": "examples/custom_assertion_src"

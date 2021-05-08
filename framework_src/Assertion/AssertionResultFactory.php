@@ -28,10 +28,7 @@ final class AssertionResultFactory {
         };
     }
 
-    public static function invalidAssertion(
-        AssertionMessage $summary,
-        AssertionMessage $details
-    ) : AssertionResult {
+    public static function invalidAssertion(AssertionMessage $summary, AssertionMessage $details) : AssertionResult {
         return new class($summary, $details) implements AssertionResult {
 
             public function __construct(

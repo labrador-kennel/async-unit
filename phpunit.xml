@@ -14,8 +14,8 @@
     <testsuites>
         <testsuite name="default">
             <directory suffix="Test.php">framework_test</directory>
-            <directory suffix=".phpt">cli_tool_test/Integration</directory>
-            <directory suffix="Test.php">cli_tool_test/Unit</directory>
+            <directory suffix=".phpt">cli_test/Integration</directory>
+            <directory suffix="Test.php">cli_test/Unit</directory>
         </testsuite>
     </testsuites>
 
@@ -26,10 +26,8 @@
             <directory suffix=".php">cli_src</directory>
         </include>
         <report>
-            <!--
             <html outputDirectory="build/coverage/html" />
             <php outputFile="build/coverage/coverage.php" />
-            -->
         </report>
     </coverage>
 </phpunit>

@@ -2,4 +2,4 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-final class DefaultTestSuite extends TestSuite {}
+final class ImplicitTestSuite extends TestSuite {}

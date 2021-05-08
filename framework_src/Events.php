@@ -10,11 +10,13 @@ interface Events {
 
     const TEST_CASE_STARTED = 'labrador.asyncUnit.testCaseStarted';
 
-    const TEST_INVOKED = 'labrador.asyncUnit.testInvoked';
+    const TEST_PROCESSED = 'labrador.asyncUnit.testProcessed';
 
     const TEST_PASSED = 'labrador.asyncUnit.testPassed';
 
     const TEST_FAILED = 'labrador.asyncUnit.testFailed';
+
+    const TEST_DISABLED = 'labrador.asyncUnit.testDisabled';
 
     const TEST_CASE_FINISHED = 'labrador.asyncUnit.testCaseFinished';
 

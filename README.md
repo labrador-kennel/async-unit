@@ -2,8 +2,7 @@
 
 [![Unit Tests](https://github.com/labrador-kennel/async-testing/actions/workflows/php.yml/badge.svg)](https://github.com/labrador-kennel/async-testing/actions/workflows/php.yml)
 
-A comprehensive unit/integration testing framework that combines PHP8 and Amphp to support writing tests with 
-first-class async support.
+A testing framework, with a focus on integration testing, that treats Amp's Loop as a first-class citizen!
 
 ## Installation
 
@@ -17,8 +16,6 @@ Although AsyncUnit can satisfy the needs of most unit and integration tests it w
 test which can be challenging to run properly even in synchronous contexts. The "canonical" AsyncUnit test example 
 is below and demonstrates the core functionality of the framework.
 
-> Please note that TestSuite hook and state functionality is currently in progress!
-
 ```php
 <?php
 
@@ -30,7 +27,7 @@ use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as UseTestSuite;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite as UseTestSuite;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 use Amp\Success;

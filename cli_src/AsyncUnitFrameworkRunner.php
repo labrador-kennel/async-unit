@@ -13,7 +13,7 @@ use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Cspray\Labrador\Engine;
 
-class AsyncUnitFrameworkRunner {
+final class AsyncUnitFrameworkRunner {
 
     public function __construct(
         private TestFrameworkApplicationObjectGraph $applicationObjectGraph,
@@ -32,7 +32,7 @@ class AsyncUnitFrameworkRunner {
         $emitter = $injector->make(EventEmitter::class);
         $hasFailedTests = false;
         $emitter->once(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$hasFailedTests) {
-            $hasFailedTests = $event->getTarget()->getFailureTestCount() !== 0;
+            $hasFailedTests = $event->getTarget()->getFailedTestCount() !== 0;
         });
 
         /** @var TestFrameworkApplication $app */

@@ -178,7 +178,7 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         $constructor = $reflectedSubject->getConstructor();
         $constructor->setAccessible(true);
         $subject = $reflectedSubject->newInstanceWithoutConstructor();
-        $constructor->invoke($subject, (new \ReflectionClass(DefaultTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext);
+        $constructor->invoke($subject, (new \ReflectionClass(ImplicitTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext);
 
         return [$subject, $assertionContext, $asyncAssertionContext, $customAssertionContext];
     }

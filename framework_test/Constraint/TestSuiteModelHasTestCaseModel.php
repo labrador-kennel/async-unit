@@ -26,6 +26,6 @@ class TestSuiteModelHasTestCaseModel extends Constraint {
     }
 
     public function toString() : string {
-        return sprintf('TestSuite has TestCase class "%s"', $this->expectedClass);
+        return sprintf('AttachToTestSuite has TestCase class "%s"', $this->expectedClass);
     }
 }
