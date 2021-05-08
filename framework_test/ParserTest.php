@@ -204,17 +204,17 @@ class ParserTest extends PHPUnitTestCase {
 
     public function hooksProvider() {
         return [
-            ['BeforeAll', 'HasSingleBeforeAllHook', 'beforeAll'],
-            ['BeforeEach', 'HasSingleBeforeEachHook', 'beforeEach'],
-            ['AfterAll', 'HasSingleAfterAllHook', 'afterAll'],
-            ['AfterEach', 'HasSingleAfterEachHook', 'afterEach']
+            [HookType::BeforeAll(), 'HasSingleBeforeAllHook', 'beforeAll'],
+            [HookType::BeforeEach(), 'HasSingleBeforeEachHook', 'beforeEach'],
+            [HookType::AfterAll(), 'HasSingleAfterAllHook', 'afterAll'],
+            [HookType::AfterEach(), 'HasSingleAfterEachHook', 'afterEach']
         ];
     }
 
     /**
      * @dataProvider hooksProvider
      */
-    public function testParsingSimpleTestCaseHasHooks(string $hookType, string $subNamespace, string $methodName) {
+    public function testParsingSimpleTestCaseHasHooks(HookType $hookType, string $subNamespace, string $methodName) {
         $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath($subNamespace))->getTestSuiteModels();
 
         $this->assertCount(1, $testSuites);

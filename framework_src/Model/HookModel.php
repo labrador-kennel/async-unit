@@ -3,6 +3,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Model;
 
+use Cspray\Labrador\AsyncUnit\HookType;
 use PhpParser\Node\Stmt\ClassMethod;
 
 /**
@@ -16,9 +17,9 @@ final class HookModel {
         MethodModelTrait::__construct as setClassAndMethod;
     }
 
-    private string $type;
+    private HookType $type;
 
-    public function __construct(ClassMethod $classMethod, string $type) {
+    public function __construct(ClassMethod $classMethod, HookType $type) {
         $this->setClassAndMethod(
             $classMethod->getAttribute('parent')->namespacedName->toString(),
             $classMethod->name->toString()
@@ -30,10 +31,10 @@ final class HookModel {
      * Returns the type of the hook; this corresponds to the simple class name for the attribute annotated on the class
      * method.
      *
-     * @return string
+     * @return HookType
      * @todo In 8.1 convert this to use a native PHP enum
      */
-    public function getType() : string {
+    public function getType() : HookType {
         return $this->type;
     }
 

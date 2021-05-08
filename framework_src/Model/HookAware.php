@@ -4,19 +4,21 @@
 namespace Cspray\Labrador\AsyncUnit\Model;
 
 
+use Cspray\Labrador\AsyncUnit\HookType;
+
 trait HookAware {
 
     private array $hooks = [];
 
-    public function getHooks(string $hookType) : array {
-        return $this->hooks[$hookType] ?? [];
+    public function getHooks(HookType $hookType) : array {
+        return $this->hooks[$hookType->toString()] ?? [];
     }
 
     public function addHook(HookModel $hook) : void {
-        if (!isset($this->hooks[$hook->getType()])) {
-            $this->hooks[$hook->getType()] = [];
+        if (!isset($this->hooks[$hook->getType()->toString()])) {
+            $this->hooks[$hook->getType()->toString()] = [];
         }
-        $this->hooks[$hook->getType()][] = $hook;
+        $this->hooks[$hook->getType()->toString()][] = $hook;
     }
 
 }
