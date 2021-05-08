@@ -27,7 +27,7 @@ use Cspray\Labrador\AsyncUnit\Attribute\BeforeEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\AfterEachTest;
 use Cspray\Labrador\AsyncUnit\Attribute\BeforeEach;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as UseTestSuite;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite as UseTestSuite;
 use Cspray\Labrador\AsyncUnit\TestCase;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 use Amp\Success;

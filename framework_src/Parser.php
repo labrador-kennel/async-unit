@@ -5,7 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite as TestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite as DefaultTestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\HookModel;
@@ -141,7 +141,7 @@ final class Parser {
             $testSuiteAttribute = $this->findAttribute(TestSuiteAttribute::class, ...$testCaseClass->attrGroups);
             $testSuiteClassName = null;
             if (!is_null($testSuiteAttribute)) {
-                // Right now we are making a huge assumption that the TestSuite is being specified by declaring it as a class constant, i.e. MyTestSuite::class
+                // Right now we are making a huge assumption that the AttachToTestSuite is being specified by declaring it as a class constant, i.e. MyTestSuite::class
                 $testSuiteClassName = $testSuiteAttribute->args[0]->value->class->toString();
             }
 

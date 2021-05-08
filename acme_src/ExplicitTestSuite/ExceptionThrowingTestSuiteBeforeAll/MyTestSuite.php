@@ -11,7 +11,7 @@ class MyTestSuite extends TestSuite {
 
     #[BeforeAll]
     public function throwException() {
-        throw new \RuntimeException('Thrown in TestSuite');
+        throw new \RuntimeException('Thrown in AttachToTestSuite');
     }
 
 }

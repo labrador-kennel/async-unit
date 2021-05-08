@@ -5,10 +5,10 @@ namespace Acme\DemoSuites\ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTes
 
 
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite;
 use Cspray\Labrador\AsyncUnit\TestCase;
 
-#[TestSuite(MyTestSuite::class)]
+#[AttachToTestSuite(MyTestSuite::class)]
 class SecondTestCase extends TestCase {
 
     #[Test]

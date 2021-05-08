@@ -11,7 +11,7 @@ class MyTestSuite extends TestSuite {
 
     #[AfterEachTest]
     public function throwEachTestException() {
-        throw new \RuntimeException('TestSuite AfterEachTest');
+        throw new \RuntimeException('AttachToTestSuite AfterEachTest');
     }
 
 }

@@ -3,7 +3,7 @@
 namespace Acme\DemoSuites\ExplicitTestSuite\TestCaseDefinesTestSuite;
 
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
-use Cspray\Labrador\AsyncUnit\Attribute\TestSuite as TestSuiteAttribute;
+use Cspray\Labrador\AsyncUnit\Attribute\AttachToTestSuite as TestSuiteAttribute;
 use Cspray\Labrador\AsyncUnit\TestCase;
 
 #[TestSuiteAttribute(MySecondTestSuite::class)]

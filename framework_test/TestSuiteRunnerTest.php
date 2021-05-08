@@ -331,7 +331,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestSuiteSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeAll\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwException" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in TestSuite".');
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwException" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in AttachToTestSuite".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -344,7 +344,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestSuiteSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEach\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachException" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "TestSuite BeforeEach".');
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachException" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite BeforeEach".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -357,7 +357,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestSuiteTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEach\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachException" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterEach".');
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachException" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterEach".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -370,7 +370,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEachTest\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachTestException" #[AfterEachTest] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterEachTest".');
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachTestException" #[AfterEachTest] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterEachTest".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -383,7 +383,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEachTest\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachTestException" #[BeforeEachTest] hook with exception of type "RuntimeException" with code 0 and message "TestSuite BeforeEachTest".');
+            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachTestException" #[BeforeEachTest] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite BeforeEachTest".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -396,7 +396,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->expectException(TestSuiteTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterAll\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwException" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "TestSuite AfterAll".');
+            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwException" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterAll".');
 
             yield $this->testSuiteRunner->runTestSuites(...$testSuites);
         });
@@ -976,7 +976,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertTrue($testOneEvent->getTarget()->isDisabled());
             $this->assertFalse($testOneEvent->getTarget()->isSuccessful());
             $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
-            $this->assertSame('The TestSuite is disabled', $testOneEvent->getTarget()->getException()->getMessage());
+            $this->assertSame('The AttachToTestSuite is disabled', $testOneEvent->getTarget()->getException()->getMessage());
         });
     }
 

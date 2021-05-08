@@ -30,7 +30,7 @@ interface TestResult {
     public function isSuccessful() : bool;
 
     /**
-     * Returns true whether the test was disabled either as part of an annotation on the test, TestCase, or TestSuite or
+     * Returns true whether the test was disabled either as part of an annotation on the test, TestCase, or AttachToTestSuite or
      * as a result of the test calling `markDisabled()`.
      *
      * Please note that if this method return true the `getTestCase` implementation SHOULD throw an exception if called.

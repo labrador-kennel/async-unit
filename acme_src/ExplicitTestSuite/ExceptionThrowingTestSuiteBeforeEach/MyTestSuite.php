@@ -11,7 +11,7 @@ class MyTestSuite extends TestSuite {
 
     #[BeforeEach]
     public function throwEachException() {
-        throw new \RuntimeException('TestSuite BeforeEach');
+        throw new \RuntimeException('AttachToTestSuite BeforeEach');
     }
 
 }

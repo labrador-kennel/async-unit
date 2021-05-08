@@ -5,12 +5,12 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 /**
- * Class TestSuite
+ * Class AttachToTestSuite
  * @package Cspray\Labrador\AsyncUnit\Attribute
  * @codeCoverageIgnore
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-final class TestSuite {
+final class AttachToTestSuite {
 
     public function __construct(private string $testSuiteClass) {}
 

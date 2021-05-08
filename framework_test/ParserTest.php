@@ -424,7 +424,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $results->getTestSuiteModels());
         $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestSuite::class);
         $this->assertTrue($testSuite->isDisabled());
-        $this->assertSame('The TestSuite is disabled', $testSuite->getDisabledReason());
+        $this->assertSame('The AttachToTestSuite is disabled', $testSuite->getDisabledReason());
     }
 
     /**
@@ -447,7 +447,7 @@ class ParserTest extends PHPUnitTestCase {
                 return $testCaseModel;
             }
         }
-        $this->fail('Expected TestSuite to have TestCase ' . $className);
+        $this->fail('Expected AttachToTestSuite to have TestCase ' . $className);
     }
 
     private function fetchTestModel(TestCaseModel $model, string $methodName) : TestModel {

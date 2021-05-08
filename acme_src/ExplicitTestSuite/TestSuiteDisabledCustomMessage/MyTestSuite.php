@@ -5,7 +5,7 @@ namespace Acme\DemoSuites\ExplicitTestSuite\TestSuiteDisabledCustomMessage;
 use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\TestSuite;
 
-#[Disabled('The TestSuite is disabled')]
+#[Disabled('The AttachToTestSuite is disabled')]
 class MyTestSuite extends TestSuite {
 
 }
