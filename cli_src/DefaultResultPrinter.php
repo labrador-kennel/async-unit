@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncUnitCli;
 
 use Amp\ByteStream\OutputStream;
+use Coduo\PHPHumanizer\NumberHumanizer;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
@@ -10,6 +11,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Generator;
+use SebastianBergmann\Timer\ResourceUsageFormatter;
 
 final class DefaultResultPrinter {
 
@@ -62,6 +64,8 @@ final class DefaultResultPrinter {
     }
 
     private function testProcessingFinished(TestProcessingFinishedEvent $event, OutputStream $output) : Generator {
+        yield $output->write("\n\n");
+        yield $output->write((new ResourceUsageFormatter())->resourceUsage($event->getTarget()->getDuration()));
         yield $output->write("\n\n");
         if ($event->getTarget()->getFailedTestCount() > 0) {
             yield $output->write(sprintf("There was %d failure:\n", $event->getTarget()->getFailedTestCount()));
@@ -139,5 +143,4 @@ final class DefaultResultPrinter {
             ));
         }
     }
-
 }

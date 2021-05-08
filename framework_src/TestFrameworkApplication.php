@@ -14,6 +14,8 @@ use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\Plugin\Pluggable;
+use SebastianBergmann\Timer\Duration;
+use SebastianBergmann\Timer\Timer;
 use stdClass;
 use function Amp\call;
 
@@ -60,7 +62,13 @@ final class TestFrameworkApplication extends AbstractApplication {
                 new TestProcessingStartedEvent($this->getPreRunSummary())
             );
 
+            $timer = new Timer();
+            $timer->start();
+
             yield $this->testSuiteRunner->runTestSuites(...$this->parserResult->getTestSuiteModels());
+
+            $testRunState->duration = $timer->stop();
+            $testRunState->memoryUsage = memory_get_peak_usage(true);
 
             yield $this->emitter->emit(
                 new TestProcessingFinishedEvent($this->getPostRunSummary($testRunState))
@@ -114,6 +122,14 @@ final class TestFrameworkApplication extends AbstractApplication {
 
             public function getDisabledTestCount() : int {
                 return $this->testRunState->disabledTests;
+            }
+
+            public function getMemoryUsageInBytes() : int {
+                return $this->testRunState->memoryUsage;
+            }
+
+            public function getDuration() : Duration {
+                return $this->testRunState->duration;
             }
         };
     }

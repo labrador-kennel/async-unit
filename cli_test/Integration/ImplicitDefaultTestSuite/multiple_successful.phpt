@@ -16,6 +16,8 @@ Runtime: PHP 8.0.%d
 
 ...
 
+Time: %d:%f, Memory: %d.%d MB
+
 OK!
 Tests: 3, Assertions: 3, Async Assertions: 0
 

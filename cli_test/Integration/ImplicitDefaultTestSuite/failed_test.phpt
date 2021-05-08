@@ -16,6 +16,8 @@ Runtime: PHP 8.0.%d
 
 X
 
+Time: %d:%f, Memory: %d.%d MB
+
 There was 1 failure:
 
 1) Acme\DemoSuites\ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest\MyTestCase::ensureSomethingFails

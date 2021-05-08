@@ -280,4 +280,25 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteTestKnownTime() {
+        Loop::run(function() {
+            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('TestKnownRunTime')]);
+
+            $postRunSummary = null;
+            $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$postRunSummary) {
+                $postRunSummary = $event->getTarget();
+            });
+
+            yield $application->start();
+
+            $this->assertInstanceOf(PostRunSummary::class, $postRunSummary);
+            $this->assertSame(1, $postRunSummary->getTotalTestCount());
+            $this->assertSame(1, $postRunSummary->getPassedTestCount());
+            $this->assertGreaterThan(0.500, $postRunSummary->getDuration()->asMicroseconds());
+            // just making an assumption here that we should be using more than 1000 bytes? not sure how to test this
+            // without introducing an interface to abstract getting memory usage... not something we want to do at this point
+            $this->assertGreaterThan(1000, $postRunSummary->getMemoryUsageInBytes());
+        });
+    }
+
 }
