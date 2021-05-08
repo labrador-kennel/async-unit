@@ -86,7 +86,7 @@ class ParserTest extends PHPUnitTestCase {
         $this->assertCount(1, $testSuites);
         $testSuite = $testSuites[0];
 
-        $this->assertSame(DefaultTestSuite::class, $testSuite->getClass());
+        $this->assertSame(ImplicitTestSuite::class, $testSuite->getClass());
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
@@ -288,7 +288,7 @@ class ParserTest extends PHPUnitTestCase {
 
         $this->assertCount(2, $results->getTestSuiteModels());
 
-        $defaultTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $defaultTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
         $this->assertCount(1, $defaultTestSuite->getTestCaseModels());
         $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\FirstTestCase::class, $defaultTestSuite);
 
@@ -317,7 +317,7 @@ class ParserTest extends PHPUnitTestCase {
         $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
         $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class);
 
         $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::checkSomething', $testCase);
@@ -335,7 +335,7 @@ class ParserTest extends PHPUnitTestCase {
         $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabled'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
         $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class);
 
         $this->assertTrue($testCase->isDisabled());
@@ -390,7 +390,7 @@ class ParserTest extends PHPUnitTestCase {
         $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabledCustomMessage'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
         $this->assertFalse($testSuite->isDisabled());
 
         $this->assertCount(1, $testSuite->getTestCaseModels());
@@ -408,7 +408,7 @@ class ParserTest extends PHPUnitTestCase {
         $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage'));
 
         $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), DefaultTestSuite::class);
+        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
         $this->assertFalse($testSuite->isDisabled());
 
         $this->assertCount(1, $testSuite->getTestCaseModels());

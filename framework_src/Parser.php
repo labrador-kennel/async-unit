@@ -129,7 +129,7 @@ final class Parser {
             yield $testSuiteModel;
         }
         if (!$hasDefaultTestSuite) {
-            yield new TestSuiteModel(DefaultTestSuite::class, true);
+            yield new TestSuiteModel(ImplicitTestSuite::class, true);
         }
 
         $testCaseClasses = $asyncUnitVisitor->getTestCases();
