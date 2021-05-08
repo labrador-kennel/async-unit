@@ -4,6 +4,16 @@
 
 A testing framework, with a focus on integration testing, that treats Amp's Loop as a first-class citizen!
 
+- Extend `Cspray\Labrador\AsyncUnit\TestCase` and annotate your tests with `#[Test]` to get started
+- Setup and teardown your tests using a variety of hooks by annotating methods with attributes like `#[BeforeEach]` and `#[AfterEach]`
+- Embrace a test suite as a first-class citizen with `Cspray\Labrador\AsyncUnit\TestSuite` and bring a layer of extra functionality to integration tests
+- Assertion API with first-class async support and a clear 
+- Disable tests, `TestCase`, or a `TestSuite` with the `#[Disabled]` Attribute
+- Includes a bundled CLI application for running your tests
+
+AsyncUnit is under active development! The project has a [defined Roadmap](https://docs.labrador-kennel.io/asyncunit/roadmap) and is currently implementing features for 
+version **0.4.0**. 
+
 ## Installation
 
 ```
@@ -106,11 +116,15 @@ rest of this README for how to get started with the project.
 
 ## Documentation
 
-If you're a user wanting to learn how to use the library and write better asynchronous tests this is the place for you. 
-We walk you through everything you need to do get started, teach you about all the important concepts to know, and 
-list out the assertions available. You should definitely check this area out if you're new to the framework!
+Whether you're a user learning how to write tests with the framework or you're a contributor wanting to make the library 
+better our documentation should have what you're looking for! We walk you through everything you need to do get started, 
+teach you about all the important concepts to know, and list out the assertions available. For contributors we give you 
+a thorough overview of how everything works.
 
-You can find documentation online at [docs.labrador-kennel.io/asyncunit](https://docs.labrador-kennel.io/asyncunit).
+[Online documentation at https://docs.labrador-kennel.io/asyncunit](https://docs.labrador-kennel.io/asyncunit).
+
+> Documentation for Labrador AsyncUnit is sponsored by [GitBook](https://www.gitbook.com/). Should absolutely 
+> check them out if you have the ned for developer-friendly, managed documentation hosting!
 
 ## Discussion
 
@@ -122,4 +136,5 @@ You're in the right place! This is the "social" part of AsyncUnit... [go add to 
 AsyncUnit has a fairly well-defined roadmap leading to a stable API and a 1.0 release. Our Roadmap is not dated because 
 the framework is currently maintained and implemented by 1 person in their free time. Instead, we have a series of 0.x 
 releases with functionality that should enable increasingly complex tests until our canonical example can be executed.
-Check out [the Projects](https://github.com/labrador-kennel/async-unit/projects) to see what's in store for AsyncUnit!
+Check out [the Roadmap](https://docs.labrador-kennel.io/asyncunit/roadmap) to see what's in store for AsyncUnit! The 
+features we're currently working on implemented can be tracked in our [Active Sprint](https://github.com/labrador-kennel/async-unit/projects/4).
