@@ -33,8 +33,6 @@ use stdClass;
 
 class TestSuiteRunnerTest extends PHPUnitTestCase {
 
-    // The TestSuiteRunner assumes some other thing controlling it has started the loop
-
     use UsesAcmeSrc;
 
     private Parser $parser;
@@ -46,7 +44,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         $this->parser = new Parser();
         $this->emitter = new AmpEventEmitter();
         $this->customAssertionContext = (new ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
-        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext);
+        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext, new NullRandomizer());
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestInvokesMethod() {
@@ -1022,6 +1020,36 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertInstanceOf(TestFailedEvent::class, $failingEvent);
             $this->assertInstanceOf(TestOutputException::class, $failingEvent->getTarget()->getException());
             $this->assertSame("Test had unexpected output:\n\n\"testProducesOutput\"", $failingEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testRandomizerIsUtilized() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('MultipleTest');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $randomizer = $this->getMockBuilder(Randomizer::class)->getMock();
+
+            $testSuiteRunner = new TestSuiteRunner(
+                $this->emitter,
+                $this->customAssertionContext,
+                $randomizer
+            );
+
+            $this->assertCount(1, $testSuites);
+            $randomizer->expects($this->exactly(3))
+                ->method('randomize')
+                ->withConsecutive(
+                    [$testSuites],
+                    [$testSuites[0]->getTestCaseModels()],
+                    [$testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()]
+                )
+                ->willReturnOnConsecutiveCalls(
+                    $testSuites,
+                    $testSuites[0]->getTestCaseModels(),
+                    $testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()
+                );
+
+            yield $testSuiteRunner->runTestSuites(...$testSuites);
         });
     }
 

@@ -17,6 +17,8 @@ final class TestFrameworkApplicationObjectGraph extends CoreApplicationObjectGra
 
         $injector->share(Parser::class);
         $injector->share(TestSuiteRunner::class);
+        $injector->share(new ShuffleRandomizer());
+        $injector->alias(Randomizer::class, ShuffleRandomizer::class);
 
         $injector->share(Application::class);
         $injector->alias(Application::class, TestFrameworkApplication::class);
