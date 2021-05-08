@@ -39,7 +39,11 @@ final class TestSuiteRunner {
 
     private array $reflectionCache = [];
 
-    public function __construct(private EventEmitter $emitter, private CustomAssertionContext $customAssertionContext) {}
+    public function __construct(
+        private EventEmitter $emitter,
+        private CustomAssertionContext $customAssertionContext,
+        private Randomizer $randomizer
+    ) {}
 
     public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
         return call(function() use($testSuiteModels) {

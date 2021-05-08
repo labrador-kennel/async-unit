@@ -33,8 +33,6 @@ use stdClass;
 
 class TestSuiteRunnerTest extends PHPUnitTestCase {
 
-    // The TestSuiteRunner assumes some other thing controlling it has started the loop
-
     use UsesAcmeSrc;
 
     private Parser $parser;
@@ -46,7 +44,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         $this->parser = new Parser();
         $this->emitter = new AmpEventEmitter();
         $this->customAssertionContext = (new ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
-        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext);
+        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext, new NullRandomizer());
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestInvokesMethod() {
