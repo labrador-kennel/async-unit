@@ -22,28 +22,14 @@ interface TestResult {
      */
     public function getTestCase() : TestCase;
 
-    /**
-     * Returns true whether the test was considered successful or not.
-     *
-     * @return bool
-     */
-    public function isSuccessful() : bool;
+    public function getTestMethod() : string;
 
-    /**
-     * Returns true whether the test was disabled either as part of an annotation on the test, TestCase, or AttachToTestSuite or
-     * as a result of the test calling `markDisabled()`.
-     *
-     * Please note that if this method return true the `getTestCase` implementation SHOULD throw an exception if called.
-     *
-     * @return bool
-     */
-    public function isDisabled() : bool;
+    public function getState() : TestState;
 
     /**
      * @return TestFailedException|AssertionFailedException|TestDisabledException|null
      */
     public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null;
 
-    public function getTestMethod() : string;
 
 }

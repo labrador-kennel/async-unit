@@ -191,7 +191,8 @@ final class TestSuiteRunner {
                 );
                 $failureException = new TestFailedException($msg, previous: $throwable);
             } finally {
-                $testResult = $this->getTestResult($testCase, $testCaseMethod, $failureException);
+                $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
+                $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $failureException);
             }
 
             yield $this->invokeHooks($testCase, $testCaseModel, 'AfterEach', TestTearDownException::class);
@@ -199,7 +200,7 @@ final class TestSuiteRunner {
 
             yield $this->emitter->emit(new TestProcessedEvent($testResult));
 
-            if ($testResult->isSuccessful()) {
+            if (TestState::Passed()->equals($testResult->getState())) {
                 yield $this->emitter->emit(new TestPassedEvent($testResult));
             } else {
                 yield $this->emitter->emit(new TestFailedEvent($testResult));
@@ -236,16 +237,12 @@ final class TestSuiteRunner {
                 return $this->testMethod;
             }
 
-            public function isSuccessful() : bool {
-                return false;
+            public function getState() : TestState {
+                return TestState::Disabled();
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
                 return $this->exception;
-            }
-
-            public function isDisabled() : bool {
-                return true;
             }
         };
     }
@@ -253,13 +250,15 @@ final class TestSuiteRunner {
     private function getTestResult(
         TestCase $testCase,
         string $method,
+        TestState $state,
         ?TestFailedException $testFailedException
     ) : TestResult {
-        return new class($testCase, $method, $testFailedException) implements TestResult {
+        return new class($testCase, $method, $state, $testFailedException) implements TestResult {
 
             public function __construct(
                 private TestCase $testCase,
                 private string $method,
+                private TestState $state,
                 private ?TestFailedException $testFailedException
             ) {}
 
@@ -271,16 +270,12 @@ final class TestSuiteRunner {
                 return $this->method;
             }
 
-            public function isSuccessful() : bool {
-                return is_null($this->testFailedException);
+            public function getState() : TestState {
+                return $this->state;
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
                 return $this->testFailedException;
-            }
-
-            public function isDisabled() : bool {
-                return false;
             }
         };
     }

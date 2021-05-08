@@ -48,7 +48,7 @@ final class TestFrameworkApplication extends AbstractApplication {
                 $testRunState->testsInvoked++;
                 $testRunState->totalAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAssertionCount();
                 $testRunState->totalAsyncAssertionCount += $testInvokedEvent->getTarget()->getTestCase()->getAsyncAssertionCount();
-                if (!$testInvokedEvent->getTarget()->isSuccessful()) {
+                if (TestState::Failed()->equals($testInvokedEvent->getTarget()->getState())) {
                     $testRunState->failedTests++;
                 }
             });

@@ -70,7 +70,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
             $this->assertInstanceOf(ImplicitDefaultTestSuite\SingleTest\MyTestCase::class, $testResult->getTestCase());
             $this->assertSame('ensureSomethingHappens', $testResult->getTestMethod());
-            $this->assertTrue($testResult->isSuccessful());
+            $this->assertSame(TestState::Passed(), $testResult->getState());
         });
     }
 
@@ -89,7 +89,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
             $this->assertInstanceOf(ImplicitDefaultTestSuite\SingleTestAsyncAssertion\MyTestCase::class, $testResult->getTestCase());
             $this->assertSame('ensureAsyncAssert', $testResult->getTestMethod());
-            $this->assertTrue($testResult->isSuccessful());
+            $this->assertSame(TestState::Passed(), $testResult->getState());
         });
     }
 
@@ -108,7 +108,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
             $this->assertInstanceOf(ImplicitDefaultTestSuite\NoAssertions\MyTestCase::class, $testResult->getTestCase());
             $this->assertSame('noAssertions', $testResult->getTestMethod());
-            $this->assertFalse($testResult->isSuccessful());
+            $this->assertSame(TestState::Failed(), $testResult->getState());
             $msg = sprintf(
                 'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
                 ImplicitDefaultTestSuite\NoAssertions\MyTestCase::class,
@@ -130,8 +130,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $this->assertInstanceOf(TestFailedEvent::class, $event);
 
             $testResult = $event->getTarget();
-
-            $this->assertFalse($testResult->isSuccessful());
+            $this->assertSame(TestState::Failed(), $testResult->getState());
         });
     }
 
