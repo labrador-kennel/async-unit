@@ -18,6 +18,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
+use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
@@ -1001,6 +1002,26 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(TestDisabledEvent::class, $disabledEvent);
             $this->assertSame(TestState::Disabled(), $disabledEvent->getTarget()->getState());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestHasOutput() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestHasOutput');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->events = [];
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->events);
+
+            $failingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestHasOutput\MyTestCase::class, 'testProducesOutput');
+
+            $this->assertInstanceOf(TestFailedEvent::class, $failingEvent);
+            $this->assertInstanceOf(TestOutputException::class, $failingEvent->getTarget()->getException());
+            $this->assertSame("Test had unexpected output:\n\n\"testProducesOutput\"", $failingEvent->getTarget()->getException()->getMessage());
         });
     }
 

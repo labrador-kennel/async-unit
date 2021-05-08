@@ -20,6 +20,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
@@ -169,6 +170,7 @@ final class TestSuiteRunner {
             $testCaseMethod = $testMethodModel->getMethod();
             $failureException = null;
             try {
+                ob_start();
                 yield call(fn() => $testCase->$testCaseMethod(...$args));
                 if ($assertionContext->getAssertionCount() === 0 && $asyncAssertionContext->getAssertionCount() === 0) {
                     $msg = sprintf(
@@ -191,6 +193,16 @@ final class TestSuiteRunner {
                 );
                 $failureException = new TestFailedException($msg, previous: $throwable);
             } finally {
+                $output = ob_get_clean();
+                if ($output && !$failureException) {
+                    $msg = sprintf(
+                        'Test had unexpected output:%s%s"%s"',
+                        PHP_EOL,
+                        PHP_EOL,
+                        $output
+                    );
+                    $failureException = new TestOutputException($msg);
+                }
                 $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
                 $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $failureException);
             }
