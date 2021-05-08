@@ -111,12 +111,12 @@ final class Parser {
             }
             $testSuiteModel = new TestSuiteModel($testSuiteClass->namespacedName->toString(), !is_null($defaultTestSuiteAttribute));
 
-            $this->addHooks($testSuiteModel, $classMethods, 'BeforeAll');
-            $this->addHooks($testSuiteModel, $classMethods, 'BeforeEach');
-            $this->addHooks($testSuiteModel, $classMethods, 'BeforeEachTest');
-            $this->addHooks($testSuiteModel, $classMethods, 'AfterEachTest');
-            $this->addHooks($testSuiteModel, $classMethods, 'AfterEach');
-            $this->addHooks($testSuiteModel, $classMethods, 'AfterAll');
+            $this->addHooks($testSuiteModel, $classMethods, HookType::BeforeAll());
+            $this->addHooks($testSuiteModel, $classMethods, HookType::BeforeEach());
+            $this->addHooks($testSuiteModel, $classMethods, HookType::BeforeEachTest());
+            $this->addHooks($testSuiteModel, $classMethods, HookType::AfterEachTest());
+            $this->addHooks($testSuiteModel, $classMethods, HookType::AfterEach());
+            $this->addHooks($testSuiteModel, $classMethods, HookType::AfterAll());
 
             if ($disabledAttribute = $this->findAttribute(Disabled::class, ...$testSuiteClass->attrGroups)) {
                 $reason = null;
@@ -163,10 +163,10 @@ final class Parser {
                 throw new TestCompilationException($msg);
             }
 
-            $this->addHooks($testCaseModel, $classMethods, 'BeforeAll');
-            $this->addHooks($testCaseModel, $classMethods, 'BeforeEach');
-            $this->addHooks($testCaseModel, $classMethods, 'AfterEach');
-            $this->addHooks($testCaseModel, $classMethods, 'AfterAll');
+            $this->addHooks($testCaseModel, $classMethods, HookType::BeforeAll());
+            $this->addHooks($testCaseModel, $classMethods, HookType::BeforeEach());
+            $this->addHooks($testCaseModel, $classMethods, HookType::AfterEach());
+            $this->addHooks($testCaseModel, $classMethods, HookType::AfterAll());
 
             yield $testCaseModel;
         }
@@ -208,8 +208,8 @@ final class Parser {
         return $asyncUnitVisitor;
     }
 
-    private function addHooks(TestSuiteModel|TestCaseModel $model, array $classMethods, string $hookType) : void {
-        $hookAttribute = sprintf('Cspray\\Labrador\\AsyncUnit\\Attribute\\%s', $hookType);
+    private function addHooks(TestSuiteModel|TestCaseModel $model, array $classMethods, HookType $hookType) : void {
+        $hookAttribute = sprintf('Cspray\\Labrador\\AsyncUnit\\Attribute\\%s', $hookType->toString());
         foreach ($classMethods as $classMethod) {
             if ($model->getClass() !== $classMethod->getAttribute('parent')->namespacedName->toString()) {
                 continue;
