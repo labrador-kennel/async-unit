@@ -186,15 +186,7 @@ final class TestSuiteRunner {
             } catch (TestFailedException $exception) {
                 $failureException = $exception;
             } catch (Throwable $throwable) {
-                $msg = sprintf(
-                    'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
-                    $throwable::class,
-                    $throwable->getCode(),
-                    $throwable->getMessage(),
-                    $testCase::class,
-                    $testMethodModel->getMethod()
-                );
-                $failureException = new TestFailedException($msg, previous: $throwable);
+                $expectationContext->setThrownException($throwable);
             } finally {
                 $expectationContext->setActualOutput(ob_get_clean());
                 // If something else failed we don't need to make validations about expectations
@@ -319,7 +311,8 @@ final class TestSuiteRunner {
             $testCaseObject,
             $testSuite,
             $assertionContext,
-            $asyncAssertionContext
+            $asyncAssertionContext,
+            $expectationContext
         );
         return [$testCaseObject, $assertionContext, $asyncAssertionContext, $expectationContext];
     }

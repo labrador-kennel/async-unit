@@ -2,8 +2,6 @@
 
 namespace Cspray\Labrador\AsyncUnit\Exception;
 
-use Cspray\Labrador\Exception\InvalidArgumentException as LabradorInvalidArgumentException;
-
-class InvalidArgumentException extends LabradorInvalidArgumentException {
+class InvalidArgumentException extends Exception {
 
 }

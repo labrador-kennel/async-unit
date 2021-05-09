@@ -15,9 +15,12 @@ use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
@@ -1050,6 +1053,154 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
                 );
 
             yield $testSuiteRunner->runTestSuites(...$testSuites);
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestExpectsExceptionOnly() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionOnly');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->passed = new stdClass();
+            $state->passed->events = [];
+            $state->failed = new stdClass();
+            $state->failed->events = [];
+            $state->disabled = new stdClass();
+            $state->disabled->events = [];
+
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->passed->events);
+            $this->assertCount(0, $state->failed->events);
+            $this->assertCount(0, $state->disabled->events);
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongType() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongType');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->passed = new stdClass();
+            $state->passed->events = [];
+            $state->failed = new stdClass();
+            $state->failed->events = [];
+            $state->disabled = new stdClass();
+            $state->disabled->events = [];
+
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(0, $state->passed->events);
+            $this->assertCount(1, $state->failed->events);
+            $this->assertCount(0, $state->disabled->events);
+
+            /** @var TestFailedEvent $testFailedEvent */
+            $testFailedEvent = $state->failed->events[0];
+
+            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $expected = sprintf(
+                'Failed asserting that thrown exception %s extends expected %s',
+                InvalidStateException::class,
+                InvalidArgumentException::class
+            );
+            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestExpectsExceptionMessage() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionMessage');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->passed = new stdClass();
+            $state->passed->events = [];
+            $state->failed = new stdClass();
+            $state->failed->events = [];
+            $state->disabled = new stdClass();
+            $state->disabled->events = [];
+
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(1, $state->passed->events);
+            $this->assertCount(0, $state->failed->events);
+            $this->assertCount(0, $state->disabled->events);
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongMessage() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongMessage');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->passed = new stdClass();
+            $state->passed->events = [];
+            $state->failed = new stdClass();
+            $state->failed->events = [];
+            $state->disabled = new stdClass();
+            $state->disabled->events = [];
+
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(0, $state->passed->events);
+            $this->assertCount(1, $state->failed->events);
+            $this->assertCount(0, $state->disabled->events);
+            $testFailedEvent = $state->failed->events[0];
+
+            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $expected = sprintf(
+                'Failed asserting that thrown exception message "%s" equals expected "%s"',
+                'This is NOT the message that I expect',
+                'This is the message that I expect'
+            );
+            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestExpectsExceptionDoesNotThrow() {
+        Loop::run(function() {
+            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionDoesNotThrow');
+            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $state = new stdClass();
+            $state->passed = new stdClass();
+            $state->passed->events = [];
+            $state->failed = new stdClass();
+            $state->failed->events = [];
+            $state->disabled = new stdClass();
+            $state->disabled->events = [];
+
+            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
+            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
+            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
+
+            yield $this->testSuiteRunner->runTestSuites(...$testSuites);
+
+            $this->assertCount(0, $state->passed->events);
+            $this->assertCount(1, $state->failed->events);
+            $this->assertCount(0, $state->disabled->events);
+            $testFailedEvent = $state->failed->events[0];
+
+            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $expected = sprintf(
+                'Failed asserting that an exception of type %s is thrown',
+                InvalidArgumentException::class
+            );
+            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
         });
     }
 

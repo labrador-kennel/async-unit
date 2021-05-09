@@ -9,6 +9,7 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\TrueUnaryOperandSummary
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 use Cspray\Labrador\AsyncUnit\Exception\Exception;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use PHPUnit\Framework\TestCase;
 
 class AsyncAssertInstanceOfTest extends TestCase {
@@ -45,7 +46,7 @@ class AsyncAssertInstanceOfTest extends TestCase {
 
     public function testPassingObjectAsExpected() {
         Loop::run(function() {
-            $subject = new AsyncAssertInstanceOf(new Exception(), new Success(new InvalidArgumentException()));
+            $subject = new AsyncAssertInstanceOf(new InvalidStateException(), new Success(new InvalidArgumentException()));
             $results = yield $subject->assert();
 
             $this->assertFalse($results->isSuccessful());

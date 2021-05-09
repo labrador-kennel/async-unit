@@ -8,7 +8,9 @@ use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExpo
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
+use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Stub\AssertNotTestCase;
 use Cspray\Labrador\AsyncUnit\Stub\CustomAssertionTestCase;
 use Cspray\Labrador\AsyncUnit\Stub\FailingTestCase;
@@ -174,12 +176,19 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         $asyncAssertionContextConstructor->setAccessible(true);
         $asyncAssertionContextConstructor->invoke($asyncAssertionContext, $customAssertionContext);
 
+        $reflectedExpectationContext = new \ReflectionClass(ExpectationContext::class);
+        $fakeTestModel = new TestModel('SomeClass', 'someMethod');
+        $expectationContext = $reflectedExpectationContext->newInstanceWithoutConstructor();
+        $expectationContextConstructor = $reflectedExpectationContext->getConstructor();
+        $expectationContextConstructor->setAccessible(true);
+        $expectationContextConstructor->invoke($expectationContext, $fakeTestModel, $assertionContext, $asyncAssertionContext);
+
         $reflectedSubject = new \ReflectionClass($testCase);
         $constructor = $reflectedSubject->getConstructor();
         $constructor->setAccessible(true);
         $subject = $reflectedSubject->newInstanceWithoutConstructor();
-        $constructor->invoke($subject, (new \ReflectionClass(ImplicitTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext);
+        $constructor->invoke($subject, (new \ReflectionClass(ImplicitTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext, $expectationContext);
 
-        return [$subject, $assertionContext, $asyncAssertionContext, $customAssertionContext];
+        return [$subject, $assertionContext, $asyncAssertionContext, $customAssertionContext, $expectationContext];
     }
 }
