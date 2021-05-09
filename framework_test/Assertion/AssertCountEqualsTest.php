@@ -33,10 +33,10 @@ class AssertCountEqualsTest extends AbstractAssertionTestCase {
     }
 
     protected function getSummaryAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\CountEqualsSummary::class;
+        return Assertion\AssertionMessage\CountEqualsMessage::class;
     }
 
     protected function getDetailsAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\CountEqualsDetails::class;
+        return Assertion\AssertionMessage\CountEqualsMessage::class;
     }
 }

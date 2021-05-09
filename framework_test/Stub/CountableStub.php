@@ -2,7 +2,6 @@
 
 namespace Cspray\Labrador\AsyncUnit\Stub;
 
-
 class CountableStub implements \Countable {
 
     private int $count;

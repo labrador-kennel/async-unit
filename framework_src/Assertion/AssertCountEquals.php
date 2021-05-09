@@ -20,10 +20,10 @@ class AssertCountEquals implements Assertion {
     }
 
     private function getSummary() : AssertionMessage {
-        return new Assertion\AssertionMessage\CountEqualsSummary();
+        return new Assertion\AssertionMessage\CountEqualsMessage($this->expected, $this->actual);
     }
 
     private function getDetails() : AssertionMessage {
-        return new Assertion\AssertionMessage\CountEqualsDetails();
+        return new Assertion\AssertionMessage\CountEqualsMessage($this->expected, $this->actual);
     }
 }
