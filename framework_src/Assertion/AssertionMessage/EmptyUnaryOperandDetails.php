@@ -4,13 +4,9 @@ namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage;
 
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class EmptyUnaryOperandDetails implements AssertionMessage {
+class EmptyUnaryOperandDetails extends UnaryOperandDetails implements AssertionMessage {
 
-    public function toString() : string {
-        // TODO: Implement toString() method.
-    }
-
-    public function toNotString() : string {
-        // TODO: Implement toNotString() method.
+    protected function getExpectedDescriptor() : string {
+        return 'empty';
     }
 }

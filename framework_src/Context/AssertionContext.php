@@ -2,7 +2,9 @@
 
 namespace Cspray\Labrador\AsyncUnit\Context;
 
+use Countable;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertArrayEquals;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertCountEquals;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertFloatEquals;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertInstanceOf;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIntEquals;
@@ -62,6 +64,16 @@ final class AssertionContext {
         $this->invokedAssertionContext();
 
         $assert = new AssertStringEquals($expected, $actual);
+        $results = $assert->assert();
+
+        $this->handleAssertionResults($results, $isNot, $message);
+    }
+
+    public function countEquals(int $expected, array|Countable $actual, string $message = null) : void {
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
+        $assert = new AssertCountEquals($expected, $actual);
         $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);

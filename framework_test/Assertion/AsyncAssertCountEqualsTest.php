@@ -2,13 +2,17 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
+use Amp\Coroutine;
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Cspray\Labrador\AsyncUnit\Stub\CountableStub;
+use Generator;
 
-class AssertCountEqualsTest extends AbstractAssertionTestCase {
+class AsyncAssertCountEqualsTest extends AbstractAsyncAssertionTestCase {
 
-    protected function getAssertion($expected, $actual) : Assertion {
-        return new AssertCountEquals($expected, $actual);
+    protected function getAssertion(mixed $expected, Promise|Coroutine|Generator $actual) : AsyncAssertion {
+        return new AsyncAssertCountEquals($expected, $actual);
     }
 
     protected function getExpected() : int {
