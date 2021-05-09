@@ -3,38 +3,27 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractAssertionTestCase extends TestCase {
 
-    use AssertionDataProvider;
-
     abstract protected function getAssertion($expected, $actual) : Assertion;
 
-    abstract protected function getGoodValue();
+    abstract protected function getExpected() : mixed;
 
-    abstract protected function getBadValue();
+    abstract public function getGoodActual() : array;
 
-    abstract protected function getExpectedType();
-
-    abstract protected function getInvalidTypeAssertionMessageClass() : string;
+    abstract public function getBadActual() : array;
 
     abstract protected function getSummaryAssertionMessageClass() : string;
 
     abstract protected function getDetailsAssertionMessageClass() : string;
 
-    public function runBadTypeAssertions(mixed $actual) {
-        $subject = $this->getAssertion($this->getGoodValue(), $actual);
-        $results = $subject->assert();
-
-        $this->assertFalse($results->isSuccessful());
-        $this->assertInstanceOf($this->getInvalidTypeAssertionMessageClass(), $results->getSummary());
-        $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
-    }
-
-    public function testAssertGoodValueEqualsGoodValue() {
-        $subject = $this->getAssertion($this->getGoodValue(), $this->getGoodValue());
+    /**
+     * @dataProvider getGoodActual
+     */
+    public function testAssertGoodValueEqualsGoodValue(mixed $actual) : void {
+        $subject = $this->getAssertion($this->getExpected(), $actual);
         $results = $subject->assert();
 
         $this->assertTrue($results->isSuccessful());
@@ -42,8 +31,11 @@ abstract class AbstractAssertionTestCase extends TestCase {
         $this->assertInstanceOf($this->getDetailsAssertionMessageClass(), $results->getDetails());
     }
 
-    public function testAssertGoodValueDoesNotEqualBadValueInformation() {
-        $subject = $this->getAssertion($this->getGoodValue(), $this->getBadValue());
+    /**
+     * @dataProvider getBadActual
+     */
+    public function testAssertGoodValueDoesNotEqualBadValueInformation(mixed $actual) : void {
+        $subject = $this->getAssertion($this->getExpected(), $actual);
         $results = $subject->assert();
 
         $this->assertFalse($results->isSuccessful());

@@ -6,6 +6,7 @@ use Amp\Coroutine;
 use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertArrayEquals;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertFloatEquals;
+use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertInstanceOf;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIntEquals;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsNull;
@@ -68,6 +69,15 @@ final class AsyncAssertionContext {
             $isNot = $this->isNot;
             $this->invokedAssertionContext();
             $results = yield (new AsyncAssertStringEquals($expected, $actual))->assert();
+            $this->handleAssertionResults($results, $isNot, $message);
+        });
+    }
+
+    public function instanceOf(string $expected, Promise|Generator|Coroutine $actual, string $message = null) : Promise {
+        return call(function() use($expected, $actual, $message) {
+            $isNot = $this->isNot;
+            $this->invokedAssertionContext();
+            $results = yield (new AsyncAssertInstanceOf($expected, $actual))->assert();
             $this->handleAssertionResults($results, $isNot, $message);
         });
     }

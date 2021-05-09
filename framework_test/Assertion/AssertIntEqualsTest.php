@@ -3,36 +3,33 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertIntEqualsTest extends AbstractAssertionTestCase {
 
-    /**
-     * @dataProvider nonIntProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
+    protected function getAssertion($expected, $actual) : Assertion {
+        return new AssertIntEquals($expected, $actual);
     }
 
-    protected function getAssertion($value, $actual) : Assertion {
-        return new AssertIntEquals($value, $actual);
-    }
-
-    protected function getGoodValue() {
+    protected function getExpected() : int {
         return 1234;
     }
 
-    protected function getBadValue() {
-        return 9876;
+    public function getGoodActual() : array {
+        return [
+            [1234]
+        ];
     }
 
-    protected function getExpectedType() {
-        return 'integer';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            [9876],
+            [1234.56],
+            [[]],
+            ['not an int'],
+            [new \stdClass()],
+            [null],
+            [true]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

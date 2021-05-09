@@ -4,7 +4,9 @@ namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Cspray\Labrador\AsyncUnit\Assertion\AssertArrayEquals;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertFloatEquals;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertInstanceOf;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIntEquals;
+use Cspray\Labrador\AsyncUnit\Assertion\AssertIsEmpty;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsNull;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertIsTrue;
@@ -60,6 +62,24 @@ final class AssertionContext {
         $this->invokedAssertionContext();
 
         $assert = new AssertStringEquals($expected, $actual);
+        $results = $assert->assert();
+
+        $this->handleAssertionResults($results, $isNot, $message);
+    }
+
+    public function instanceOf(string|object $expected, object $actual, string $message = null) : void {
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+        $assert = new AssertInstanceOf($expected, $actual);
+        $results = $assert->assert();
+        $this->handleAssertionResults($results, $isNot, $message);
+    }
+
+    public function isEmpty(mixed $actual, string $message = null) : void {
+        $isNot = $this->isNot;
+        $this->invokedAssertionContext();
+
+        $assert = new AssertIsEmpty($actual);
         $results = $assert->assert();
 
         $this->handleAssertionResults($results, $isNot, $message);

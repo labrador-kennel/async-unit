@@ -5,40 +5,35 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\BinaryOperandSummary;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\InvalidTypeBinaryOperandSummaryTest;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
 class AsyncAssertIntEqualsTest extends AbstractAsyncAssertionTestCase {
-    /**
-     * @dataProvider nonIntProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
 
     protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
         return new AsyncAssertIntEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() : int {
+    protected function getExpected() : int {
         return 1;
     }
 
-    protected function getBadValue() : int {
-        return 2;
+    public function getGoodActual() : array {
+        return [
+            [1]
+        ];
     }
 
-    protected function getExpectedType() : string {
-        return 'integer';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return InvalidTypeBinaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            [2],
+            [1.1],
+            [null],
+            [true],
+            [[]],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

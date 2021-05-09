@@ -13,31 +13,31 @@ use Generator;
 
 class AsyncAssertStringEqualsTest extends AbstractAsyncAssertionTestCase {
 
-    /**
-     * @dataProvider nonStringProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
-
     protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
         return new AsyncAssertStringEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() : string {
+    protected function getExpected() : string {
         return 'async unit';
     }
 
-    protected function getBadValue() : string {
-        return 'blocking code';
+    public function getGoodActual() : array {
+        return [
+            ['async unit']
+        ];
     }
 
-    protected function getExpectedType() : string {
-        return 'string';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return InvalidTypeBinaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            ['blocking code'],
+            ['not async unit'],
+            [1],
+            [0],
+            [null],
+            [true],
+            [[]],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

@@ -3,37 +3,34 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
-use PHPUnit\Framework\TestCase;
 
 class AssertStringEqualsTest extends AbstractAssertionTestCase {
-
-    /**
-     * @dataProvider nonStringProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
 
     protected function getAssertion($value, $actual) : Assertion {
         return new AssertStringEquals($value, $actual);
     }
 
-    protected function getGoodValue() {
+    public function getGoodActual() : array {
+        return [
+            ['async unit']
+        ];
+    }
+
+    protected function getExpected() : string {
         return 'async unit';
     }
 
-    protected function getBadValue() {
-        return 'blocking code';
-    }
-
-    protected function getExpectedType() {
-        return 'string';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\InvalidTypeBinaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            ['blocking code'],
+            ['phpunit'],
+            [1],
+            [1.23],
+            [null],
+            [true],
+            [['async unit']],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

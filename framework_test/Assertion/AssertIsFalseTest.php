@@ -3,35 +3,33 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 
 class AssertIsFalseTest extends AbstractAssertionTestCase {
 
-    /**
-     * @dataProvider nonBoolProvider
-     */
-    public function testBadTypes($value) {
-        $this->runBadTypeAssertions($value);
-    }
-
-    protected function getAssertion($value, $actual) : Assertion {
+    protected function getAssertion($expected, $actual) : Assertion {
         return new AssertIsFalse($actual);
     }
 
-    protected function getGoodValue() {
-        return false;
+    protected function getExpected() : mixed {
+        return null;
     }
 
-    protected function getBadValue() {
-        return true;
+    public function getGoodActual() : array {
+        return [
+            [false]
+        ];
     }
 
-    protected function getExpectedType() {
-        return 'boolean';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\FalseUnaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            [true],
+            [1],
+            [0],
+            [[]],
+            ['not false'],
+            [''],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

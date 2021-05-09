@@ -4,38 +4,36 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
 
-class AssertIsTrueTest extends AbstractAssertionTestCase {
+class AssertCountEqualsTest extends AbstractAssertionTestCase {
 
     protected function getAssertion($expected, $actual) : Assertion {
-        return new AssertIsTrue($actual);
+        return new AssertCountEquals($expected, $actual);
+    }
+
+    protected function getExpected() : int {
+        return 5;
     }
 
     public function getGoodActual() : array {
         return [
-            [true]
+            [[1, 2, 3, 4, 5]],
+            [['a', 'b', 'c', 'd', 'e']]
         ];
-    }
-
-    protected function getExpected() : mixed {
-        return null;
     }
 
     public function getBadActual() : array {
         return [
-            [false],
-            [1],
-            [0],
-            [[1]],
-            [new \stdClass()],
-            ['this is not true']
+            [[]],
+            [[1, 2, 3, 4]],
+            [[1, 2, 3, 4, 5, 6]]
         ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\TrueUnaryOperandSummary::class;
+        return Assertion\AssertionMessage\CountEqualsSummary::class;
     }
 
     protected function getDetailsAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\TrueUnaryOperandDetails::class;
+        return Assertion\AssertionMessage\CountEqualsDetails::class;
     }
 }

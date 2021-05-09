@@ -11,31 +11,30 @@ use Generator;
 
 class AsyncAssertArrayEqualsTest extends AbstractAsyncAssertionTestCase {
 
-    /**
-     * @dataProvider nonArrayProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
-
     protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
         return new AsyncAssertArrayEquals($expected, $actual);
     }
 
-    protected function getExpectedValue() : array {
+    protected function getExpected() : array {
         return ['generators', 'promises', 'coroutines'];
     }
 
-    protected function getBadValue() : array {
-        return ['blocks', 'io', 'nooooo'];
+    public function getGoodActual() : array {
+        return [
+            [['generators', 'promises', 'coroutines']]
+        ];
     }
 
-    protected function getExpectedType() : string {
-        return 'array';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return InvalidTypeBinaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            [['blocks', 'io', 'nooooo']],
+            [[]],
+            [1],
+            [0],
+            [null],
+            [true],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {
