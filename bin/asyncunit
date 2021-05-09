@@ -3,7 +3,9 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-require_once dirname(__DIR__) . '/vendor/autoload.php';
+$cwd = getcwd();
+
+require_once $cwd . '/vendor/autoload.php';
 
 use Cspray\Labrador\AsyncUnitCli\AsyncUnitCliApplication;
 use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
@@ -19,7 +21,7 @@ $configurationFactory = new ConfigurationFactory();
 $application = new AsyncUnitCliApplication(
     $configurationFactory,
     new TestFrameworkApplicationObjectGraph($environment, $logger),
-    getcwd(),
+    $cwd,
     '0.4.0'
 );
 
