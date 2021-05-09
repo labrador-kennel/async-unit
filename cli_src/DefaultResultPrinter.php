@@ -3,7 +3,6 @@
 namespace Cspray\Labrador\AsyncUnitCli;
 
 use Amp\ByteStream\OutputStream;
-use Coduo\PHPHumanizer\NumberHumanizer;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
