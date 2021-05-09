@@ -5,16 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.4.0 - 2021-05-09
 
 ### Added
 
-- Added a `#[Disabled]` Attribute that allows for annotating a test to not run. 
+- Added a `#[Disabled]` Attribute that allows for annotating a test, TestCase, or TestSuite to not run. [#63](https://github.com/labrador-kennel/async-unit/pull/63)
+- Adds the total time and memory usage to default test output. [#64](https://github.com/labrador-kennel/async-unit/pull/64)
+- Ensures that any test that has output is marked as a failure. [#67](https://github.com/labrador-kennel/async-unit/pull/67)
+- Randomize all tests so none of them process in any specific order. Depending on the order of the tests is a code smell 
+  in your application or testing suite. [#68](https://github.com/labrador-kennel/async-unit/pull/68)
+- Adds `assert()->instanceOf`, `assert()->isEmpty`, and `assert()->countEquals` along with their asynchronous counterparts. [#69](https://github.com/labrador-kennel/async-unit/pull/69)
+- Adds the ability to expect that an exception is thrown from your test. [#70](https://github.com/labrador-kennel/async-unit/pull/70)
+- Adds a `TestResult::getState` method that returns an enum whether test passed, failed, or was disabled.
 
 ### Changed
 
 - **Breaking Change!** Renamed `TestInvokedEvent` -> `TestProcessedEvent` to better signify that the test might not have actually 
 been invoked if it was disabled.
+- **Breaking Change!** Removes the `TestOutput` interface in favor of using the `Amp\ByteStream\OutputStream` interface. 
+- **Breaking Change!** Renamed `DefaultTestSuite` -> `ImplicitTestSuite` to not conflict with the attribute of the same name.
+- **Breaking Change!** Renamed `#[TestSuite]` -> `#[AttachToTestSuite]` to not conflict with the interface of the same name.
+- **Breaking Change!** Refactored the `HookModel` type to be an enum instead of a string.
+
+### Removed
+
+- **Breaking Change!** Removed the `TestResult::isSuccessful` method. With the addition of a disabled boolean the state 
+of the test became too complex to manage with booleans.
 
 ## 0.3.0 - 2021-05-05
 

@@ -9,10 +9,12 @@ A testing framework, with a focus on integration testing, that treats Amp's Loop
 - Embrace a test suite as a first-class citizen with `Cspray\Labrador\AsyncUnit\TestSuite` and bring a layer of extra functionality to integration tests
 - Assertion API with first-class async support and a clear 
 - Disable tests, `TestCase`, or a `TestSuite` with the `#[Disabled]` Attribute
+- Utilize `#[DataProvider]` to reduce test duplication
+- Expect exceptions with, or without, specific messages to be thrown by your tests
 - Includes a bundled CLI application for running your tests
 
 AsyncUnit is under active development! The project has a [defined Roadmap](https://docs.labrador-kennel.io/asyncunit/roadmap) and is currently implementing features for 
-version **0.4.0**. 
+version **0.5.0**. 
 
 ## Installation
 
