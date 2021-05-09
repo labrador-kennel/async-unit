@@ -19,6 +19,11 @@ class CountEqualsMessage implements AssertionMessage {
     }
 
     public function toNotString() : string {
-        // TODO: Implement toNotString() method.
+        return sprintf(
+            'asserting %s with count of %d does not equal expected count of %d',
+            is_array($this->actual) ? 'array': $this->actual::class,
+            count($this->actual),
+            $this->expected
+        );
     }
 }
