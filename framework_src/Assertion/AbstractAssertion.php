@@ -11,21 +11,9 @@ abstract class AbstractAssertion implements Assertion {
     public function __construct(private mixed $expected, private mixed $actual) {}
 
     final public function assert() : AssertionResult {
-        if (!$this->isValidType($this->actual)) {
-            return AssertionResultFactory::invalidAssertion(
-                $this->getInvalidTypeSummary(),
-                $this->getDetails()
-            );
-        } else if ($this->expected !== $this->actual) {
-            return AssertionResultFactory::invalidAssertion($this->getSummary(), $this->getDetails());
-        }
-
-        return AssertionResultFactory::validAssertion($this->getSummary(), $this->getDetails());
+        $factoryMethod = $this->expected === $this->actual ? 'validAssertion' : 'invalidAssertion';
+        return AssertionResultFactory::$factoryMethod($this->getSummary(), $this->getDetails());
     }
-
-    abstract protected function isValidType(mixed $actual) : bool;
-
-    abstract protected function getInvalidTypeSummary() : AssertionMessage;
 
     abstract protected function getSummary() : AssertionMessage;
 

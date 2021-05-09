@@ -13,19 +13,11 @@ final class AssertIsFalse extends AbstractAssertion implements Assertion {
         parent::__construct(false, $actual);
     }
 
-    protected function isValidType(mixed $actual) : bool {
-        return is_bool($actual);
-    }
-
     protected function getSummary() : AssertionMessage {
         return new FalseUnaryOperandSummary($this->getActual());
     }
 
     protected function getDetails() : AssertionMessage {
         return new FalseUnaryOperandDetails($this->getActual());
-    }
-
-    protected function getInvalidTypeSummary() : AssertionMessage {
-        return new FalseUnaryOperandSummary($this->getActual());
     }
 }

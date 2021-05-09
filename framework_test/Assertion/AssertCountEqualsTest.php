@@ -3,40 +3,40 @@
 namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Cspray\Labrador\AsyncUnit\Assertion;
+use Cspray\Labrador\AsyncUnit\Stub\CountableStub;
 
-class AssertIntEqualsTest extends AbstractAssertionTestCase {
+class AssertCountEqualsTest extends AbstractAssertionTestCase {
 
     protected function getAssertion($expected, $actual) : Assertion {
-        return new AssertIntEquals($expected, $actual);
+        return new AssertCountEquals($expected, $actual);
     }
 
     protected function getExpected() : int {
-        return 1234;
+        return 5;
     }
 
     public function getGoodActual() : array {
         return [
-            [1234]
+            [[1, 2, 3, 4, 5]],
+            [['a', 'b', 'c', 'd', 'e']],
+            [new CountableStub(5)]
         ];
     }
 
     public function getBadActual() : array {
         return [
-            [9876],
-            [1234.56],
             [[]],
-            ['not an int'],
-            [new \stdClass()],
-            [null],
-            [true]
+            [[1, 2, 3, 4]],
+            [[1, 2, 3, 4, 5, 6]],
+            [new CountableStub(4)]
         ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+        return Assertion\AssertionMessage\CountEqualsMessage::class;
     }
 
     protected function getDetailsAssertionMessageClass() : string {
-        return Assertion\AssertionMessage\BinaryOperandSummary::class;
+        return Assertion\AssertionMessage\CountEqualsMessage::class;
     }
 }

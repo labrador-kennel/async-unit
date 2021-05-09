@@ -4,41 +4,34 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 
 use Amp\Coroutine;
 use Amp\Promise;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\FalseAssertionComparisonDisplay;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\NullAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandDetails;
 use Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage\NullUnaryOperandSummary;
-use Cspray\Labrador\AsyncUnit\AssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\AsyncAssertion;
 use Generator;
 
 class AsyncAssertIsNullTest extends AbstractAsyncAssertionTestCase {
 
-    /**
-     * @dataProvider nonNullProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
-
     protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
         return new AsyncAssertIsNull($actual);
     }
 
-    protected function getExpectedValue() : mixed {
+    protected function getExpected() : mixed {
         return null;
     }
 
-    protected function getBadValue() : string {
-        return 'non null';
+    public function getGoodActual() : array {
+        return [
+            [null]
+        ];
     }
 
-    protected function getExpectedType() : string {
-        return 'NULL';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return NullUnaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            ['not null'],
+            [0],
+            [false],
+            [[]]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {

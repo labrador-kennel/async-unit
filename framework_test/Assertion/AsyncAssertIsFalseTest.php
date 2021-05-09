@@ -13,31 +13,30 @@ use Generator;
 
 class AsyncAssertIsFalseTest extends AbstractAsyncAssertionTestCase {
 
-    /**
-     * @dataProvider nonBoolProvider
-     */
-    public function testBadTypes($value, string $type) {
-        $this->runBadTypeAssertions($value, $type);
-    }
-
     protected function getAssertion($expected, Promise|Generator|Coroutine $actual) : AsyncAssertion {
         return new AsyncAssertIsFalse($actual);
     }
 
-    protected function getExpectedValue() : bool {
-        return false;
+    protected function getExpected() : mixed {
+        return null;
     }
 
-    protected function getBadValue() : bool {
-        return true;
+    public function getGoodActual() : array {
+        return [
+            [false]
+        ];
     }
 
-    protected function getExpectedType() : string {
-        return 'boolean';
-    }
-
-    protected function getInvalidTypeAssertionMessageClass() : string {
-        return FalseUnaryOperandSummary::class;
+    public function getBadActual() : array {
+        return [
+            [true],
+            [null],
+            [1],
+            [0],
+            [''],
+            [[]],
+            [new \stdClass()]
+        ];
     }
 
     protected function getSummaryAssertionMessageClass() : string {
