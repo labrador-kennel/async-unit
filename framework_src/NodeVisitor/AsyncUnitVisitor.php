@@ -95,6 +95,14 @@ final class AsyncUnitVisitor extends NodeVisitorAbstract implements NodeVisitor 
         ];
         foreach ($validAttributes as $validAttribute => $validator) {
             if (!is_null($this->findAttribute($validAttribute, ...$classMethod->attrGroups))) {
+                $className = $classMethod->getAttribute('parent')->namespacedName->toString();
+                if (!class_exists($className)) {
+                    $msg = sprintf(
+                        'Failure compiling %s. The class cannot be autoloaded. Please ensure your Composer autoloader settings have been configured correctly',
+                        $className
+                    );
+                    throw new TestCompilationException($msg);
+                }
                 $validator();
                 return true;
             }
