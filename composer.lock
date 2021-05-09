@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "26209554d18429df26b03b95a612ebc5",
+    "content-hash": "c2da27ecbeba625c9513914b5ab5e6dc",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -292,16 +292,16 @@
         },
         {
             "name": "cspray/labrador",
-            "version": "3.2.0-alpha4",
+            "version": "3.2.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/labrador-kennel/core.git",
-                "reference": "f3c1aac5b163323972099052f5d507764004b81a"
+                "reference": "dbb93308d53a71e6bf196211811305ca4d20f5ff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/labrador-kennel/core/zipball/f3c1aac5b163323972099052f5d507764004b81a",
-                "reference": "f3c1aac5b163323972099052f5d507764004b81a",
+                "url": "https://api.github.com/repos/labrador-kennel/core/zipball/dbb93308d53a71e6bf196211811305ca4d20f5ff",
+                "reference": "dbb93308d53a71e6bf196211811305ca4d20f5ff",
                 "shasum": ""
             },
             "require": {
@@ -348,9 +348,9 @@
             ],
             "support": {
                 "issues": "https://github.com/labrador-kennel/core/issues",
-                "source": "https://github.com/labrador-kennel/core/tree/3.2.0-alpha4"
+                "source": "https://github.com/labrador-kennel/core/tree/3.2.0"
             },
-            "time": "2021-05-01T16:40:03+00:00"
+            "time": "2021-05-09T20:52:45+00:00"
         },
         {
             "name": "cspray/labrador-async-event",
@@ -3715,9 +3715,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "cspray/labrador": 15
-    },
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
