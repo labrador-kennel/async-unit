@@ -7,6 +7,7 @@ use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
+use Acme\DemoSuites\ErrorConditions;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
@@ -78,6 +79,38 @@ class ParserTest extends PHPUnitTestCase {
         $this->expectException(TestCompilationException::class);
         $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
         $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeEachAttributeOnNotTestCaseOrTestSuite');
+    }
+
+    public function badNamespaceDataProvider() {
+        return [
+            ['BadNamespaceTest', 'MyTestCase'],
+            ['BadNamespaceTestCaseAfterAll', 'MyTestCase'],
+            ['BadNamespaceTestCaseAfterEach', 'MyTestCase'],
+            ['BadNamespaceTestCaseBeforeAll', 'MyTestCase'],
+            ['BadNamespaceTestCaseBeforeEach', 'MyTestCase'],
+            ['BadNamespaceTestSuiteAfterAll', 'MyTestSuite'],
+            ['BadNamespaceTestSuiteAfterEach', 'MyTestSuite'],
+            ['BadNamespaceTestSuiteAfterEachTest', 'MyTestSuite'],
+            ['BadNamespaceTestSuiteBeforeAll', 'MyTestSuite'],
+            ['BadNamespaceTestSuiteBeforeEach', 'MyTestSuite'],
+            ['BadNamespaceTestSuiteBeforeEachTest', 'MyTestSuite']
+        ];
+    }
+
+    /**
+     * @dataProvider badNamespaceDataProvider
+     */
+    public function testErrorConditionsBadNamespace(string $errorConditionNamespace, string $simpleClass) {
+        $this->expectException(TestCompilationException::class);
+        $expected = sprintf(
+            'Failure compiling Acme\\DemoSuites\\ErrorConditions\\%s\\IntentionallyBad\\%s. The class cannot be autoloaded. Please ensure your Composer autoloader settings have been configured correctly',
+            $errorConditionNamespace,
+            $simpleClass
+
+        );
+        $this->expectExceptionMessage($expected);
+
+        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/' . $errorConditionNamespace . '/');
     }
 
     public function testDefaultTestSuiteName() {
