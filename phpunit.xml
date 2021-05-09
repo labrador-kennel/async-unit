@@ -23,11 +23,12 @@
               processUncoveredFiles="true">
         <include>
             <directory suffix=".php">framework_src</directory>
-            <directory suffix=".php">cli_src</directory>
         </include>
         <report>
+            <!--
             <html outputDirectory="build/coverage/html" />
             <php outputFile="build/coverage/coverage.php" />
+            -->
         </report>
     </coverage>
 </phpunit>
