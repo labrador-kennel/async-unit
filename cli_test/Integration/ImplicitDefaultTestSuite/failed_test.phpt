@@ -21,9 +21,10 @@ Time: %d:%f, Memory: %d.%d MB
 There was 1 failure:
 
 1) Acme\DemoSuites\ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest\MyTestCase::ensureSomethingFails
-An unexpected Cspray\Labrador\AsyncUnit\Exception\TestFailedException was thrown in %s/acme_src/ImplicitDefaultTestSuite/TestFailedExceptionThrowingTest/MyTestCase.php on line 13.
 
-"Something barfed"
+Test failure message:
+
+Something barfed
 
 %s
 %s

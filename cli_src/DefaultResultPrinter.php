@@ -3,13 +3,13 @@
 namespace Cspray\Labrador\AsyncUnitCli;
 
 use Amp\ByteStream\OutputStream;
-use Coduo\PHPHumanizer\NumberHumanizer;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Generator;
 use SebastianBergmann\Timer\ResourceUsageFormatter;
 
@@ -87,6 +87,10 @@ final class DefaultResultPrinter {
                         $exception->getAssertionFailureLine()
                     ));
                     yield $output->write("\n");
+                } else if ($exception instanceof TestFailedException) {
+                    yield $output->write("\nTest failure message:\n\n");
+                    yield $output->write($exception->getMessage() . "\n\n");
+                    yield $output->write($exception->getTraceAsString() . "\n\n");
                 } else {
                     yield $output->write(sprintf(
                         "An unexpected %s was thrown in %s on line %d.\n",

@@ -7,6 +7,7 @@ use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
+use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
@@ -72,7 +73,7 @@ final class TestSuiteRunner {
                     foreach ($testMethodModels as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */
-                        [$testCase, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite);
+                        [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                         if ($testMethodModel->getDataProvider() !== null) {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCase->$dataProvider();
@@ -82,12 +83,13 @@ final class TestSuiteRunner {
                                     $testCase,
                                     $assertionContext,
                                     $asyncAssertionContext,
+                                    $expectationContext,
                                     $testSuiteModel,
                                     $testCaseModel,
                                     $testMethodModel,
                                     $args
                                 );
-                                [$testCase, $assertionContext, $asyncAssertionContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite);
+                                [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                             }
                         } else {
                             yield $this->invokeTest(
@@ -95,6 +97,7 @@ final class TestSuiteRunner {
                                 $testCase,
                                 $assertionContext,
                                 $asyncAssertionContext,
+                                $expectationContext,
                                 $testSuiteModel,
                                 $testCaseModel,
                                 $testMethodModel
@@ -153,12 +156,13 @@ final class TestSuiteRunner {
         TestCase $testCase,
         AssertionContext $assertionContext,
         AsyncAssertionContext $asyncAssertionContext,
+        ExpectationContext $expectationContext,
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
         TestModel $testMethodModel,
         array $args = []
     ) : Promise {
-        return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+        return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
             if ($testMethodModel->isDisabled()) {
                 $msg = $testMethodModel->getDisabledReason() ??
                     $testCaseModel->getDisabledReason() ??
@@ -179,36 +183,15 @@ final class TestSuiteRunner {
             try {
                 ob_start();
                 yield call(fn() => $testCase->$testCaseMethod(...$args));
-                if ($assertionContext->getAssertionCount() === 0 && $asyncAssertionContext->getAssertionCount() === 0) {
-                    $msg = sprintf(
-                        'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
-                        $testCase::class,
-                        $testCaseMethod
-                    );
-                    throw new TestFailedException($msg);
-                }
             } catch (TestFailedException $exception) {
                 $failureException = $exception;
             } catch (Throwable $throwable) {
-                $msg = sprintf(
-                    'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
-                    $throwable::class,
-                    $throwable->getCode(),
-                    $throwable->getMessage(),
-                    $testCase::class,
-                    $testMethodModel->getMethod()
-                );
-                $failureException = new TestFailedException($msg, previous: $throwable);
+                $expectationContext->setThrownException($throwable);
             } finally {
-                $output = ob_get_clean();
-                if ($output && !$failureException) {
-                    $msg = sprintf(
-                        'Test had unexpected output:%s%s"%s"',
-                        PHP_EOL,
-                        PHP_EOL,
-                        $output
-                    );
-                    $failureException = new TestOutputException($msg);
+                $expectationContext->setActualOutput(ob_get_clean());
+                // If something else failed we don't need to make validations about expectations
+                if (is_null($failureException)) {
+                    $failureException = yield $expectationContext->validateExpectations();
                 }
                 $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
                 $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $failureException);
@@ -299,12 +282,13 @@ final class TestSuiteRunner {
         };
     }
 
-    private function invokeTestCaseConstructor(string $testCaseClass, TestSuite $testSuite) : array {
+    private function invokeTestCaseConstructor(string $testCaseClass, TestSuite $testSuite, TestModel $testModel) : array {
         /** @var TestCase $testCaseObject */
         $reflectionClass = $this->getReflectionClass($testCaseClass);
         $testCaseObject = $reflectionClass->newInstanceWithoutConstructor();
         $reflectedAssertionContext = $this->getReflectionClass(AssertionContext::class);
         $reflectedAsyncAssertionContext = $this->getReflectionClass(AsyncAssertionContext::class);
+        $reflectedExpectationContext = $this->getReflectionClass(ExpectationContext::class);
         $testCaseConstructor = $reflectionClass->getConstructor();
         $testCaseConstructor->setAccessible(true);
 
@@ -318,13 +302,19 @@ final class TestSuiteRunner {
         $asyncAssertionContextConstructor->setAccessible(true);
         $asyncAssertionContextConstructor->invoke($asyncAssertionContext, $this->customAssertionContext);
 
+        $expectationContext = $reflectedExpectationContext->newInstanceWithoutConstructor();
+        $expectationContextConstructor = $reflectedExpectationContext->getConstructor();
+        $expectationContextConstructor->setAccessible(true);
+        $expectationContextConstructor->invoke($expectationContext, $testModel, $assertionContext, $asyncAssertionContext);
+
         $testCaseConstructor->invoke(
             $testCaseObject,
             $testSuite,
             $assertionContext,
-            $asyncAssertionContext
+            $asyncAssertionContext,
+            $expectationContext
         );
-        return [$testCaseObject, $assertionContext, $asyncAssertionContext];
+        return [$testCaseObject, $assertionContext, $asyncAssertionContext, $expectationContext];
     }
 
 }
