@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\Loop;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
@@ -27,61 +28,77 @@ class ParserTest extends PHPUnitTestCase {
 
 
     public function testErrorConditionsNoTestsTestCase() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\NoTestsTestCase\\BadTestCase". There were no #[Test] found.');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\NoTestsTestCase\\BadTestCase". There were no #[Test] found.');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/NoTestsTestCase');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/NoTestsTestCase');
+        });
     }
 
     public function testErrorConditionsBeforeAllNonStaticMethod() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllNonStaticMethod\\BadTestCase". The non-static method "badBeforeAllMustBeStatic" cannot be used as a #[BeforeAll] hook.');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllNonStaticMethod\\BadTestCase". The non-static method "badBeforeAllMustBeStatic" cannot be used as a #[BeforeAll] hook.');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeAllNonStaticMethod');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeAllNonStaticMethod');
+        });
     }
 
     public function testErrorConditionsAfterAllNonStaticMethod() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllNonStaticMethod\\BadTestCase". The non-static method "badAfterAllMustBeStatic" cannot be used as a #[AfterAll] hook.');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllNonStaticMethod\\BadTestCase". The non-static method "badAfterAllMustBeStatic" cannot be used as a #[AfterAll] hook.');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterAllNonStaticMethod');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterAllNonStaticMethod');
+        });
     }
 
     public function testErrorConditionsTestAttributeOnNotTestCase() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\TestAttributeOnNotTestCase\\BadTestCase". The method "ensureSomething" is annotated with #[Test] but this class does not extend "' . TestCase::class . '".');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\TestAttributeOnNotTestCase\\BadTestCase". The method "ensureSomething" is annotated with #[Test] but this class does not extend "' . TestCase::class . '".');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/TestAttributeOnNotTestCase');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/TestAttributeOnNotTestCase');
+        });
     }
 
     public function testErrorConditionsBeforeAllAttributeOnNotTestCaseOrTestSuite() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeAllAttributeOnNotTestCaseOrTestSuite');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeAllAttributeOnNotTestCaseOrTestSuite');
+        });
     }
 
     public function testErrorConditionsAfterAllAttributeOnNotTestCaseOrTestSuite() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterAllAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterAll] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterAllAttributeOnNotTestCaseOrTestSuite');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterAllAttributeOnNotTestCaseOrTestSuite');
+        });
     }
 
     public function testErrorConditionsAfterEachAttributeOnNotTestCaseOrTestSuite() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\AfterEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[AfterEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterEachAttributeOnNotTestCaseOrTestSuite');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/AfterEachAttributeOnNotTestCaseOrTestSuite');
+        });
     }
 
     public function testErrorConditionsBeforeEachAttributeOnNotTestCaseOrTestSuite() {
-        $this->expectException(TestCompilationException::class);
-        $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeEachAttributeOnNotTestCaseOrTestSuite');
+        Loop::run(function() {
+            $this->expectException(TestCompilationException::class);
+            $this->expectExceptionMessage('Failure compiling "Acme\\DemoSuites\\ErrorConditions\\BeforeEachAttributeOnNotTestCaseOrTestSuite\\BadTestCase". The method "ensureSomething" is annotated with #[BeforeEach] but this class does not extend "' . TestSuite::class . '" or "' . TestCase::class . '".');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/BeforeEachAttributeOnNotTestCaseOrTestSuite');
+        });
     }
 
-    public function badNamespaceDataProvider() {
+    public function badNamespaceDataProvider() : array {
         return [
             ['BadNamespaceTest', 'MyTestCase'],
             ['BadNamespaceTestCaseAfterAll', 'MyTestCase'],
@@ -101,141 +118,161 @@ class ParserTest extends PHPUnitTestCase {
      * @dataProvider badNamespaceDataProvider
      */
     public function testErrorConditionsBadNamespace(string $errorConditionNamespace, string $simpleClass) {
-        $this->expectException(TestCompilationException::class);
-        $expected = sprintf(
-            'Failure compiling Acme\\DemoSuites\\ErrorConditions\\%s\\IntentionallyBad\\%s. The class cannot be autoloaded. Please ensure your Composer autoloader settings have been configured correctly',
-            $errorConditionNamespace,
-            $simpleClass
+        Loop::run(function() use($errorConditionNamespace, $simpleClass) {
+            $this->expectException(TestCompilationException::class);
+            $expected = sprintf(
+                'Failure compiling Acme\\DemoSuites\\ErrorConditions\\%s\\IntentionallyBad\\%s. The class cannot be autoloaded. Please ensure your Composer autoloader settings have been configured correctly',
+                $errorConditionNamespace,
+                $simpleClass
 
-        );
-        $this->expectExceptionMessage($expected);
+            );
+            $this->expectExceptionMessage($expected);
 
-        $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/' . $errorConditionNamespace . '/');
+            yield $this->subject->parse($this->acmeSrcDir . '/ErrorConditions/' . $errorConditionNamespace . '/');
+        });
     }
 
     public function testDefaultTestSuiteName() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $this->assertSame(ImplicitTestSuite::class, $testSuite->getClass());
+            $this->assertSame(ImplicitTestSuite::class, $testSuite->getClass());
+        });
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $expectedTestCase = ImplicitDefaultTestSuite\SingleTest\MyTestCase::class;
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite($expectedTestCase, $testSuite);
+            $expectedTestCase = ImplicitDefaultTestSuite\SingleTest\MyTestCase::class;
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite($expectedTestCase, $testSuite);
 
-        $testCaseModel = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
+            $testCaseModel = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-        $this->assertCount(1, $testCaseModel->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCaseModel);
+            $this->assertCount(1, $testCaseModel->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCaseModel);
+        });
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTest() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTest'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTest'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
-        $expectedTestCase = ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class;
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite(
-            $expectedTestCase,
-            $testSuite
-        );
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
+            $expectedTestCase = ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class;
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite(
+                $expectedTestCase,
+                $testSuite
+            );
 
-        $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
+            $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-        $this->assertCount(3, $testCase->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
-        $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensTwice', $testCase);
-        $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensThreeTimes', $testCase);
+            $this->assertCount(3, $testCase->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
+            $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensTwice', $testCase);
+            $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensThreeTimes', $testCase);
+        });
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteHasNotTestCaseObject() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('HasNotTestCaseObject'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('HasNotTestCaseObject'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $expectedTestCase = ImplicitDefaultTestSuite\HasNotTestCaseObject\MyTestCase::class;
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite(
-            $expectedTestCase,
-            $testSuite
-        );
+            $expectedTestCase = ImplicitDefaultTestSuite\HasNotTestCaseObject\MyTestCase::class;
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite(
+                $expectedTestCase,
+                $testSuite
+            );
 
-        $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
+            $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-        $this->assertCount(1, $testCase->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
+            $this->assertCount(1, $testCase->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
+        });
     }
 
     public function testParsingSimpleTestCaseImplicitDefaultTestSuiteMultipleTestCase() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTestCase'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('MultipleTestCase'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $barTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BarTestCase::class;
-        $bazTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BazTestCase::class;
-        $fooTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\FooTestCase::class;
+            $barTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BarTestCase::class;
+            $bazTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\BazTestCase::class;
+            $fooTestCaseClass = ImplicitDefaultTestSuite\MultipleTestCase\FooTestCase::class;
 
-        $this->assertCount(3, $testSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite($barTestCaseClass, $testSuite);
-        $this->assertTestCaseClassBelongsToTestSuite($bazTestCaseClass, $testSuite);
-        $this->assertTestCaseClassBelongsToTestSuite($fooTestCaseClass, $testSuite);
+            $this->assertCount(3, $testSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite($barTestCaseClass, $testSuite);
+            $this->assertTestCaseClassBelongsToTestSuite($bazTestCaseClass, $testSuite);
+            $this->assertTestCaseClassBelongsToTestSuite($fooTestCaseClass, $testSuite);
 
-        $barTestCase = $this->fetchTestCaseModel($testSuite, $barTestCaseClass);
-        $bazTestCase = $this->fetchTestCaseModel($testSuite, $bazTestCaseClass);
-        $fooTestCase = $this->fetchTestCaseModel($testSuite, $fooTestCaseClass);
+            $barTestCase = $this->fetchTestCaseModel($testSuite, $barTestCaseClass);
+            $bazTestCase = $this->fetchTestCaseModel($testSuite, $bazTestCaseClass);
+            $fooTestCase = $this->fetchTestCaseModel($testSuite, $fooTestCaseClass);
 
-        $this->assertCount(1, $barTestCase->getTestMethodModels());
-        $this->assertCount(1, $bazTestCase->getTestMethodModels());
-        $this->assertCount(2, $fooTestCase->getTestMethodModels());
+            $this->assertCount(1, $barTestCase->getTestMethodModels());
+            $this->assertCount(1, $bazTestCase->getTestMethodModels());
+            $this->assertCount(2, $fooTestCase->getTestMethodModels());
+        });
     }
 
     public function testParsingImplicitDefaultTestSuiteExtendedTestCases() {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'))->getTestSuiteModels();
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $firstTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FirstTestCase::class;
-        $thirdTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\ThirdTestCase::class;
-        $fifthTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FifthTestCase::class;
+            $firstTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FirstTestCase::class;
+            $thirdTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\ThirdTestCase::class;
+            $fifthTestCaseClass = ImplicitDefaultTestSuite\ExtendedTestCases\FifthTestCase::class;
 
-        $this->assertCount(3, $testSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite($firstTestCaseClass, $testSuite);
-        $this->assertTestCaseClassBelongsToTestSuite($thirdTestCaseClass, $testSuite);
-        $this->assertTestCaseClassBelongsToTestSuite($fifthTestCaseClass, $testSuite);
+            $this->assertCount(3, $testSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite($firstTestCaseClass, $testSuite);
+            $this->assertTestCaseClassBelongsToTestSuite($thirdTestCaseClass, $testSuite);
+            $this->assertTestCaseClassBelongsToTestSuite($fifthTestCaseClass, $testSuite);
 
-        $firstTestCase = $this->fetchTestCaseModel($testSuite, $firstTestCaseClass);
-        $this->assertCount(1, $firstTestCase->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($firstTestCaseClass . '::firstEnsureSomething', $firstTestCase);
+            $firstTestCase = $this->fetchTestCaseModel($testSuite, $firstTestCaseClass);
+            $this->assertCount(1, $firstTestCase->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($firstTestCaseClass . '::firstEnsureSomething', $firstTestCase);
 
-        $thirdTestCase = $this->fetchTestCaseModel($testSuite, $thirdTestCaseClass);
-        $this->assertCount(3, $thirdTestCase->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::firstEnsureSomething', $thirdTestCase);
-        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::secondEnsureSomething', $thirdTestCase);
-        $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::thirdEnsureSomething', $thirdTestCase);
+            $thirdTestCase = $this->fetchTestCaseModel($testSuite, $thirdTestCaseClass);
+            $this->assertCount(3, $thirdTestCase->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::firstEnsureSomething', $thirdTestCase);
+            $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::secondEnsureSomething', $thirdTestCase);
+            $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::thirdEnsureSomething', $thirdTestCase);
 
-        $fifthTestCase = $this->fetchTestCaseModel($testSuite, $fifthTestCaseClass);
-        $this->assertCount(5, $fifthTestCase->getTestMethodModels());
-        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::firstEnsureSomething', $fifthTestCase);
-        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::secondEnsureSomething', $fifthTestCase);
-        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::thirdEnsureSomething', $fifthTestCase);
-        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fourthEnsureSomething', $fifthTestCase);
-        $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fifthEnsureSomething', $fifthTestCase);
+            $fifthTestCase = $this->fetchTestCaseModel($testSuite, $fifthTestCaseClass);
+            $this->assertCount(5, $fifthTestCase->getTestMethodModels());
+            $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::firstEnsureSomething', $fifthTestCase);
+            $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::secondEnsureSomething', $fifthTestCase);
+            $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::thirdEnsureSomething', $fifthTestCase);
+            $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fourthEnsureSomething', $fifthTestCase);
+            $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::fifthEnsureSomething', $fifthTestCase);
+        });
     }
 
-    public function hooksProvider() {
+    public function hooksProvider() : array {
         return [
             [HookType::BeforeAll(), 'HasSingleBeforeAllHook', 'beforeAll'],
             [HookType::BeforeEach(), 'HasSingleBeforeEachHook', 'beforeEach'],
@@ -248,216 +285,254 @@ class ParserTest extends PHPUnitTestCase {
      * @dataProvider hooksProvider
      */
     public function testParsingSimpleTestCaseHasHooks(HookType $hookType, string $subNamespace, string $methodName) {
-        $testSuites = $this->subject->parse($this->implicitDefaultTestSuitePath($subNamespace))->getTestSuiteModels();
+        Loop::run(function() use($hookType, $subNamespace, $methodName) {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath($subNamespace));
+            $testSuites = $results->getTestSuiteModels();
 
-        $this->assertCount(1, $testSuites);
-        $testSuite = $testSuites[0];
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
 
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $myTestCase = $testSuite->getTestCaseModels()[0];
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $myTestCase = $testSuite->getTestCaseModels()[0];
 
-        $this->assertCount(1, $myTestCase->getHooks($hookType));
-        $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->getHooks($hookType)[0]->getClass());
-        $this->assertSame($methodName, $myTestCase->getHooks($hookType)[0]->getMethod());
+            $this->assertCount(1, $myTestCase->getHooks($hookType));
+            $this->assertSame('Acme\\DemoSuites\\ImplicitDefaultTestSuite\\' . $subNamespace . '\\MyTestCase', $myTestCase->getHooks($hookType)[0]->getClass());
+            $this->assertSame($methodName, $myTestCase->getHooks($hookType)[0]->getMethod());
+        });
     }
 
     public function testParsingCustomAssertionPlugins() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasAssertionPlugin'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('HasAssertionPlugin'));
 
-        $this->assertCount(2, $results->getPluginModels());
+            $this->assertCount(2, $results->getPluginModels());
 
-        $pluginNames = array_map(fn(PluginModel $pluginModel) => $pluginModel->getPluginClass(), $results->getPluginModels());
-        $expected = [ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin::class, ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin::class];
+            $pluginNames = array_map(fn(PluginModel $pluginModel) => $pluginModel->getPluginClass(), $results->getPluginModels());
+            $expected = [ImplicitDefaultTestSuite\HasAssertionPlugin\MyCustomAssertionPlugin::class, ImplicitDefaultTestSuite\HasAssertionPlugin\MyOtherCustomAssertionPlugin::class];
 
-        $this->assertEqualsCanonicalizing($expected, $pluginNames);
+            $this->assertEqualsCanonicalizing($expected, $pluginNames);
+        });
     }
 
     public function testParsingDataProvider() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasDataProvider'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('HasDataProvider'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $results->getTestSuiteModels()[0];
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $results->getTestSuiteModels()[0];
 
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $testCaseModel = $testSuite->getTestCaseModels()[0];
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $testCaseModel = $testSuite->getTestCaseModels()[0];
 
-        $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getClass());
-        $this->assertCount(1, $testCaseModel->getTestMethodModels());
-        $testMethodModel = $testCaseModel->getTestMethodModels()[0];
+            $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getClass());
+            $this->assertCount(1, $testCaseModel->getTestMethodModels());
+            $testMethodModel = $testCaseModel->getTestMethodModels()[0];
 
-        $this->assertSame('ensureStringsEqual', $testMethodModel->getMethod());
-        $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
+            $this->assertSame('ensureStringsEqual', $testMethodModel->getMethod());
+            $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
+        });
     }
 
     public function testExplicitTestSuiteAnnotatedDefaultTestSuite() {
-        $results = $this->subject->parse($this->explicitTestSuitePath('AnnotatedDefaultTestSuite'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('AnnotatedDefaultTestSuite'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $results->getTestSuiteModels()[0];
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $results->getTestSuiteModels()[0];
 
-        $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $testSuite->getClass());
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestCase::class, $testSuite);
+            $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $testSuite->getClass());
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestCase::class, $testSuite);
+        });
     }
 
     public function testExplicitTestSuiteTestCaseDefinesTestSuite() {
-        $results = $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinesTestSuite'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinesTestSuite'));
 
-        $this->assertCount(2, $results->getTestSuiteModels());
+            $this->assertCount(2, $results->getTestSuiteModels());
 
-        $firstTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class);
-        $this->assertCount(1, $firstTestSuite->getTestCaseModels());
+            $firstTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class);
+            $this->assertCount(1, $firstTestSuite->getTestCaseModels());
 
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\FirstTestCase::class, $firstTestSuite);
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\FirstTestCase::class, $firstTestSuite);
 
-        $secondTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class);
-        $this->assertCount(2, $secondTestSuite->getTestCaseModels());
+            $secondTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class);
+            $this->assertCount(2, $secondTestSuite->getTestCaseModels());
 
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\SecondTestCase::class, $secondTestSuite);
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\ThirdTestCase::class, $secondTestSuite);
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\SecondTestCase::class, $secondTestSuite);
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinesTestSuite\ThirdTestCase::class, $secondTestSuite);
+        });
     }
 
     public function testExplicitTestSuiteTestCaseDefinesAndTestCaseDefaultTestSuite() {
-        $results = $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinedAndImplicitDefaultTestSuite'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestCaseDefinedAndImplicitDefaultTestSuite'));
 
-        $this->assertCount(2, $results->getTestSuiteModels());
+            $this->assertCount(2, $results->getTestSuiteModels());
 
-        $defaultTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
-        $this->assertCount(1, $defaultTestSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\FirstTestCase::class, $defaultTestSuite);
+            $defaultTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
+            $this->assertCount(1, $defaultTestSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\FirstTestCase::class, $defaultTestSuite);
 
-        $myTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\MyTestSuite::class);
-        $this->assertCount(1, $myTestSuite->getTestCaseModels());
-        $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\SecondTestCase::class, $myTestSuite);
+            $myTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\MyTestSuite::class);
+            $this->assertCount(1, $myTestSuite->getTestCaseModels());
+            $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\SecondTestCase::class, $myTestSuite);
+        });
     }
 
     public function testImplicitDefaultTestSuitePathExtendedTestCases() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
 
-        $this->assertEquals(1, $results->getTestSuiteCount());
-        $this->assertEquals(3, $results->getTotalTestCaseCount());
-        $this->assertEquals(9, $results->getTotalTestCount());
+            $this->assertEquals(1, $results->getTestSuiteCount());
+            $this->assertEquals(3, $results->getTotalTestCaseCount());
+            $this->assertEquals(9, $results->getTotalTestCount());
+        });
     }
 
     public function testImplicitDefaultTestSuitePathHasResultPrinterPlugin() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('HasResultPrinterPlugin'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('HasResultPrinterPlugin'));
 
-        $this->assertCount(1, $results->getPluginModels());
-        $pluginModel = $results->getPluginModels()[0];
-        $this->assertSame(ImplicitDefaultTestSuite\HasResultPrinterPlugin\MyResultPrinterPlugin::class, $pluginModel->getPluginClass());
+            $this->assertCount(1, $results->getPluginModels());
+            $pluginModel = $results->getPluginModels()[0];
+            $this->assertSame(ImplicitDefaultTestSuite\HasResultPrinterPlugin\MyResultPrinterPlugin::class, $pluginModel->getPluginClass());
+        });
     }
 
     public function testImplicitDefaultTestSuitePathTestDisabled() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
-        $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class);
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
+            $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class);
 
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::checkSomething', $testCase);
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::skippedTest', $testCase);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::checkSomething', $testCase);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class . '::skippedTest', $testCase);
 
-        $checkSomething = $this->fetchTestModel($testCase, 'checkSomething');
-        $skippedTest = $this->fetchTestModel($testCase, 'skippedTest');
+            $checkSomething = $this->fetchTestModel($testCase, 'checkSomething');
+            $skippedTest = $this->fetchTestModel($testCase, 'skippedTest');
 
-        $this->assertFalse($checkSomething->isDisabled());
-        $this->assertTrue($skippedTest->isDisabled());
-        $this->assertNull($skippedTest->getDisabledReason());
+            $this->assertFalse($checkSomething->isDisabled());
+            $this->assertTrue($skippedTest->isDisabled());
+            $this->assertNull($skippedTest->getDisabledReason());
+        });
     }
 
     public function testImplicitDefaultTestSuitePathTestCaseDisabled() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabled'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabled'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
-        $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class);
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
+            $testCase = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class);
 
-        $this->assertTrue($testCase->isDisabled());
+            $this->assertTrue($testCase->isDisabled());
 
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedOne', $testCase);
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedTwo', $testCase);
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedThree', $testCase);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedOne', $testCase);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedTwo', $testCase);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class . '::skippedThree', $testCase);
 
-        $one = $this->fetchTestModel($testCase, 'skippedOne');
-        $two = $this->fetchTestModel($testCase, 'skippedTwo');
-        $three = $this->fetchTestModel($testCase, 'skippedThree');
+            $one = $this->fetchTestModel($testCase, 'skippedOne');
+            $two = $this->fetchTestModel($testCase, 'skippedTwo');
+            $three = $this->fetchTestModel($testCase, 'skippedThree');
 
-        $this->assertTrue($one->isDisabled());
-        $this->assertNull($one->getDisabledReason());
-        $this->assertTrue($two->isDisabled());
-        $this->assertNull($two->getDisabledReason());
-        $this->assertTrue($three->isDisabled());
-        $this->assertNull($three->getDisabledReason());
+            $this->assertTrue($one->isDisabled());
+            $this->assertNull($one->getDisabledReason());
+            $this->assertTrue($two->isDisabled());
+            $this->assertNull($two->getDisabledReason());
+            $this->assertTrue($three->isDisabled());
+            $this->assertNull($three->getDisabledReason());
+        });
     }
 
     public function testExplicitTestSuiteTestSuiteDisabled() {
-        $results = $this->subject->parse($this->explicitTestSuitePath('TestSuiteDisabled'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestSuiteDisabled'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class);
-        $this->assertTrue($testSuite->isDisabled());
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class);
+            $this->assertTrue($testSuite->isDisabled());
 
-        $this->assertCount(2, $testSuite->getTestCaseModels());
-        $firstTestCase = $this->fetchTestCaseModel($testSuite, ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class);
-        $secondTestCase = $this->fetchTestCaseModel($testSuite, ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class);
+            $this->assertCount(2, $testSuite->getTestCaseModels());
+            $firstTestCase = $this->fetchTestCaseModel($testSuite, ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class);
+            $secondTestCase = $this->fetchTestCaseModel($testSuite, ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class);
 
-        $this->assertTrue($firstTestCase->isDisabled());
-        $this->assertTrue($secondTestCase->isDisabled());
+            $this->assertTrue($firstTestCase->isDisabled());
+            $this->assertTrue($secondTestCase->isDisabled());
 
-        $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class . '::testOne', $firstTestCase);
-        $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class . '::testTwo', $firstTestCase);
-        $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class . '::testOne', $secondTestCase);
+            $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class . '::testOne', $firstTestCase);
+            $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class . '::testTwo', $firstTestCase);
+            $this->assertTestMethodBelongsToTestCase(ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class . '::testOne', $secondTestCase);
 
-        $one = $this->fetchTestModel($firstTestCase, 'testOne');
-        $two = $this->fetchTestModel($firstTestCase, 'testTwo');
-        $three = $this->fetchTestModel($firstTestCase, 'testOne');
+            $one = $this->fetchTestModel($firstTestCase, 'testOne');
+            $two = $this->fetchTestModel($firstTestCase, 'testTwo');
+            $three = $this->fetchTestModel($firstTestCase, 'testOne');
 
-        $this->assertTrue($one->isDisabled());
-        $this->assertNull($one->getDisabledReason());
-        $this->assertTrue($two->isDisabled());
-        $this->assertNull($two->getDisabledReason());
-        $this->assertTrue($three->isDisabled());
-        $this->assertNull($three->getDisabledReason());
+            $this->assertTrue($one->isDisabled());
+            $this->assertNull($one->getDisabledReason());
+            $this->assertTrue($two->isDisabled());
+            $this->assertNull($two->getDisabledReason());
+            $this->assertTrue($three->isDisabled());
+            $this->assertNull($three->getDisabledReason());
+        });
     }
 
     public function testImplicitDefaultTestSuiteTestDisabledCustomMessage() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabledCustomMessage'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestDisabledCustomMessage'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
-        $this->assertFalse($testSuite->isDisabled());
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
+            $this->assertFalse($testSuite->isDisabled());
 
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $testCaseModel = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class);
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $testCaseModel = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class);
 
-        $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class . '::testOne', $testCaseModel);
+            $this->assertTestMethodBelongsToTestCase(ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class . '::testOne', $testCaseModel);
 
-        $testModel = $this->fetchTestModel($testCaseModel, 'testOne');
+            $testModel = $this->fetchTestModel($testCaseModel, 'testOne');
 
-        $this->assertTrue($testModel->isDisabled());
-        $this->assertSame('Not sure what we should do here yet', $testModel->getDisabledReason());
+            $this->assertTrue($testModel->isDisabled());
+            $this->assertSame('Not sure what we should do here yet', $testModel->getDisabledReason());
+        });
     }
 
     public function testImplicitDefaultTestSuiteTestCaseDisabledCustomMessage() {
-        $results = $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
-        $this->assertFalse($testSuite->isDisabled());
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ImplicitTestSuite::class);
+            $this->assertFalse($testSuite->isDisabled());
 
-        $this->assertCount(1, $testSuite->getTestCaseModels());
-        $testCaseModel = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestCaseDisabledCustomMessage\MyTestCase::class);
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $testCaseModel = $this->fetchTestCaseModel($testSuite, ImplicitDefaultTestSuite\TestCaseDisabledCustomMessage\MyTestCase::class);
 
-        $this->assertTrue($testCaseModel->isDisabled());
-        $this->assertSame('The TestCase is disabled', $testCaseModel->getDisabledReason());
+            $this->assertTrue($testCaseModel->isDisabled());
+            $this->assertSame('The TestCase is disabled', $testCaseModel->getDisabledReason());
+        });
     }
 
     public function testExplicitTestSuiteTestSuiteDisabledCustomMessage() {
-        $results = $this->subject->parse($this->explicitTestSuitePath('TestSuiteDisabledCustomMessage'));
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestSuiteDisabledCustomMessage'));
 
-        $this->assertCount(1, $results->getTestSuiteModels());
-        $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestSuite::class);
-        $this->assertTrue($testSuite->isDisabled());
-        $this->assertSame('The AttachToTestSuite is disabled', $testSuite->getDisabledReason());
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestSuite::class);
+            $this->assertTrue($testSuite->isDisabled());
+            $this->assertSame('The AttachToTestSuite is disabled', $testSuite->getDisabledReason());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteRecursiveTestLayout() {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('RecursiveTestLayout'));
+
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $this->assertCount(5, $results->getTestSuiteModels()[0]->getTestCaseModels());
+        });
     }
 
     /**

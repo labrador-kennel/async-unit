@@ -52,7 +52,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestInvokesMethod() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('SingleTest'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('SingleTest'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -73,7 +74,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteMultipleTestInvokesMethod() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTest'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTest'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -103,7 +105,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleBeforeAllHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeAllHook'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeAllHook'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -133,7 +136,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleBeforeEachHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeEachHook'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeEachHook'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -163,7 +167,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleAfterAllHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterAllHook'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterAllHook'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -193,7 +198,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteHasSingleAfterEachHook() {
         Loop::run(function() {
-            $testSuites = $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterEachHook'))->getTestSuiteModels();
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterEachHook'));
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -224,7 +230,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTest() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $results = yield $this->parser->parse($dir);
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -255,7 +262,8 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingTestWithAfterEachHook() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingTestWithAfterEachHook');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $results = yield $this->parser->parse($dir);
+            $testSuites = $results->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -279,7 +287,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeAll() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeAll');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestCaseSetUpException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeAll\MyTestCase::class;
@@ -292,7 +300,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterAll() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterAll');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestCaseTearDownException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterAll\MyTestCase::class;
@@ -305,7 +313,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingBeforeEach() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeEach');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSetUpException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeEach\MyTestCase::class;
@@ -318,7 +326,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteExceptionThrowingAfterEach() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterEach');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestTearDownException::class);
             $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterEach\MyTestCase::class;
@@ -331,7 +339,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeAll() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeAll');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSuiteSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeAll\MyTestSuite::class;
@@ -344,7 +352,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEach() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeEach');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSuiteSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEach\MyTestSuite::class;
@@ -357,7 +365,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEach() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterEach');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSuiteTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEach\MyTestSuite::class;
@@ -370,7 +378,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEachTest() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterEachTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEachTest\MyTestSuite::class;
@@ -383,7 +391,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEachTest() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeEachTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSetUpException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEachTest\MyTestSuite::class;
@@ -396,7 +404,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterAll() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterAll');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
 
             $this->expectException(TestSuiteTearDownException::class);
             $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterAll\MyTestSuite::class;
@@ -409,7 +417,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testSimpleTestCaseImplicitDefaultTestSuiteTestFailedExceptionThrowingTest() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestFailedExceptionThrowingTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -439,7 +447,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteCustomAssertions() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('CustomAssertions');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -477,7 +485,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteHasDataProvider() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('HasDataProvider');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -499,7 +507,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('AnnotatedDefaultTestSuite');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
 
@@ -519,7 +527,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('MultipleBeforeAllHooks');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -543,7 +551,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('BeforeAllTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -567,7 +575,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('BeforeEachTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -592,7 +600,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('BeforeEachTestTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -617,7 +625,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('AfterEachTestTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -642,7 +650,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('AfterEachTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -667,7 +675,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('AfterAllTestSuiteHook');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -691,7 +699,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('SingleTest');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->data = [];
             $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
@@ -711,7 +719,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('FailedAssertion');
 
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->data = [];
             $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
@@ -730,7 +738,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestSuiteProcessingEventEmitted() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('SingleTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_SUITE_STARTED, function($event) use($state) {
@@ -751,7 +759,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestCaseProcessingEventEmitted() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('SingleTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use($state) {
@@ -772,7 +780,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestMethodIsNotInvokedWhenDisabled() : void {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -788,7 +796,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestMethodIsNotInvokedWhenTestCaseDisabled() : void {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabled');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -808,7 +816,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestResultWhenTestDisabled() : void {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
@@ -834,7 +842,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteHandleNonPhpFiles() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('HandleNonPhpFiles');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
@@ -850,7 +858,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestDisabledHookNotInvoked() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabledHookNotInvoked');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -874,7 +882,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestCaseDisabledHookNotInvoked() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledHookNotInvoked');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -898,7 +906,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteTestSuiteDisabledHookNotInvoked() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -918,7 +926,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestDisabledCustomMessage() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabledCustomMessage');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -938,7 +946,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestCaseDisabledCustomMessage() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -958,7 +966,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testExplicitTestSuiteTestSuiteDisabledCustomMessage() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('TestSuiteDisabledCustomMessage');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
@@ -978,7 +986,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestDisabledEvents() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestDisabledEvents');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->events[] = $event);
@@ -1009,7 +1017,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestHasOutput() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestHasOutput');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->events = [];
             $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->events[] = $event);
@@ -1029,7 +1037,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testRandomizerIsUtilized() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('MultipleTest');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $randomizer = $this->getMockBuilder(Randomizer::class)->getMock();
 
             $testSuiteRunner = new TestSuiteRunner(
@@ -1059,7 +1067,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestExpectsExceptionOnly() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionOnly');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->passed = new stdClass();
             $state->passed->events = [];
@@ -1083,7 +1091,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongType() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongType');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->passed = new stdClass();
             $state->passed->events = [];
@@ -1118,7 +1126,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestExpectsExceptionMessage() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionMessage');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->passed = new stdClass();
             $state->passed->events = [];
@@ -1142,7 +1150,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongMessage() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongMessage');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->passed = new stdClass();
             $state->passed->events = [];
@@ -1175,7 +1183,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testImplicitDefaultTestSuiteTestExpectsExceptionDoesNotThrow() {
         Loop::run(function() {
             $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionDoesNotThrow');
-            $testSuites = $this->parser->parse($dir)->getTestSuiteModels();
+            $testSuites = (yield $this->parser->parse($dir))->getTestSuiteModels();
             $state = new stdClass();
             $state->passed = new stdClass();
             $state->passed->events = [];

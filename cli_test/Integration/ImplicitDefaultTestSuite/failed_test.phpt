@@ -26,52 +26,7 @@ Test failure message:
 
 Something barfed
 
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
-%s
+%a
 
 FAILURES
 Tests: 1, Failures: 1, Assertions: 0, Async Assertions: 0

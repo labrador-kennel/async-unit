@@ -2,6 +2,10 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\ByteStream\Payload;
+use Amp\File\Driver;
+use Amp\File\File;
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
@@ -20,12 +24,10 @@ use PhpParser\NodeVisitor\NameResolver;
 use PhpParser\NodeVisitor\NodeConnectingVisitor;
 use PhpParser\Parser as PhpParser;
 use PhpParser\ParserFactory;
-use FilesystemIterator;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Generator;
-use SplFileInfo;
 use stdClass;
+use function Amp\call;
+use function Amp\File\filesystem;
 
 /**
  * Responsible for iterating over a directory of PHP source code, analyzing it for code annotated with AysncUnit
@@ -48,59 +50,67 @@ final class Parser {
 
     private PhpParser $phpParser;
     private NodeTraverser $nodeTraverser;
+    private Driver $filesystem;
 
     public function __construct() {
         $this->phpParser = (new ParserFactory())->create(ParserFactory::ONLY_PHP7);
         $this->nodeTraverser = new NodeTraverser();
+        $this->filesystem = filesystem();
     }
 
-    public function parse(string|array $dirs) : ParserResult {
-        $defaultTestSuite = null;
-        $nonDefaultTestSuites = [];
-        $plugins = [];
-        $dirs = is_string($dirs) ? [$dirs] : $dirs;
-        $parseState = new stdClass();
-        $parseState->totalTestCaseCount = 0;
-        $parseState->totalTestCount = 0;
+    /**
+     * @param string|array $dirs
+     * @return Promise<ParserResult>
+     */
+    public function parse(string|array $dirs) : Promise {
+        return call(function() use($dirs) {
+            $defaultTestSuite = null;
+            $nonDefaultTestSuites = [];
+            $plugins = [];
+            $dirs = is_string($dirs) ? [$dirs] : $dirs;
+            $parseState = new stdClass();
+            $parseState->totalTestCaseCount = 0;
+            $parseState->totalTestCount = 0;
 
-        foreach ($this->parseDirs($dirs, $parseState) as $model) {
-            // The parseDirs implementation is required to yield back models in the order in which we have listed them
-            // in this if/elseif statement. ALL TestSuiteModels should be yielded, then all TestCase models and finally
-            // any PluginModel. Failure to yield these models in the correct order will result in a fatal error
-            if ($model instanceof TestSuiteModel) {
-                if ($model->isDefaultTestSuite()) {
-                    $defaultTestSuite = $model;
-                } else {
-                    $nonDefaultTestSuites[$model->getClass()] = $model;
-                }
-            } else if ($model instanceof TestCaseModel) {
-                $parseState->totalTestCaseCount++;
-                $testCaseTestSuite = null;
-                if (is_null($model->getTestSuiteClass())) {
-                    $testCaseTestSuite = $defaultTestSuite;
-                } else {
-                    $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
-                }
-                $testCaseTestSuite->addTestCaseModel($model);
-                if ($testCaseTestSuite->isDisabled()) {
-                    $model->markDisabled();
-                    foreach ($model->getTestMethodModels() as $testMethodModel) {
-                        $testMethodModel->markDisabled();
+            $asyncUnitVisitor = yield $this->doParseDirectories($dirs);
+            foreach ($this->parseNodes($asyncUnitVisitor, $parseState) as $model) {
+                // The parseDirs implementation is required to yield back models in the order in which we have listed them
+                // in this if/elseif statement. ALL TestSuiteModels should be yielded, then all TestCase models and finally
+                // any PluginModel. Failure to yield these models in the correct order will result in a fatal error
+                if ($model instanceof TestSuiteModel) {
+                    if ($model->isDefaultTestSuite()) {
+                        $defaultTestSuite = $model;
+                    } else {
+                        $nonDefaultTestSuites[$model->getClass()] = $model;
                     }
+                } else if ($model instanceof TestCaseModel) {
+                    $parseState->totalTestCaseCount++;
+                    $testCaseTestSuite = null;
+                    if (is_null($model->getTestSuiteClass())) {
+                        $testCaseTestSuite = $defaultTestSuite;
+                    } else {
+                        $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
+                    }
+                    $testCaseTestSuite->addTestCaseModel($model);
+                    if ($testCaseTestSuite->isDisabled()) {
+                        $model->markDisabled();
+                        foreach ($model->getTestMethodModels() as $testMethodModel) {
+                            $testMethodModel->markDisabled();
+                        }
+                    }
+                } else if ($model instanceof PluginModel) {
+                    $plugins[] = $model;
                 }
-            } else if ($model instanceof PluginModel) {
-                $plugins[] = $model;
             }
-        }
-        $testSuites = array_values($nonDefaultTestSuites);
-        if (!empty($defaultTestSuite->getTestCaseModels())) {
-            array_unshift($testSuites, $defaultTestSuite);
-        }
-        return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+            $testSuites = array_values($nonDefaultTestSuites);
+            if (!empty($defaultTestSuite->getTestCaseModels())) {
+                array_unshift($testSuites, $defaultTestSuite);
+            }
+            return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+        });
     }
 
-    private function parseDirs(array $dirs, stdClass $state) : Generator {
-        $asyncUnitVisitor = $this->doParseDirectories($dirs);
+    private function parseNodes(AsyncUnitVisitor $asyncUnitVisitor, stdClass $state) : Generator {
         $classMethods = $asyncUnitVisitor->getAnnotatedClassMethods();
 
         $hasDefaultTestSuite = false;
@@ -176,36 +186,48 @@ final class Parser {
         }
     }
 
-    private function doParseDirectories(array $dirs) : AsyncUnitVisitor {
-        $nodeConnectingVisitor = new NodeConnectingVisitor();
-        $nameResolver = new NameResolver();
-        $asyncUnitVisitor = new AsyncUnitVisitor();
+    /**
+     * @param array $dirs
+     * @return Promise
+     */
+    private function doParseDirectories(array $dirs) : Promise {
+        return call(function() use($dirs) {
+            $nodeConnectingVisitor = new NodeConnectingVisitor();
+            $nameResolver = new NameResolver();
+            $asyncUnitVisitor = new AsyncUnitVisitor();
 
-        $this->nodeTraverser->addVisitor($nodeConnectingVisitor);
-        $this->nodeTraverser->addVisitor($nameResolver);
-        $this->nodeTraverser->addVisitor($asyncUnitVisitor);
+            $this->nodeTraverser->addVisitor($nodeConnectingVisitor);
+            $this->nodeTraverser->addVisitor($nameResolver);
+            $this->nodeTraverser->addVisitor($asyncUnitVisitor);
 
-        foreach ($dirs as $dir) {
-            $dirIterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator(
-                    $dir,
-                    FilesystemIterator::KEY_AS_PATHNAME |
-                    FilesystemIterator::CURRENT_AS_FILEINFO |
-                    FilesystemIterator::SKIP_DOTS
-                )
-            );
-
-            /** @var SplFileInfo $file */
-            foreach ($dirIterator as $file) {
-                if ($file->isDir() || $file->getExtension() !== 'php') {
-                    continue;
-                }
-                $statements = $this->phpParser->parse(file_get_contents($file->getRealPath()));
-                $this->nodeTraverser->traverse($statements);
+            foreach ($dirs as $dir) {
+                yield $this->traverseDir($dir);
             }
-        }
 
-        return $asyncUnitVisitor;
+            return $asyncUnitVisitor;
+        });
+    }
+
+    private function traverseDir(string $dir) : Promise {
+        return call(function() use($dir) {
+            $files = yield $this->filesystem->scandir($dir);
+
+            foreach ($files as $fileOrDir) {
+                $fullPath = $dir . '/' . $fileOrDir;
+                if (yield $this->filesystem->isdir($fullPath)) {
+                    yield $this->traverseDir($fullPath);
+                } else {
+                    /** @var File $handle */
+                    $handle = yield $this->filesystem->open($fullPath, 'r');
+                    $contents = yield (new Payload($handle))->buffer();
+                    $statements = $this->phpParser->parse($contents);
+                    $this->nodeTraverser->traverse($statements);
+                    yield $handle->close();
+                    unset($handle);
+                    unset($contents);
+                }
+            }
+        });
     }
 
     private function addHooks(TestSuiteModel|TestCaseModel $model, array $classMethods, HookType $hookType) : void {

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Introduced the `amphp/file` library to handle async I/O on the filesystem.
+
+### Changed
+
+- **Breaking Change!** Updates the `Parser::parse` return type to be a `Promise` and use async I/O.
+- **Breaking Change!** The `TestFrameworkApplication` now expects to get a `Parser` implementation and the directories to
+parse as a constructor dependency. The `TestFrameworkApplication` is now responsible for initiating parsing.
+
 ## 0.4.2 - 2021-05-09
 
 ### Changed
