@@ -526,6 +526,15 @@ class ParserTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteRecursiveTestLayout() {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('RecursiveTestLayout'));
+
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $this->assertCount(5, $results->getTestSuiteModels()[0]->getTestCaseModels());
+        });
+    }
+
     /**
      * @param TestSuiteModel[] $testSuites
      * @param string $testSuiteClassName

@@ -82,6 +82,8 @@ final class TestFrameworkApplication extends AbstractApplication {
 
     private function loadDynamicPlugins(ParserResult $parserResults) : Promise {
         return call(function() use($parserResults) {
+            // This absolutely no good ugly hack is going to be necessary until Labrador Core has support for dynamic Plugin loading
+            // Please see https://github.com/labrador-kennel/core/issues/110
             $reflectedPluginManager = new \ReflectionObject($this->pluginManager);
             $loadPlugin = $reflectedPluginManager->getMethod('loadPlugin');
             $loadPlugin->setAccessible(true);
