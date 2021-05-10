@@ -5,14 +5,10 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Promise;
 use Cspray\Labrador\AbstractApplication;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingStartedEvent;
-use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
-use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
-use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
+use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use Cspray\Labrador\Plugin\Pluggable;
 use SebastianBergmann\Timer\Duration;
 use SebastianBergmann\Timer\Timer;
@@ -22,24 +18,28 @@ use function Amp\call;
 final class TestFrameworkApplication extends AbstractApplication {
 
     private EventEmitter $emitter;
-    private ParserResult $parserResult;
+    private Parser $parser;
     private TestSuiteRunner $testSuiteRunner;
+    private array $dirs;
+    protected Pluggable $pluginManager;
 
     public function __construct(
         Pluggable $pluggable,
         EventEmitter $emitter,
-        ParserResult $parserResult,
-        TestSuiteRunner $testSuiteRunner
+        Parser $parser,
+        TestSuiteRunner $testSuiteRunner,
+        array $dirs
     ) {
         parent::__construct($pluggable);
+        $this->pluginManager = $pluggable;
         $this->emitter = $emitter;
-        $this->parserResult = $parserResult;
+        $this->parser = $parser;
         $this->testSuiteRunner = $testSuiteRunner;
+        $this->dirs = $dirs;
     }
 
     protected function doStart() : Promise {
         return call(function() {
-
             $testRunState = new stdClass();
             $testRunState->testsProcessed = 0;
             $testRunState->failedTests = 0;
@@ -58,14 +58,18 @@ final class TestFrameworkApplication extends AbstractApplication {
                 }
             });
 
+            $parserResults = yield $this->parser->parse(...$this->dirs);
+
+            yield $this->loadDynamicPlugins($parserResults);
+
             yield $this->emitter->emit(
-                new TestProcessingStartedEvent($this->getPreRunSummary())
+                new TestProcessingStartedEvent($this->getPreRunSummary($parserResults))
             );
 
             $timer = new Timer();
             $timer->start();
 
-            yield $this->testSuiteRunner->runTestSuites(...$this->parserResult->getTestSuiteModels());
+            yield $this->testSuiteRunner->runTestSuites(...$parserResults->getTestSuiteModels());
 
             $testRunState->duration = $timer->stop();
             $testRunState->memoryUsage = memory_get_peak_usage(true);
@@ -76,8 +80,28 @@ final class TestFrameworkApplication extends AbstractApplication {
         });
     }
 
-    private function getPreRunSummary() : PreRunSummary {
-        return new class($this->parserResult) implements PreRunSummary {
+    private function loadDynamicPlugins(ParserResult $parserResults) : Promise {
+        return call(function() use($parserResults) {
+            $reflectedPluginManager = new \ReflectionObject($this->pluginManager);
+            $loadPlugin = $reflectedPluginManager->getMethod('loadPlugin');
+            $loadPlugin->setAccessible(true);
+
+            $hasResultPrinter = false;
+            foreach ($parserResults->getPluginModels() as $pluginModel) {
+                yield $loadPlugin->invoke($this->pluginManager, $pluginModel->getPluginClass());
+                if (is_subclass_of($pluginModel->getPluginClass(), ResultPrinterPlugin::class)) {
+                    $hasResultPrinter = true;
+                }
+            }
+
+            if (!$hasResultPrinter) {
+                yield $loadPlugin->invoke($this->pluginManager, DefaultResultPrinter::class);
+            }
+        });
+    }
+
+    private function getPreRunSummary(ParserResult $parserResult) : PreRunSummary {
+        return new class($parserResult) implements PreRunSummary {
 
             public function __construct(private ParserResult $parserResult) {}
 

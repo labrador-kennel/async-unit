@@ -7,7 +7,6 @@ use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
-use Cspray\Labrador\AsyncUnit\Parser;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplication;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
@@ -23,12 +22,6 @@ final class AsyncUnitFrameworkRunner {
     public function run(array $testDirs, OutputStream $terminalOutput) : bool {
         $injector = $this->applicationObjectGraph->wireObjectGraph();
 
-        /** @var Parser $parser */
-        $parser = $injector->make(Parser::class);
-        $parserResults = $parser->parse($testDirs);
-
-        $injector->share($parserResults);
-
         $emitter = $injector->make(EventEmitter::class);
         $hasFailedTests = false;
         $emitter->once(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$hasFailedTests) {
@@ -36,26 +29,11 @@ final class AsyncUnitFrameworkRunner {
         });
 
         /** @var TestFrameworkApplication $app */
-        $app = $injector->make(Application::class);
+        $app = $injector->make(Application::class, [':dirs' => $testDirs]);
         $app->registerPluginLoadHandler(ResultPrinterPlugin::class, function(ResultPrinterPlugin $resultPrinterPlugin) use($emitter, $terminalOutput) {
             $resultPrinterPlugin->registerEvents($emitter, $terminalOutput);
         });
-
-        foreach ($parserResults->getPluginModels() as $pluginModel) {
-            $app->registerPlugin($pluginModel->getPluginClass());
-        }
-
-        $hasResultPrinter = false;
-        foreach ($app->getRegisteredPlugins() as $registeredPlugin) {
-            if (is_subclass_of($registeredPlugin, ResultPrinterPlugin::class)) {
-                $hasResultPrinter = true;
-                break;
-            }
-        }
-
-        if (!$hasResultPrinter) {
-            (new DefaultResultPrinter($this->version))->registerEvents($emitter, $terminalOutput);
-        }
+        $injector->define(DefaultResultPrinter::class, [':version' => $this->version]);
 
         $injector->execute(Engine::class . '::run');
         return !$hasFailedTests;

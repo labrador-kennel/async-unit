@@ -10,10 +10,11 @@ use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Generator;
 use SebastianBergmann\Timer\ResourceUsageFormatter;
 
-final class DefaultResultPrinter {
+final class DefaultResultPrinter implements ResultPrinterPlugin {
 
     /**
      * @var TestFailedEvent[]
