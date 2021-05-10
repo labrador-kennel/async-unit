@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
@@ -26,6 +27,7 @@ use RecursiveIteratorIterator;
 use Generator;
 use SplFileInfo;
 use stdClass;
+use function Amp\call;
 
 /**
  * Responsible for iterating over a directory of PHP source code, analyzing it for code annotated with AysncUnit
@@ -54,49 +56,55 @@ final class Parser {
         $this->nodeTraverser = new NodeTraverser();
     }
 
-    public function parse(string|array $dirs) : ParserResult {
-        $defaultTestSuite = null;
-        $nonDefaultTestSuites = [];
-        $plugins = [];
-        $dirs = is_string($dirs) ? [$dirs] : $dirs;
-        $parseState = new stdClass();
-        $parseState->totalTestCaseCount = 0;
-        $parseState->totalTestCount = 0;
+    /**
+     * @param string|array $dirs
+     * @return Promise<ParserResult>
+     */
+    public function parse(string|array $dirs) : Promise {
+        return call(function() use($dirs) {
+            $defaultTestSuite = null;
+            $nonDefaultTestSuites = [];
+            $plugins = [];
+            $dirs = is_string($dirs) ? [$dirs] : $dirs;
+            $parseState = new stdClass();
+            $parseState->totalTestCaseCount = 0;
+            $parseState->totalTestCount = 0;
 
-        foreach ($this->parseDirs($dirs, $parseState) as $model) {
-            // The parseDirs implementation is required to yield back models in the order in which we have listed them
-            // in this if/elseif statement. ALL TestSuiteModels should be yielded, then all TestCase models and finally
-            // any PluginModel. Failure to yield these models in the correct order will result in a fatal error
-            if ($model instanceof TestSuiteModel) {
-                if ($model->isDefaultTestSuite()) {
-                    $defaultTestSuite = $model;
-                } else {
-                    $nonDefaultTestSuites[$model->getClass()] = $model;
-                }
-            } else if ($model instanceof TestCaseModel) {
-                $parseState->totalTestCaseCount++;
-                $testCaseTestSuite = null;
-                if (is_null($model->getTestSuiteClass())) {
-                    $testCaseTestSuite = $defaultTestSuite;
-                } else {
-                    $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
-                }
-                $testCaseTestSuite->addTestCaseModel($model);
-                if ($testCaseTestSuite->isDisabled()) {
-                    $model->markDisabled();
-                    foreach ($model->getTestMethodModels() as $testMethodModel) {
-                        $testMethodModel->markDisabled();
+            foreach ($this->parseDirs($dirs, $parseState) as $model) {
+                // The parseDirs implementation is required to yield back models in the order in which we have listed them
+                // in this if/elseif statement. ALL TestSuiteModels should be yielded, then all TestCase models and finally
+                // any PluginModel. Failure to yield these models in the correct order will result in a fatal error
+                if ($model instanceof TestSuiteModel) {
+                    if ($model->isDefaultTestSuite()) {
+                        $defaultTestSuite = $model;
+                    } else {
+                        $nonDefaultTestSuites[$model->getClass()] = $model;
                     }
+                } else if ($model instanceof TestCaseModel) {
+                    $parseState->totalTestCaseCount++;
+                    $testCaseTestSuite = null;
+                    if (is_null($model->getTestSuiteClass())) {
+                        $testCaseTestSuite = $defaultTestSuite;
+                    } else {
+                        $testCaseTestSuite = $nonDefaultTestSuites[$model->getTestSuiteClass()];
+                    }
+                    $testCaseTestSuite->addTestCaseModel($model);
+                    if ($testCaseTestSuite->isDisabled()) {
+                        $model->markDisabled();
+                        foreach ($model->getTestMethodModels() as $testMethodModel) {
+                            $testMethodModel->markDisabled();
+                        }
+                    }
+                } else if ($model instanceof PluginModel) {
+                    $plugins[] = $model;
                 }
-            } else if ($model instanceof PluginModel) {
-                $plugins[] = $model;
             }
-        }
-        $testSuites = array_values($nonDefaultTestSuites);
-        if (!empty($defaultTestSuite->getTestCaseModels())) {
-            array_unshift($testSuites, $defaultTestSuite);
-        }
-        return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+            $testSuites = array_values($nonDefaultTestSuites);
+            if (!empty($defaultTestSuite->getTestCaseModels())) {
+                array_unshift($testSuites, $defaultTestSuite);
+            }
+            return new ParserResult($testSuites, $plugins, $parseState->totalTestCaseCount, $parseState->totalTestCount);
+        });
     }
 
     private function parseDirs(array $dirs, stdClass $state) : Generator {

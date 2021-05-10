@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
+use Amp\Promise;
 use Auryn\Injector;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
@@ -17,6 +18,8 @@ use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Psr\Log\NullLogger;
+use function Amp\call;
+use function Amp\Promise\wait;
 
 class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
@@ -35,34 +38,37 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         $this->injector = $objectGraph;
     }
 
-    private function getStateAndApplication(array $dirs) {
-        $state = new \stdClass();
-        $state->data = [];
-        $state->passed = new \stdClass();
-        $state->passed->events = [];
-        $state->failed = new \stdClass();
-        $state->failed->events = [];
-        $state->disabled = new \stdClass();
-        $state->disabled->events = [];
-        $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
-            $state->passed->events[] = $event;
-        });
-        $this->emitter->on(Events::TEST_FAILED, function($event) use($state) {
-            $state->failed->events[] = $event;
-        });
-        $this->emitter->on(Events::TEST_DISABLED, function($event) use($state) {
-            $state->disabled->events[] = $event;
-        });
+    private function getStateAndApplication(array $dirs) : Promise {
+        return call(function() use($dirs) {
+            $state = new \stdClass();
+            $state->data = [];
+            $state->passed = new \stdClass();
+            $state->passed->events = [];
+            $state->failed = new \stdClass();
+            $state->failed->events = [];
+            $state->disabled = new \stdClass();
+            $state->disabled->events = [];
+            $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
+                $state->passed->events[] = $event;
+            });
+            $this->emitter->on(Events::TEST_FAILED, function($event) use($state) {
+                $state->failed->events[] = $event;
+            });
+            $this->emitter->on(Events::TEST_DISABLED, function($event) use($state) {
+                $state->disabled->events[] = $event;
+            });
 
-        $parserResult = $this->injector->make(Parser::class)->parse($dirs);
+            $parserResult = yield $this->injector->make(Parser::class)->parse($dirs);
 
-        /** @var TestFrameworkApplication $application */
-        return [$state, $this->injector->make(Application::class, [':parserResult' => $parserResult])];
+            /** @var TestFrameworkApplication $application */
+            return [$state, $this->injector->make(Application::class, [':parserResult' => $parserResult])];
+
+        });
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
             yield $application->start();
 
             $this->assertCount(1, $state->passed->events);
@@ -81,7 +87,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestAsyncAssertion() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion')]);
             yield $application->start();
 
             $this->assertCount(1, $state->passed->events);
@@ -100,7 +106,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteNoAssertions() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('NoAssertions')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('NoAssertions')]);
             yield $application->start();
 
             $this->assertCount(0, $state->passed->events);
@@ -125,7 +131,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteFailedAssertion() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('FailedAssertion')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('FailedAssertion')]);
             yield $application->start();
 
             $this->assertCount(0, $state->passed->events);
@@ -141,7 +147,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testTestProcessingEventsEmitted() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
             $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
                 $state->data[] = 'test invoked';
             });
@@ -160,7 +166,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testTestProcessingStartedHasPreRunSummary() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
             $this->emitter->on(Events::TEST_PROCESSING_STARTED, function($event) use($state) {
                 $state->data[] = $event;
             });
@@ -179,7 +185,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testTestProcessingFinishedHasPostRunSummary() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('ExtendedTestCases')]);
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function($event) use($state) {
                 $state->data[] = $event;
             });
@@ -202,7 +208,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function testLoadingCustomAssertionPlugins() {
         Loop::run(function() {
             /** @var Application $application */
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
 
             $this->injector->share(FooAssertionPlugin::class);
             $this->injector->share(BarAssertionPlugin::class);
@@ -224,7 +230,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testExplicitTestSuiteTestSuiteStateShared() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteStateBeforeAll')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteStateBeforeAll')]);
 
             yield $application->start();
 
@@ -235,7 +241,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testExplicitTestSuiteTestCaseBeforeAllHasTestSuiteState() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseBeforeAllHasTestSuiteState')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseBeforeAllHasTestSuiteState')]);
 
             yield $application->start();
 
@@ -246,7 +252,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testExplicitTestSuiteTestCaseAfterAllHasTestSuiteState() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseAfterAllHasTestSuiteState')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseAfterAllHasTestSuiteState')]);
 
             yield $application->start();
 
@@ -259,7 +265,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testExplicitTestSuiteTestSuiteDisabledPostRunSummary() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteDisabled')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteDisabled')]);
 
             $postRunSummary = null;
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$postRunSummary) {
@@ -282,7 +288,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
 
     public function testImplicitDefaultTestSuiteTestKnownTime() {
         Loop::run(function() {
-            [$state, $application] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('TestKnownRunTime')]);
+            [$state, $application] = yield $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('TestKnownRunTime')]);
 
             $postRunSummary = null;
             $this->emitter->on(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$postRunSummary) {
