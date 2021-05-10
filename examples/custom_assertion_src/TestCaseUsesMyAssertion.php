@@ -8,8 +8,12 @@ use Cspray\Labrador\AsyncUnit\TestCase;
 class TestCaseUsesMyAssertion extends TestCase {
 
     #[Test]
-    public function ensureAsyncUnitStrings() {
+    public function ensureAsyncUnitStringEquals() {
         $this->assert()->isAsyncUnitString('AsyncUnit');
+    }
+
+    #[Test]
+    public function ensurePhpUnitStringNotEquals() {
         $this->assert()->not()->isAsyncUnitString('PHPUnit');
     }
 
