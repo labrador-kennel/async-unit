@@ -11,6 +11,7 @@ use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
+use Cspray\Labrador\StyledByteStream\TerminalOutputStream;
 use Generator;
 use SebastianBergmann\Timer\ResourceUsageFormatter;
 
@@ -29,14 +30,18 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
     public function __construct(private string $version) {}
 
     public function registerEvents(EventEmitter $emitter, OutputStream $output) : void {
+        $output = new TerminalOutputStream($output);
+        $successOutput = $output->green();
+        $failedOutput = $output->red();
+        $disabledOutput = $output->yellow();
         $emitter->once(Events::TEST_PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
-        $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($output));
-        $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $output));
-        $emitter->on(Events::TEST_DISABLED, fn($event) => $this->testDisabled($event, $output));
+        $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($successOutput));
+        $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $failedOutput));
+        $emitter->on(Events::TEST_DISABLED, fn($event) => $this->testDisabled($event, $disabledOutput));
         $emitter->once(Events::TEST_PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
     }
 
-    private function testProcessingStarted(OutputStream $output) : Generator {
+    private function testProcessingStarted(TerminalOutputStream $output) : Generator {
         $inspirationalMessages = [
             'Let\'s run some asynchronous tests!',
             'Zoom, zoom... here we go!',
@@ -44,13 +49,11 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
             'Alright, waking the hamsters up!',
         ];
         $inspirationalMessage = $inspirationalMessages[array_rand($inspirationalMessages)];
-        yield $output->write(sprintf("AsyncUnit v%s - %s\n", $this->version, $inspirationalMessage));
-        yield $output->write("\n");
-        yield $output->write(sprintf("Runtime: PHP %s\n", phpversion()));
-        yield $output->write("\n");
+        yield $output->writeln(sprintf("AsyncUnit v%s - %s\n", $this->version, $inspirationalMessage));
+        yield $output->writeln(sprintf("Runtime: PHP %s\n", phpversion()));
     }
 
-    private function testPassed(OutputStream $output) : Generator {
+    private function testPassed(TerminalOutputStream $output) : Generator {
         yield $output->write('.');
     }
 
@@ -64,46 +67,49 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
         yield $output->write('X');
     }
 
-    private function testProcessingFinished(TestProcessingFinishedEvent $event, OutputStream $output) : Generator {
-        yield $output->write("\n\n");
-        yield $output->write((new ResourceUsageFormatter())->resourceUsage($event->getTarget()->getDuration()));
-        yield $output->write("\n\n");
+    private function testProcessingFinished(TestProcessingFinishedEvent $event, TerminalOutputStream $output) : Generator {
+        yield $output->br(2);
+        yield $output->writeln((new ResourceUsageFormatter())->resourceUsage($event->getTarget()->getDuration()));
+        yield $output->br();
         if ($event->getTarget()->getFailedTestCount() > 0) {
-            yield $output->write(sprintf("There was %d failure:\n", $event->getTarget()->getFailedTestCount()));
-            yield $output->write("\n");
+            yield $output->writeln(sprintf("There was %d failure:\n", $event->getTarget()->getFailedTestCount()));
             foreach ($this->failedTests as $index => $failedTestEvent) {
-                yield $output->write(sprintf(
-                    "%d) %s::%s\n",
+                yield $output->writeln(sprintf(
+                    "%d) %s::%s",
                     $index + 1,
                     $failedTestEvent->getTarget()->getTestCase()::class,
                     $failedTestEvent->getTarget()->getTestMethod()
                 ));
                 $exception = $failedTestEvent->getTarget()->getException();
                 if ($exception instanceof AssertionFailedException) {
-                    yield $output->write($exception->getDetailedMessage() . "\n");
-                    yield $output->write("\n");
-                    yield $output->write(sprintf(
-                        "%s:%d\n",
+                    yield $output->writeln($exception->getDetailedMessage());
+                    yield $output->br();
+                    yield $output->writeln(sprintf(
+                        "%s:%d",
                         $exception->getAssertionFailureFile(),
                         $exception->getAssertionFailureLine()
                     ));
-                    yield $output->write("\n");
+                    yield $output->br();
                 } else if ($exception instanceof TestFailedException) {
-                    yield $output->write("\nTest failure message:\n\n");
-                    yield $output->write($exception->getMessage() . "\n\n");
-                    yield $output->write($exception->getTraceAsString() . "\n\n");
+                    yield $output->br();
+                    yield $output->writeln("Test failure message:");
+                    yield $output->br();
+                    yield $output->writeln($exception->getMessage());
+                    yield $output->br();
+                    yield $output->writeln($exception->getTraceAsString());
+                    yield $output->br();
                 } else {
-                    yield $output->write(sprintf(
-                        "An unexpected %s was thrown in %s on line %d.\n",
+                    yield $output->writeln(sprintf(
+                        "An unexpected %s was thrown in %s on line %d.",
                         $exception::class,
                         $exception->getFile(),
                         $exception->getLine()
                     ));
-                    yield $output->write("\n");
-                    yield $output->write(sprintf("\"%s\"\n", $exception->getMessage()));
-                    yield $output->write("\n");
-                    yield $output->write($exception->getTraceAsString() . "\n");
-                    yield $output->write("\n");
+                    yield $output->br();
+                    yield $output->writeln(sprintf("\"%s\"", $exception->getMessage()));
+                    yield $output->br();
+                    yield $output->writeln($exception->getTraceAsString());
+                    yield $output->br();
                 }
             }
 

@@ -1,5 +1,5 @@
 --TEST--
-Ensure single test has appropriate format
+Ensure an error is shown with default command and no config found
 --FILE--
 <?php
 

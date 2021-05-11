@@ -14,7 +14,7 @@ AsyncUnit v%s - %s
 
 Runtime: PHP 8.0.%d
 
-...
+%s.%s.%s.%s
 
 Time: %d:%f, Memory: %d.%d MB
 
