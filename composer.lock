@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e4cf1937ddc099cdf7baeca33ddea23c",
+    "content-hash": "c5f04c5907fbcfbb60ea66bc5dba4ffc",
     "packages": [
         {
             "name": "adbario/php-dot-notation",
@@ -842,6 +842,52 @@
                 "source": "https://github.com/labrador-kennel/exception/tree/1.2.0"
             },
             "time": "2021-03-19T21:46:48+00:00"
+        },
+        {
+            "name": "cspray/labrador-styled-byte-stream",
+            "version": "0.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/labrador-kennel/styled-byte-stream.git",
+                "reference": "93bd8866d3cebda9cb57250b92caa9ec21e1b513"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/labrador-kennel/styled-byte-stream/zipball/93bd8866d3cebda9cb57250b92caa9ec21e1b513",
+                "reference": "93bd8866d3cebda9cb57250b92caa9ec21e1b513",
+                "shasum": ""
+            },
+            "require": {
+                "amphp/byte-stream": "^v1.8",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "phpunir/phpunit": "^9"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Cspray\\Labrador\\StyledByteStream\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Charles Sprayberry",
+                    "email": "contact@labrador-kennel.io",
+                    "homepage": "https://labrador-kennel.io",
+                    "role": "Project Maintainer"
+                }
+            ],
+            "description": "Create colorized and formatted terminal text with Amp's OutputStream!",
+            "support": {
+                "issues": "https://github.com/labrador-kennel/styled-byte-stream/issues",
+                "source": "https://github.com/labrador-kennel/styled-byte-stream/tree/0.1.0"
+            },
+            "time": "2021-05-11T21:48:22+00:00"
         },
         {
             "name": "cspray/yape",

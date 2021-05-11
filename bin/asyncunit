@@ -7,7 +7,7 @@ $cwd = getcwd();
 
 require_once $cwd . '/vendor/autoload.php';
 
-use Cspray\Labrador\AsyncUnitCli\AsyncUnitCliApplication;
+use Cspray\Labrador\AsyncUnitCli\AsyncUnitConsoleApplication;
 use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
@@ -18,7 +18,7 @@ $logger = new NullLogger();
 
 $configurationFactory = new ConfigurationFactory();
 
-$application = new AsyncUnitCliApplication(
+$application = new AsyncUnitConsoleApplication(
     $configurationFactory,
     new TestFrameworkApplicationObjectGraph($environment, $logger),
     $cwd,

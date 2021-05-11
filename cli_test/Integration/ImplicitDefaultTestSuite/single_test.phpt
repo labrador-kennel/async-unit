@@ -1,5 +1,5 @@
 --TEST--
-Ensure single test has appropriate format
+Ensure single test shows appropriate information
 --FILE--
 <?php
 
@@ -14,7 +14,7 @@ AsyncUnit v%s - %s
 
 Runtime: PHP 8.0.%d
 
-.
+%s.%s
 
 Time: %d:%f, Memory: %d.%d MB
 

@@ -1,5 +1,5 @@
 --TEST--
-Ensure single test has appropriate format
+Ensure custom ResultPrinterPlugin present overwrites the default
 --FILE--
 <?php
 

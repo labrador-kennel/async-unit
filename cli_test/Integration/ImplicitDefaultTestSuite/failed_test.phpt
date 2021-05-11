@@ -1,5 +1,5 @@
 --TEST--
-Ensure single failing test from bad assertion has appropriate format
+Ensure a test that failed not because of an assertion displays the correct information
 --FILE--
 <?php
 
@@ -14,7 +14,7 @@ AsyncUnit v%s - %s
 
 Runtime: PHP 8.0.%d
 
-X
+%sX%s
 
 Time: %d:%f, Memory: %d.%d MB
 
