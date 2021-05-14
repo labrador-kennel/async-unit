@@ -11,6 +11,8 @@ use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Acme\DemoSuites\ErrorConditions;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
+use Cspray\Labrador\AsyncUnit\Statistics\SummaryCalculator;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 class ParserTest extends PHPUnitTestCase {
@@ -19,11 +21,11 @@ class ParserTest extends PHPUnitTestCase {
     use UsesAcmeSrc;
 
     private string $acmeSrcDir;
-    private Parser $subject;
+    private StaticAnalysisParser $subject;
 
     public function setUp() : void {
         $this->acmeSrcDir = dirname(__DIR__) . '/acme_src';
-        $this->subject = new Parser();
+        $this->subject = new StaticAnalysisParser();
     }
 
 
@@ -377,16 +379,6 @@ class ParserTest extends PHPUnitTestCase {
             $myTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\MyTestSuite::class);
             $this->assertCount(1, $myTestSuite->getTestCaseModels());
             $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\SecondTestCase::class, $myTestSuite);
-        });
-    }
-
-    public function testImplicitDefaultTestSuitePathExtendedTestCases() {
-        Loop::run(function() {
-            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
-
-            $this->assertEquals(1, $results->getTestSuiteCount());
-            $this->assertEquals(3, $results->getTotalTestCaseCount());
-            $this->assertEquals(9, $results->getTotalTestCount());
         });
     }
 

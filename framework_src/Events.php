@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnit;
 
 interface Events {
 
-    const TEST_PROCESSING_STARTED = 'labrador.asyncUnit.testProcessingStarted';
+    const PROCESSING_STARTED = 'labrador.asyncUnit.processingStarted';
 
     const TEST_SUITE_STARTED = 'labrador.asyncUnit.testSuiteStarted';
 
@@ -22,6 +22,6 @@ interface Events {
 
     const TEST_SUITE_FINISHED = 'labrador.asyncUnit.testSuiteFinished';
 
-    const TEST_PROCESSING_FINISHED = 'labrador.asyncUnit.testProcessingFinished';
+    const PROCESSING_FINISHED = 'labrador.asyncUnit.processingFinished';
 
 }

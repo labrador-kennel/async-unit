@@ -9,6 +9,12 @@ final class TestModel {
 
     private ?string $dataProvider = null;
 
+    public function withClass(string $class) : TestModel {
+        $new = clone $this;
+        $new->class = $class;
+        return $new;
+    }
+
     public function getDataProvider() : ?string {
         return $this->dataProvider;
     }

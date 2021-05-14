@@ -3,7 +3,10 @@
 
 namespace Cspray\Labrador\AsyncUnit\Attribute;
 
-
+/**
+ * @package Cspray\Labrador\AsyncUnit\Attribute
+ * @codeCoverageIgnore
+ */
 #[\Attribute(\Attribute::TARGET_METHOD | \Attribute::TARGET_CLASS)]
 class Disabled {
 

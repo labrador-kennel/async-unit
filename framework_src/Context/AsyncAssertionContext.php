@@ -14,7 +14,6 @@ use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsFalse;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsNull;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertIsTrue;
 use Cspray\Labrador\AsyncUnit\Assertion\AsyncAssertStringEquals;
-use Cspray\Labrador\AsyncUnit\LastAssertionCalledTrait;
 use Generator;
 use function Amp\call;
 
