@@ -31,12 +31,8 @@ use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\Parser\ParserResult;
-use Cspray\Labrador\AsyncUnit\Statistics\PostRunSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\ProcessedAggregateSummaryBuilder;
+use Cspray\Labrador\AsyncUnit\Statistics\ProcessedSummaryBuilder;
 use ReflectionClass;
-use SebastianBergmann\Timer\Duration;
-use SebastianBergmann\Timer\Timer;
-use stdClass;
 use Throwable;
 use function Amp\call;
 
@@ -61,7 +57,7 @@ final class TestSuiteRunner {
 
             $testSuiteModels = $this->randomizer->randomize($parserResult->getTestSuiteModels());
 
-            $aggregateSummaryBuilder = new ProcessedAggregateSummaryBuilder();
+            $aggregateSummaryBuilder = new ProcessedSummaryBuilder();
             $aggregateSummaryBuilder->startProcessing();
 
             foreach ($testSuiteModels as $testSuiteModel) {
@@ -70,6 +66,8 @@ final class TestSuiteRunner {
                 $testSuite = (new ReflectionClass($testSuiteClass))->newInstanceWithoutConstructor();
                 $testSuiteSummary = $parserResult->getTestSuiteSummary($testSuite::class);
                 yield $this->emitter->emit(new TestSuiteStartedEvent($testSuiteSummary));
+
+                $aggregateSummaryBuilder->startTestSuite($testSuiteModel);
                 if (!$testSuiteModel->isDisabled()) {
                     yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeAll(), TestSuiteSetUpException::class);
                 }
@@ -79,6 +77,8 @@ final class TestSuiteRunner {
                 foreach ($testCaseModels as $testCaseModel) {
                     $testCaseSummary = $parserResult->getTestCaseSummary($testCaseModel->getClass());
                     yield $this->emitter->emit(new TestCaseStartedEvent($testCaseSummary));
+
+                    $aggregateSummaryBuilder->startTestCase($testCaseModel);
                     if (!$testSuiteModel->isDisabled()) {
                         yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeEach(), TestSuiteSetUpException::class);
                     }
@@ -135,14 +135,12 @@ final class TestSuiteRunner {
                 if (!$testSuiteModel->isDisabled()) {
                     yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::AfterAll(), TestSuiteTearDownException::class);
                 }
-                yield $this->emitter->emit(new TestSuiteFinishedEvent($testSuiteModel));
-                $aggregateSummaryBuilder->processedTestSuite($testSuiteModel);
+                yield $this->emitter->emit(new TestSuiteFinishedEvent($aggregateSummaryBuilder->finishTestSuite($testSuiteModel)));
             }
 
-            $aggregateSummaryBuilder->finishProcessing();
 
             yield $this->emitter->emit(
-                new ProcessingFinishedEvent($aggregateSummaryBuilder->build())
+                new ProcessingFinishedEvent($aggregateSummaryBuilder->finishProcessing())
             );
         });
     }
@@ -177,7 +175,7 @@ final class TestSuiteRunner {
     }
 
     private function invokeTest(
-        ProcessedAggregateSummaryBuilder $aggregateSummaryBuilder,
+        ProcessedSummaryBuilder $aggregateSummaryBuilder,
         TestCase $testCase,
         AssertionContext $assertionContext,
         AsyncAssertionContext $asyncAssertionContext,

@@ -134,7 +134,7 @@ class ParserTest extends PHPUnitTestCase {
         });
     }
 
-    public function testDefaultTestSuiteName() {
+    public function testDefaultTestSuiteName() : void {
         Loop::run(function() {
             $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
             $testSuites = $results->getTestSuiteModels();
@@ -143,6 +143,22 @@ class ParserTest extends PHPUnitTestCase {
             $testSuite = $testSuites[0];
 
             $this->assertSame(ImplicitTestSuite::class, $testSuite->getClass());
+        });
+    }
+
+    public function testTestCaseModelAlwaysHasTestSuite() : void {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
+            $testSuites = $results->getTestSuiteModels();
+
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
+
+            $testCases = $testSuites[0]->getTestCaseModels();
+
+            $this->assertCount(1, $testCases);
+
+            $this->assertSame(ImplicitTestSuite::class, $testCases[0]->getTestSuiteClass());
         });
     }
 

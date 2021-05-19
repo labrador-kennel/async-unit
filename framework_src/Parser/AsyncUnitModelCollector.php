@@ -87,7 +87,11 @@ final class AsyncUnitModelCollector {
         }
 
         foreach ($this->testCaseModels as $testCaseModel) {
-            $testSuiteModel = $this->testSuiteModels[$testCaseModel->getTestSuiteClass() ?? $this->defaultTestSuite];
+            if (is_null($testCaseModel->getTestSuiteClass())) {
+                $testCaseModel->setTestSuiteClass($this->defaultTestSuite);
+            }
+
+            $testSuiteModel = $this->testSuiteModels[$testCaseModel->getTestSuiteClass()];
             if ($testSuiteModel->isDisabled()) {
                 $testCaseModel->markDisabled($testSuiteModel->getDisabledReason());
             }

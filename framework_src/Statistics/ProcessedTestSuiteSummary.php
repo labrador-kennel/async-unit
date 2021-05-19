@@ -1,16 +1,18 @@
 <?php declare(strict_types=1);
 
-
 namespace Cspray\Labrador\AsyncUnit\Statistics;
 
+use SebastianBergmann\Timer\Duration;
 
-interface ProcessedTestCaseSummary {
+interface ProcessedTestSuiteSummary {
 
     public function getTestSuiteName() : string;
 
-    public function getTestCaseName() : string;
+    public function getTestCaseNames() : array;
 
-    public function getTestNames() : array;
+    public function getTestCaseCount() : int;
+
+    public function getDisabledTestCaseCount() : int;
 
     public function getTestCount() : int;
 
@@ -23,5 +25,7 @@ interface ProcessedTestCaseSummary {
     public function getAssertionCount() : int;
 
     public function getAsyncAssertionCount() : int;
+
+    public function getDuration() : Duration;
 
 }

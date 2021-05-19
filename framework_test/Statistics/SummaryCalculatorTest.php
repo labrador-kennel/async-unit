@@ -76,26 +76,6 @@ class SummaryCalculatorTest extends TestCase {
         });
     }
 
-    public function aggregateSummaryEnabledTestSuiteCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 3],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider aggregateSummaryEnabledTestSuiteCountProvider
-     */
-    public function testGetAggregateSummaryGetEnabledTestSuiteCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $this->assertSame($expected, $calculator->getAggregateSummary()->getEnabledTestSuiteCount());
-        });
-    }
-
     public function aggregateSummaryTotalTestCaseCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
@@ -136,27 +116,6 @@ class SummaryCalculatorTest extends TestCase {
         });
     }
 
-    public function aggregateSummaryEnabledTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestDisabled'), 1]
-        ];
-    }
-
-    /**
-     * @dataProvider aggregateSummaryEnabledTestCaseCountProvider
-     */
-    public function testGetAggregateSummaryGetEnabledTestCaseCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $this->assertSame($expected, $calculator->getAggregateSummary()->getEnabledTestCaseCount());
-        });
-    }
-
     public function aggregateSummaryTotalTestCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
@@ -194,26 +153,6 @@ class SummaryCalculatorTest extends TestCase {
             $calculator = new SummaryCalculator($results);
 
             $this->assertSame($expected, $calculator->getAggregateSummary()->getDisabledTestCount());
-        });
-    }
-
-    public function aggregateSummaryEnabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('MultipleTest'), 3],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider aggregateSummaryEnabledTestCountProvider
-     */
-    public function testGetAggregateSummaryGetEnabledTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $this->assertSame($expected, $calculator->getAggregateSummary()->getEnabledTestCount());
         });
     }
 
@@ -315,28 +254,6 @@ class SummaryCalculatorTest extends TestCase {
         });
     }
 
-    public function suiteSummaryEnabledTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), ImplicitTestSuite::class, 1],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), ImplicitTestSuite::class, 0],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class, 0],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), ImplicitTestSuite::class, 3]
-        ];
-    }
-
-    /**
-     * @dataProvider suiteSummaryEnabledTestCaseCountProvider
-     */
-    public function testGetTestSuiteSummaryGetEnabledTestCaseCount(string $path, string $testSuite, int $expected) : void {
-        Loop::run(function() use($path, $testSuite, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $testSuiteSummary = $calculator->getTestSuiteSummary($testSuite);
-            $this->assertSame($expected, $testSuiteSummary->getEnabledTestCaseCount());
-        });
-    }
-
     public function suiteSummaryTestCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), ImplicitTestSuite::class, 1],
@@ -381,29 +298,6 @@ class SummaryCalculatorTest extends TestCase {
 
             $testSuiteSummary = $calculator->getTestSuiteSummary($testSuite);
             $this->assertSame($expected, $testSuiteSummary->getDisabledTestCount());
-        });
-    }
-
-    public function suiteSummaryEnabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), ImplicitTestSuite::class, 1],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), ImplicitTestSuite::class, 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class, 3],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class, 2]
-        ];
-    }
-
-    /**
-     * @dataProvider suiteSummaryEnabledTestCountProvider
-     */
-    public function testGetTestSuiteSummaryGetEnabledTestCount(string $path, string $testSuite, int $expected) : void {
-        Loop::run(function() use($path, $testSuite, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $testSuiteSummary = $calculator->getTestSuiteSummary($testSuite);
-            $this->assertSame($expected, $testSuiteSummary->getEnabledTestCount());
         });
     }
 
@@ -506,27 +400,6 @@ class SummaryCalculatorTest extends TestCase {
 
             $testCaseSummary = $calculator->getTestCaseSummary($testCase);
             $this->assertSame($expected, $testCaseSummary->getDisabledTestCount());
-        });
-    }
-
-    public function caseSummaryEnabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), ImplicitDefaultTestSuite\SingleTest\MyTestCase::class, 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class, 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), ImplicitDefaultTestSuite\TestCaseDisabled\MyTestCase::class, 0]
-        ];
-    }
-
-    /**
-     * @dataProvider caseSummaryEnabledTestCountProvider
-     */
-    public function testGetTestCaseSummaryGetEnabledTestCount(string $path, string $testCase, int $expected) : void {
-        Loop::run(function() use($path, $testCase, $expected) {
-            $results = yield (new StaticAnalysisParser())->parse($path);
-            $calculator = new SummaryCalculator($results);
-
-            $testCaseSummary = $calculator->getTestCaseSummary($testCase);
-            $this->assertSame($expected, $testCaseSummary->getEnabledTestCount());
         });
     }
 }

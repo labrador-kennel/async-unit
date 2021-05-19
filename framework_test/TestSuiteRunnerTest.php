@@ -1267,38 +1267,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
-    public function processedAggregateSummaryWithCorrectEnabledTestSuiteCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 3],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectEnabledTestSuiteCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectEnabledTestSuiteCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getEnabledTestSuiteCount());
-        });
-    }
-
     public function processedAggregateSummaryWithCorrectTotalTestCaseCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
@@ -1361,39 +1329,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
             $this->assertSame($expected, $testFinishedEvent->getTarget()->getDisabledTestCaseCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectEnabledTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 6],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectEnabledTestCaseCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectEnabledTestCaseCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getEnabledTestCaseCount());
         });
     }
 
@@ -1460,39 +1395,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
             $this->assertSame($expected, $testFinishedEvent->getTarget()->getDisabledTestCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectEnabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 9],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectEnabledTestCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectEnabledTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getEnabledTestCount());
         });
     }
 
@@ -1629,6 +1531,358 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function processedTestSuiteSummaryTestSuiteNameProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [ImplicitTestSuite::class]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryTestSuiteNameProvider
+     */
+    public function testProcessedTestSuiteSummaryHasCorrectTestSuiteName(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $state = new stdClass();
+            $state->data = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use($state) {
+                $state->data[] = $event->getTarget()->getTestSuiteName();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEqualsCanonicalizing($expected, $state->data);
+        });
+    }
+
+    public function processedTestSuiteSummaryTestCaseNamesProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitTestSuite::class => [ImplicitDefaultTestSuite\SingleTest\MyTestCase::class]
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class,
+                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class,
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class,
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class,
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class,
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class
+                ]
+            ]],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
+                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => [
+                    ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class,
+                    ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class
+                ]
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryTestCaseNamesProvider
+     */
+    public function testProcessedTestSuiteSummaryHasTestCaseNames(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCaseNames();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEqualsCanonicalizing($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryTotalTestCaseCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitTestSuite::class => 1,
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [
+                ImplicitTestSuite::class => 3
+            ]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
+            ]],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
+                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 2
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryTotalTestCaseCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasTotalTestCaseCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCaseCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryDisabledTestCaseCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitTestSuite::class => 0,
+            ]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
+                ImplicitTestSuite::class => 1
+            ]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
+            ]],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
+                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 2
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryDisabledTestCaseCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasDisabledTestCaseCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getDisabledTestCaseCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryTotalTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitTestSuite::class => 1,
+            ]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
+                ImplicitTestSuite::class => 3
+            ]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
+            ]],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
+                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 3
+            ]],
+            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
+                ImplicitTestSuite::class => 2
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryTotalTestCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasTotalTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryDisabledTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitTestSuite::class => 0,
+            ]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
+                ImplicitTestSuite::class => 3
+            ]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
+            ]],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
+                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 3
+            ]],
+            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
+                ImplicitTestSuite::class => 1
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryDisabledTestCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasDisabledTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getDisabledTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryPassedTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [ImplicitTestSuite::class => 1,]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 8]],
+            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
+                ImplicitTestSuite::class => 1
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryPassedTestCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasPassedTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getPassedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryFailedTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 1,]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 1]],
+            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryFailedTestCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasFailedTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getFailedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryAssertionCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 1,]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 18]],
+            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryAssertionCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasAssertionCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getAssertionCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryAsyncAssertionCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 0,]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 4]],
+            [$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion'), [ImplicitTestSuite::class => 1]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryAsyncAssertionCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasAsyncAssertionCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getAsyncAssertionCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
     public function testProcessedAggregateSummaryHasDuration() {
         Loop::run(function() {
             $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
@@ -1642,6 +1896,23 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             yield $this->testSuiteRunner->runTestSuites($results);
 
             $this->assertInstanceOf(ProcessingFinishedEvent::class, $state->event);
+            $this->assertGreaterThan(600, $state->event->getTarget()->getDuration()->asMilliseconds());
+        });
+    }
+
+    public function testTestSuiteSummaryHasDuration() {
+        Loop::run(function() {
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
+            $state = new stdClass();
+            $state->event = null;
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function($event) use($state) {
+                $state->event = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertInstanceOf(TestSuiteFinishedEvent::class, $state->event);
             $this->assertGreaterThan(600, $state->event->getTarget()->getDuration()->asMilliseconds());
         });
     }

@@ -10,19 +10,13 @@ interface AggregateSummary {
 
     public function getTotalTestSuiteCount() : int;
 
-    public function getEnabledTestSuiteCount() : int;
-
     public function getDisabledTestSuiteCount() : int;
 
     public function getTotalTestCaseCount() : int;
 
-    public function getEnabledTestCaseCount() : int;
-
     public function getDisabledTestCaseCount() : int;
 
     public function getTotalTestCount() : int;
-
-    public function getEnabledTestCount() : int;
 
     public function getDisabledTestCount() : int;
 

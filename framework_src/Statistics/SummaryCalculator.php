@@ -102,10 +102,6 @@ final class SummaryCalculator {
                 return $this->totalTestSuiteCount;
             }
 
-            public function getEnabledTestSuiteCount() : int {
-                return $this->getTotalTestSuiteCount() - $this->getDisabledTestSuiteCount();
-            }
-
             public function getDisabledTestSuiteCount() : int {
                 return $this->disabledTestSuiteCount;
             }
@@ -114,20 +110,12 @@ final class SummaryCalculator {
                 return $this->totalTestCaseCount;
             }
 
-            public function getEnabledTestCaseCount() : int {
-                return $this->getTotalTestCaseCount() - $this->getDisabledTestCaseCount();
-            }
-
             public function getDisabledTestCaseCount() : int {
                 return $this->disabledTestCaseCount;
             }
 
             public function getTotalTestCount() : int {
                 return $this->totalTestCount;
-            }
-
-            public function getEnabledTestCount() : int {
-                return $this->getTotalTestCount() - $this->getDisabledTestCount();
             }
 
             public function getDisabledTestCount() : int {
@@ -181,20 +169,12 @@ final class SummaryCalculator {
                 return $this->disabledTestCaseCount;
             }
 
-            public function getEnabledTestCaseCount() : int {
-                return $this->getTestCaseCount() - $this->getDisabledTestCaseCount();
-            }
-
             public function getTestCount() : int {
                 return $this->testCount;
             }
 
             public function getDisabledTestCount() : int {
                 return $this->disabledTestCount;
-            }
-
-            public function getEnabledTestCount() : int {
-                return $this->getTestCount() - $this->getDisabledTestCount();
             }
         };
     }
@@ -245,10 +225,6 @@ final class SummaryCalculator {
 
             public function getDisabledTestCount() : int {
                 return $this->disabledTestCount;
-            }
-
-            public function getEnabledTestCount() : int {
-                return $this->getTestCount() - $this->getDisabledTestCount();
             }
         };
     }

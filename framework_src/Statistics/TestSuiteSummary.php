@@ -12,12 +12,8 @@ interface TestSuiteSummary {
 
     public function getDisabledTestCaseCount() : int;
 
-    public function getEnabledTestCaseCount() : int;
-
     public function getTestCount() : int;
 
     public function getDisabledTestCount() : int;
-
-    public function getEnabledTestCount() : int;
 
 }
