@@ -10,8 +10,8 @@ class MyTestCase extends TestCase {
 
     #[Test]
     public function checkExceptionMessage() {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('This is the message that I expect');
+        $this->expect()->exception(InvalidArgumentException::class);
+        $this->expect()->exceptionMessage('This is the message that I expect');
 
         throw new InvalidArgumentException('This is NOT the message that I expect');
     }

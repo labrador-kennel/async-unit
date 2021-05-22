@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Throwable;
 use function Amp\call;
 
-final class ExpectationContext {
+final class ExpectationContext implements TestExpector {
 
     private string $actualOutput = '';
 
@@ -33,11 +33,11 @@ final class ExpectationContext {
         $this->thrownException = $throwable;
     }
 
-    public function setExpectedExceptionClass(string $exceptionClass) : void {
+    public function exception(string $exceptionClass) : void {
         $this->expectedExceptionClass = $exceptionClass;
     }
 
-    public function setExpectedExceptionMessage(string $exceptionMessage) : void {
+    public function exceptionMessage(string $exceptionMessage) : void {
         $this->expectedExceptionMessage = $exceptionMessage;
     }
 

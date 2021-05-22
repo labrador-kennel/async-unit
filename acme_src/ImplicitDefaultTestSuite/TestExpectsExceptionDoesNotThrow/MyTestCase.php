@@ -10,7 +10,7 @@ class MyTestCase extends TestCase {
 
     #[Test]
     public function checkDoesNotThrow() {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expect()->exception(InvalidArgumentException::class);
 
         $this->assert()->isEmpty([]);
     }
