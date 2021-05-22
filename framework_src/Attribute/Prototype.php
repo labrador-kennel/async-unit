@@ -5,12 +5,12 @@ namespace Cspray\Labrador\AsyncUnit\Attribute;
 use Attribute;
 
 /**
- * Class Protocol
+ * Class Prototype
  * @package Cspray\Labrador\AsyncUnit\Attribute
  * @codeCoverageIgnore
  */
 #[Attribute(Attribute::TARGET_CLASS)]
-final class Protocol {
+final class Prototype {
 
     public function __construct(private array $validTypes) {}
 
