@@ -7,7 +7,7 @@ use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 use Cspray\Labrador\AsyncUnit\AssertionResult;
 
-class AssertCountEquals implements Assertion {
+final class AssertCountEquals implements Assertion {
 
     public function __construct(private int $expected, private array|Countable $actual) {}
 

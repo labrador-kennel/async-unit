@@ -8,7 +8,7 @@ use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Generator;
 
-class AsyncAssertInstanceOf extends AbstractAsyncAssertion {
+final class AsyncAssertInstanceOf extends AbstractAsyncAssertion {
 
     public function __construct(private string|object $expected, Promise|Coroutine|Generator $actual) {
         if (is_string($expected) && !class_exists($expected) && !interface_exists($expected)) {
