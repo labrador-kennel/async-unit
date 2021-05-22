@@ -3,430 +3,198 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
+use Amp\Promise;
 use Amp\Success;
-use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
-use Cspray\Labrador\AsyncEvent\Event;
-use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
-use Cspray\Labrador\AsyncUnit\Event\ProcessingStartedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
-use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
-use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
-use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
-use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
-use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
-use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
-use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
-use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
-use Cspray\Labrador\AsyncUnit\Statistics\AggregateSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\TestCaseSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\TestSuiteSummary;
 use Exception;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
-use ReflectionClass;
-use stdClass;
+use function Amp\call;
 
 class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     use UsesAcmeSrc;
-
-    private StaticAnalysisParser $parser;
-    private EventEmitter $emitter;
-    private CustomAssertionContext $customAssertionContext;
-    private TestSuiteRunner $testSuiteRunner;
-
-    public function setUp() : void {
-        $this->parser = new StaticAnalysisParser();
-        $this->emitter = new AmpEventEmitter();
-        /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
-        $this->customAssertionContext = (new ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
-        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext, new NullRandomizer());
+    use TestSuiteRunnerScaffolding {
+        setUp as constructDependencies;
     }
 
-    public function testImplicitDefaultTestSuiteSingleTestEmitsTestProcessedEventWithCorrectData() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('SingleTest'));
-            $state = new stdClass();
-            $state->events = [];
+    /**
+     * @var TestResult[]
+     */
+    private array $actual = [];
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
-            $this->assertInstanceOf(TestProcessedEvent::class, $state->events[0]);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\SingleTest\MyTestCase::class, $state->events[0]->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingHappens', $state->events[0]->getTarget()->getTestMethod());
-            $this->assertTrue($state->events[0]->getTarget()->getTestCase()->getTestInvoked());
+    public function setUp() : void {
+        $this->constructDependencies();
+        $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) {
+            $this->actual[] = $event->getTarget();
         });
     }
 
-    public function testImplicitDefaultTestSuiteMultipleTestEmitsTestProcessedEventsWithCorrectData() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTest'));
-            $state = new stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
+    private function parseAndRun(string $path) : Promise {
+        return call(function() use($path) {
+            $results = yield $this->parser->parse($path);
             yield $this->testSuiteRunner->runTestSuites($results);
+        });
+    }
 
-            $this->assertCount(3, $state->events);
+    public function testImplicitDefaultTestSuiteSingleTestEmitsTestProcessedEventWithProperTestCaseInstance() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
 
-            $ensureSomethingHappensMethod = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingHappensMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class, $ensureSomethingHappensMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingHappens', $ensureSomethingHappensMethod->getTarget()->getTestMethod());
-            $this->assertEquals([ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappens'], $ensureSomethingHappensMethod->getTarget()->getTestCase()->getInvokedMethods());
-            
-            $ensureSomethingHappensTwiceMethod = $state->events[1];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingHappensTwiceMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class, $ensureSomethingHappensTwiceMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingHappensTwice', $ensureSomethingHappensTwiceMethod->getTarget()->getTestMethod());
-            $this->assertEquals([ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappensTwice'], $ensureSomethingHappensTwiceMethod->getTarget()->getTestCase()->getInvokedMethods());
+            $this->assertCount(1, $this->actual);
+            $this->assertInstanceOf(ImplicitDefaultTestSuite\SingleTest\MyTestCase::class, $this->actual[0]->getTestCase());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteSingleTestEmitsTestProcessedEventWithProperTestMethodName() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame('ensureSomethingHappens', $this->actual[0]->getTestMethod());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteSingleTestEmitsTestProcessedEventWithInvokedTestCase() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertTrue($this->actual[0]->getTestCase()->getTestInvoked());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteMultipleTestEmitsTestProcessedEventsEachTestUniqueTestCase() {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('MultipleTest'));
+            $this->assertCount(3, $this->actual);
+
+            $actual = [
+                $this->actual[0]->getTestCase()->getInvokedMethods(),
+                $this->actual[1]->getTestCase()->getInvokedMethods(),
+                $this->actual[2]->getTestCase()->getInvokedMethods()
+            ];
+            $expected = [
+                [ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappens'],
+                [ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappensTwice'],
+                [ImplicitDefaultTestSuite\MultipleTest\MyTestCase::class . '::ensureSomethingHappensThreeTimes']
+            ];
+
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testImplicitDefaultTestSuiteHasSingleBeforeAllHookInvokedBeforeTest() {
         Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeAllHook'));
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HasSingleBeforeAllHook'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            $this->assertCount(2, $this->actual);
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $actual = [
+                $this->actual[0]->getTestCase()->getCombinedData(),
+                $this->actual[1]->getTestCase()->getCombinedData()
+            ];
+            $expected = [
+                ['beforeAll', 'ensureSomething'],
+                ['beforeAll', 'ensureSomethingTwice']
+            ];
 
-            $this->assertCount(2, $state->events);
-
-            $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['beforeAll', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
-
-            $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['beforeAll', 'ensureSomethingTwice'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testImplicitDefaultTestSuiteHasSingleBeforeEachHookInvokedBeforeTest() {
         Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleBeforeEachHook'));
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HasSingleBeforeEachHook'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(2, $state->events);
-
-            $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['beforeEach', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
-
-            $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleBeforeEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['beforeEach', 'ensureSomethingTwice'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
+            $this->assertCount(2, $this->actual);
+            $actual = [
+                $this->actual[0]->getTestCase()->getData(),
+                $this->actual[1]->getTestCase()->getData()
+            ];
+            $expected = [
+                ['beforeEach', 'ensureSomething'],
+                ['beforeEach', 'ensureSomethingTwice']
+            ];
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testImplicitDefaultTestSuiteHasSingleAfterAllHookInvokedAfterTest() {
         Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterAllHook'));
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HasSingleAfterAllHook'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(2, $state->events);
-
-            $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['afterAll', 'ensureSomething'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
-
-            $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterAllHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['afterAll', 'ensureSomethingTwice'], $ensureSomethingMethod->getTarget()->getTestCase()->getCombinedData());
+            $this->assertCount(2, $this->actual);
+            $actual = [
+                $this->actual[0]->getTestCase()->getCombinedData(),
+                $this->actual[1]->getTestCase()->getCombinedData(),
+            ];
+            // We expect the afterAll _first_ here because our test case combines the class data from AfterAll and the object
+            // data from the TestCase with class data first.
+            $expected = [
+                ['afterAll', 'ensureSomething'],
+                ['afterAll', 'ensureSomethingTwice']
+            ];
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testImplicitDefaultTestSuiteHasSingleAfterEachHookInvokedAfterTest() {
         Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('HasSingleAfterEachHook'));
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HasSingleAfterEachHook'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            $this->assertCount(2, $this->actual);
+            $actual = [
+                $this->actual[0]->getTestCase()->getData(),
+                $this->actual[1]->getTestCase()->getData()
+            ];
+            $expected = [
+                ['ensureSomething', 'afterEach'],
+                ['ensureSomethingTwice', 'afterEach']
+            ];
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(2, $state->events);
-
-            $ensureSomethingMethod = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomething', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['ensureSomething', 'afterEach'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
-
-            $ensureSomethingMethod = $state->events[1];
-            $this->assertInstanceOf(TestProcessedEvent::class, $ensureSomethingMethod);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\HasSingleAfterEachHook\MyTestCase::class, $ensureSomethingMethod->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingTwice', $ensureSomethingMethod->getTarget()->getTestMethod());
-            $this->assertEquals(['ensureSomethingTwice', 'afterEach'], $ensureSomethingMethod->getTarget()->getTestCase()->getData());
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
-    public function testImplicitDefaultTestSuiteExceptionThrowingTestEmitsTestProcessedEventWithCorrectData() {
+    public function testImplicitDefaultTestSuiteExceptionThrowingTestEmitsTestProcessedEventWithFailedStateAndCorrectException() : void {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingTest');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('ExceptionThrowingTest'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed(), $this->actual[0]->getState());
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
-            /** @var TestProcessedEvent $testInvokedEvent */
-            $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
-            $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getTestMethod());
-            $this->assertSame(TestState::Failed(), $testInvokedEvent->getTarget()->getState());
-
-            $this->assertNotNull($testInvokedEvent->getTarget()->getException());
+            $this->assertNotNull($this->actual[0]->getException());
             $expectedMsg = 'An unexpected exception of type "Exception" with code 0 and message "Test failure" was thrown from #[Test] ' . ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class . '::throwsException';
-            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getException()->getMessage());
-            $this->assertSame(0, $testInvokedEvent->getTarget()->getException()->getCode());
-            $this->assertInstanceOf(Exception::class, $testInvokedEvent->getTarget()->getException()->getPrevious());
-            $this->assertSame('Test failure', $testInvokedEvent->getTarget()->getException()->getPrevious()->getMessage());
-            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getException()->getPrevious()->getFile());
+            $this->assertSame($expectedMsg, $this->actual[0]->getException()->getMessage());
+            $this->assertInstanceOf(Exception::class, $this->actual[0]->getException()->getPrevious());
         });
     }
 
     public function testImplicitDefaultTestSuiteExceptionThrowingTestWithAfterEachHookInvokedAfterTest() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingTestWithAfterEachHook');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('ExceptionThrowingTestWithAfterEachHook'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
-            /** @var TestProcessedEvent $testInvokedEvent */
-            $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\ExceptionThrowingTestWithAfterEachHook\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
-            $this->assertSame('throwsException', $testInvokedEvent->getTarget()->getTestMethod());
-            $this->assertTrue($testInvokedEvent->getTarget()->getTestCase()->getAfterHookCalled());
+            $this->assertCount(1, $this->actual);
+            $this->assertTrue($this->actual[0]->getTestCase()->getAfterHookCalled());
         });
     }
 
-    public function testImplicitDefaultTestSuiteExceptionThrowingBeforeAllHaltsTestProcessing() {
+    public function testImplicitDefaultTestSuiteTestFailedExceptionThrowingTestEmitsTestProcessedEventDoesNotMarkExceptionAsUnexpected() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeAll');
-            $results = yield $this->parser->parse($dir);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestFailedExceptionThrowingTest'));
 
-            $this->expectException(TestCaseSetUpException::class);
-            $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeAll\MyTestCase::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::beforeAll" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the class beforeAll".');
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed(), $this->actual[0]->getState());
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testImplicitDefaultTestSuiteExceptionThrowingAfterAllHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterAll');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestCaseTearDownException::class);
-            $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterAll\MyTestCase::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::afterAll" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the class afterAll".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testImplicitDefaultTestSuiteExceptionThrowingBeforeEachHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingBeforeEach');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSetUpException::class);
-            $class = ImplicitDefaultTestSuite\ExceptionThrowingBeforeEach\MyTestCase::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::beforeEach" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the object beforeEach".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testImplicitDefaultTestSuiteExceptionThrowingAfterEachHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('ExceptionThrowingAfterEach');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestTearDownException::class);
-            $class = ImplicitDefaultTestSuite\ExceptionThrowingAfterEach\MyTestCase::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::afterEach" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "Thrown in the object afterEach".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeAllHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeAll');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSuiteSetUpException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeAll\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwException" #[BeforeAll] hook with exception of type "RuntimeException" with code 0 and message "Thrown in AttachToTestSuite".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEachHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeEach');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSuiteSetUpException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEach\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachException" #[BeforeEach] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite BeforeEach".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEachHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterEach');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSuiteTearDownException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEach\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachException" #[AfterEach] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterEach".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterEachTestHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterEachTest');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestTearDownException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterEachTest\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwEachTestException" #[AfterEachTest] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterEachTest".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteBeforeEachTestHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteBeforeEachTest');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSetUpException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteBeforeEachTest\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed setting up "' . $class . '::throwEachTestException" #[BeforeEachTest] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite BeforeEachTest".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testExplicitTestSuiteExceptionThrowingTestSuiteAfterAllHaltsTestProcessing() {
-        Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('ExceptionThrowingTestSuiteAfterAll');
-            $results = yield $this->parser->parse($dir);
-
-            $this->expectException(TestSuiteTearDownException::class);
-            $class = ExplicitTestSuite\ExceptionThrowingTestSuiteAfterAll\MyTestSuite::class;
-            $this->expectExceptionMessage('Failed tearing down "' . $class . '::throwException" #[AfterAll] hook with exception of type "RuntimeException" with code 0 and message "AttachToTestSuite AfterAll".');
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-        });
-    }
-
-    public function testImplicitDefaultTestSuiteTestFailedExceptionThrowingTestEmitsTestProcessedEventWithCorrectData() {
-        Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestFailedExceptionThrowingTest');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
-            /** @var TestProcessedEvent $testInvokedEvent */
-            $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\TestFailedExceptionThrowingTest\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
-            $this->assertSame('ensureSomethingFails', $testInvokedEvent->getTarget()->getTestMethod());
-            $this->assertSame(TestState::Failed(), $testInvokedEvent->getTarget()->getState());
-
-            $this->assertNotNull($testInvokedEvent->getTarget()->getException());
-            $expectedMsg = 'Something barfed';
-            $this->assertSame($expectedMsg, $testInvokedEvent->getTarget()->getException()->getMessage());
-            $this->assertSame(0, $testInvokedEvent->getTarget()->getException()->getCode());
-            $this->assertSame($dir . '/MyTestCase.php', $testInvokedEvent->getTarget()->getException()->getFile());
+            $this->assertNotNull($this->actual[0]->getException());
+            $this->assertSame('Something barfed', $this->actual[0]->getException()->getMessage());
         });
     }
 
@@ -447,460 +215,318 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->customAssertionContext->registerAsyncAssertion('theCustomAssertion', fn() => $asyncAssertion);
 
             // Normal TestSuiteRunner testing
-            $dir = $this->implicitDefaultTestSuitePath('CustomAssertions');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('CustomAssertions'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Passed(), $this->actual[0]->getState());
 
-            $this->assertCount(1, $state->events);
-            /** @var TestProcessedEvent $testInvokedEvent */
-            $testInvokedEvent = $state->events[0];
-            $this->assertInstanceOf(TestProcessedEvent::class, $testInvokedEvent);
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\CustomAssertions\MyTestCase::class, $testInvokedEvent->getTarget()->getTestCase());
-            $this->assertSame('ensureCustomAssertionsPass', $testInvokedEvent->getTarget()->getTestMethod());
-
-            $this->assertNull($testInvokedEvent->getTarget()->getException());
         });
     }
 
     public function testImplicitDefaultTestSuiteHasDataProviderEmitsTestProcessedEventsForEachDataSetOnUniqueTestCase() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('HasDataProvider');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HasDataProvider'));
+            $this->assertCount(3, $this->actual);
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            $actual = [
+                $this->actual[0]->getTestCase()->getCounter(),
+                $this->actual[1]->getTestCase()->getCounter(),
+                $this->actual[2]->getTestCase()->getCounter(),
+            ];
+            $expected = [1, 1, 1];
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(3, $state->events);
-
-            /** @var TestProcessedEvent $firstEvent */
-            $firstEvent = $state->events[0];
-            $this->assertSame(1, $firstEvent->getTarget()->getTestCase()->getCounter());
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testExplicitTestSuiteDefaultExplicitTestSuite() {
         Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('AnnotatedDefaultTestSuite');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
+            yield $this->parseAndRun($this->explicitTestSuitePath('AnnotatedDefaultTestSuite'));
 
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
-            $this->assertNull($state->events[0]->getTarget()->getException());
-            $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $state->events[0]->getTarget()->getTestCase()->getTestSuiteName());
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(ExplicitTestSuite\AnnotatedDefaultTestSuite\MyTestSuite::class, $this->actual[0]->getTestCase()->testSuite()::class);
         });
     }
 
     public function testImplicitDefaultTestSuiteMultipleBeforeAllHooksAllInvokedBeforeTest() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('MultipleBeforeAllHooks');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                 $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-            $this->assertCount(2, $state->events);
-            $allResults = array_map(
-                fn(TestProcessedEvent $testInvokedEvent) => $testInvokedEvent->getTarget()->getTestCase()->getState(),
-                $state->events
-            );
-            $this->assertEqualsCanonicalizing(
-                [ImplicitDefaultTestSuite\MultipleBeforeAllHooks\FirstTestCase::class, ImplicitDefaultTestSuite\MultipleBeforeAllHooks\SecondTestCase::class],
-                $allResults
-            );
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('MultipleBeforeAllHooks'));
+            $this->assertCount(2, $this->actual);
+            $actual = [
+                $this->actual[0]->getTestCase()->getState(),
+                $this->actual[1]->getTestCase()->getState(),
+            ];
+            $expected = [
+                ImplicitDefaultTestSuite\MultipleBeforeAllHooks\FirstTestCase::class,
+                ImplicitDefaultTestSuite\MultipleBeforeAllHooks\SecondTestCase::class
+            ];
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testExplicitTestSuiteBeforeAllTestSuiteHookTestCaseHasAccessToSameTestSuite() : void {
         Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('BeforeAllTestSuiteHook');
-            $results = yield $this->parser->parse($dir);
-
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                 $state->events[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-            $this->assertCount(3, $state->events);
-
-            $testCaseTestSuites = [];
-            foreach ($state->events as $testInvokedEvent) {
-                $testCaseTestSuites[] = $testInvokedEvent->getTarget()->getTestCase()->testSuite();
-            }
-
-            $testSuite = $state->events[0]->getTarget()->getTestCase()->testSuite();
-            $this->assertSame([$testSuite, $testSuite, $testSuite], $testCaseTestSuites);
+            yield $this->parseAndRun($this->explicitTestSuitePath('BeforeAllTestSuiteHook'));
+            $this->assertCount(3, $this->actual);
+            $actual = [
+                $this->actual[0]->getTestCase()->testSuite(),
+                $this->actual[1]->getTestCase()->testSuite(),
+                $this->actual[2]->getTestCase()->testSuite(),
+            ];
+            $this->assertSame($actual[0], $actual[1]);
+            $this->assertSame($actual[1], $actual[2]);
         });
     }
 
     public function testTestPassedEventsEmittedAfterTestProcessedEvent() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('SingleTest');
-            $results = yield $this->parser->parse($dir);
-
-            $state = new stdClass();
-            $state->data = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
-                $state->data[] = 'test invoked';
+            $actual = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test invoked';
             });
-            $this->emitter->on(Events::TEST_PASSED, function() use($state) {
-                $state->data[] = 'test passed';
+            $this->emitter->on(Events::TEST_PASSED, function() use(&$actual) {
+                $actual[] = 'test passed';
             });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertSame(['test invoked', 'test passed'], $state->data);
+            $this->assertSame(['test invoked', 'test passed'], $actual);
         });
     }
 
     public function testTestFailedEventsEmittedAfterTestProcessedEvent() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('FailedAssertion');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->data = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
-                $state->data[] = 'test invoked';
+            $actual = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test invoked';
             });
-            $this->emitter->on(Events::TEST_FAILED, function() use($state) {
-                $state->data[] = 'test failed';
+            $this->emitter->on(Events::TEST_FAILED, function() use(&$actual) {
+                $actual[] = 'test failed';
             });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('FailedAssertion'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $this->assertSame(['test invoked', 'test failed'], $actual);
+        });
+    }
 
-            $this->assertSame(['test invoked', 'test failed'], $state->data);
+    public function testTestDisabledEventsEmittedAfterTestProcessedEvent() {
+        Loop::run(function() {
+            $actual = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test invoked';
+            });
+            $this->emitter->on(Events::TEST_DISABLED, function() use(&$actual) {
+                $actual[] = 'test disabled';
+            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTestDisabled'));
+
+            $this->assertSame(['test invoked', 'test disabled'], $actual);
         });
     }
 
     public function testTestSuiteStartedAndFinishedEventsEmittedInOrder() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('SingleTest');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $state->order = [];
-            $this->emitter->on(Events::TEST_SUITE_STARTED, function($event) use($state) {
-                $state->events[] = $event;
-                $state->order[] = 'test suite start';
+            $actual = [];
+            $this->emitter->on(Events::TEST_SUITE_STARTED, function() use(&$actual) {
+                $actual[] = 'test suite start';
             });
-            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
-                $state->order[] = 'test processed';
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test processed';
             });
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function($event) use($state) {
-                $state->events[] = $event;
-                $state->order[] = 'test finished';
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function() use(&$actual) {
+                $actual[] = 'test finished';
             });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(2, $state->events);
-            $this->assertInstanceOf(TestSuiteStartedEvent::class, $state->events[0]);
-            $this->assertInstanceOf(TestSuiteFinishedEvent::class, $state->events[1]);
-            $this->assertSame(['test suite start', 'test processed', 'test finished'], $state->order);
+            $this->assertSame(['test suite start', 'test processed', 'test finished'], $actual);
         });
     }
 
     public function testTestCaseProcessingEventEmitted() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('SingleTest');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use($state) {
-                $state->events[] = $event;
+            $actual = [];
+            $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use(&$actual) {
+                $actual[] = 'test case started';
             });
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function($event) use($state) {
-                $state->events[] = $event;
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test processed';
+            });
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function($event) use(&$actual) {
+                $actual[] = 'test case finished';
             });
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
 
-            $this->assertCount(2, $state->events);
-            $this->assertInstanceOf(TestCaseStartedEvent::class, $state->events[0]);
-            $this->assertInstanceOf(TestCaseFinishedEvent::class, $state->events[1]);
+            $this->assertSame(['test case started', 'test processed', 'test case finished'], $actual);
         });
     }
 
     public function testTestMethodIsNotInvokedWhenDisabled() : void {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestDisabled'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(2, $state->events);
-            $this->assertEqualsCanonicalizing(
-                [TestState::Passed(), TestState::Disabled()],
-                [$state->events[0]->getTarget()->getState(), $state->events[1]->getTarget()->getState()]
-            );
+            $this->assertCount(2, $this->actual);
+            $actual = [
+                $this->actual[0]->getState(),
+                $this->actual[1]->getState()
+            ];
+            $expected = [TestState::Passed(), TestState::Disabled()];
+            $this->assertEqualsCanonicalizing($expected, $actual);
         });
     }
 
     public function testTestMethodIsNotInvokedWhenTestCaseDisabled() : void {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabled');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestCaseDisabled'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $this->assertCount(3, $this->actual);
+            $actualState = [
+                $this->actual[0]->getState(),
+                $this->actual[1]->getState(),
+                $this->actual[2]->getState(),
+            ];
+            $expectedState = [TestState::Disabled(), TestState::Disabled(), TestState::Disabled()];
+            $this->assertEqualsCanonicalizing($expectedState, $actualState);
 
-            $this->assertCount(3, $state->events);
-            $isDisabled = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->getState(), $state->events);
-            $this->assertSame([TestState::Disabled(), TestState::Disabled(), TestState::Disabled()], $isDisabled);
-            $testCaseData = array_map(fn(TestProcessedEvent $event) => $event->getTarget()->getTestCase()->getData(), $state->events);
-            $this->assertSame([[], [], []], $testCaseData);
+            $actualData = [
+                $this->actual[0]->getTestCase()->getData(),
+                $this->actual[1]->getTestCase()->getData(),
+                $this->actual[2]->getTestCase()->getData(),
+            ];
+            $expectedData = [[], [], []];
+            $this->assertEqualsCanonicalizing($expectedData, $actualData);
         });
     }
 
     public function testTestResultWhenTestDisabled() : void {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestDisabled');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestDisabled'));
+            $disabledTestResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class, 'skippedTest');
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-            $disabledTestResult = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class, 'skippedTest');
-
-            $this->assertInstanceOf(ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class, $disabledTestResult->getTarget()->getTestCase());
-            $this->assertSame('skippedTest', $disabledTestResult->getTarget()->getTestMethod());
-            $this->assertSame(TestState::Disabled(), $disabledTestResult->getTarget()->getState());
-            $this->assertInstanceOf(TestDisabledException::class, $disabledTestResult->getTarget()->getException());
+            $this->assertSame(TestState::Disabled(), $disabledTestResult->getState());
+            $this->assertInstanceOf(TestDisabledException::class, $disabledTestResult->getException());
             $expected = sprintf(
                 '%s::%s has been marked disabled via annotation',
                 ImplicitDefaultTestSuite\TestDisabled\MyTestCase::class,
                 'skippedTest'
             );
-            $this->assertSame($expected, $disabledTestResult->getTarget()->getException()->getMessage());
+            $this->assertSame($expected, $disabledTestResult->getException()->getMessage());
         });
     }
 
     public function testImplicitDefaultTestSuiteHandleNonPhpFiles() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('HandleNonPhpFiles');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
-                $state->events[] = $event;
-            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('HandleNonPhpFiles'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->events);
+            $this->assertCount(1, $this->actual);
         });
     }
 
     public function testImplicitDefaultTestSuiteTestDisabledHookNotInvoked() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestDisabledHookNotInvoked');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestDisabledHookNotInvoked'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $disabledTestResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'disabledTest');
 
-            $this->assertCount(2, $state->events);
+            $this->assertSame(TestState::Disabled(), $disabledTestResult->getState());
+            $this->assertSame([], $disabledTestResult->getTestCase()->getState());
 
-            $disabledTestEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'disabledTest');
+            $enabledTestResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'enabledTest');
 
-            $this->assertSame(TestState::Disabled(), $disabledTestEvent->getTarget()->getState());
-            $this->assertSame([], $disabledTestEvent->getTarget()->getTestCase()->getState());
-
-            $enabledTestEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledHookNotInvoked\MyTestCase::class, 'enabledTest');
-
-            $this->assertSame(TestState::Passed(), $enabledTestEvent->getTarget()->getState());
-            $this->assertSame(['before', 'enabled', 'after'], $enabledTestEvent->getTarget()->getTestCase()->getState());
+            $this->assertSame(TestState::Passed(), $enabledTestResult->getState());
+            $this->assertSame(['before', 'enabled', 'after'], $enabledTestResult->getTestCase()->getState());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestCaseDisabledHookNotInvoked() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledHookNotInvoked');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestCaseDisabledHookNotInvoked'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $testOneResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testOne');
 
-            $this->assertCount(2, $state->events);
+            $this->assertSame(TestState::Disabled(), $testOneResult->getState());
+            $this->assertSame([], $testOneResult->getTestCase()->getState());
 
-            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testOne');
+            $testTwoResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testTwo');
 
-            $this->assertSame(TestState::Disabled(), $testOneEvent->getTarget()->getState());
-            $this->assertSame([], $testOneEvent->getTarget()->getTestCase()->getState());
-
-            $testTwoEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledHookNotInvoked\MyTestCase::class, 'testTwo');
-
-            $this->assertSame(TestState::Disabled(), $testTwoEvent->getTarget()->getState());
-            $this->assertSame([], $testTwoEvent->getTarget()->getTestCase()->getState());
+            $this->assertSame(TestState::Disabled(), $testTwoResult->getState());
+            $this->assertSame([], $testTwoResult->getTestCase()->getState());
         });
     }
 
     public function testExplicitTestSuiteTestSuiteDisabledHookNotInvoked() {
         Loop::run(function() {
             $dir = $this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $testSomethingResult = $this->fetchTestResultForTest(ExplicitTestSuite\TestSuiteDisabledHookNotInvoked\MyTestCase::class, 'testSomething');
 
-            $this->assertCount(1, $state->events);
-
-            $testSomethingEvent = $this->fetchTestProcessedEventForTest($state->events, ExplicitTestSuite\TestSuiteDisabledHookNotInvoked\MyTestCase::class, 'testSomething');
-
-            $this->assertSame(TestState::Disabled(), $testSomethingEvent->getTarget()->getState());
-
-            $this->assertSame([], $testSomethingEvent->getTarget()->getTestCase()->testSuite()->getState());
+            $this->assertSame(TestState::Disabled(), $testSomethingResult->getState());
+            $this->assertSame([], $testSomethingResult->getTestCase()->testSuite()->getState());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestDisabledCustomMessage() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestDisabledCustomMessage');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestDisabledCustomMessage'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $testOneResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class, 'testOne');
 
-            $this->assertCount(1, $state->events);
-
-            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledCustomMessage\MyTestCase::class, 'testOne');
-
-            $this->assertSame(TestState::Disabled(), $testOneEvent->getTarget()->getState());
-            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
-            $this->assertSame('Not sure what we should do here yet', $testOneEvent->getTarget()->getException()->getMessage());
+            $this->assertSame(TestState::Disabled(), $testOneResult->getState());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneResult->getException());
+            $this->assertSame('Not sure what we should do here yet', $testOneResult->getException()->getMessage());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestCaseDisabledCustomMessage() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestCaseDisabledCustomMessage'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $testOneResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestCaseDisabledCustomMessage\MyTestCase::class, 'testOne');
 
-            $this->assertCount(1, $state->events);
-
-            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestCaseDisabledCustomMessage\MyTestCase::class, 'testOne');
-
-            $this->assertSame(TestState::Disabled(), $testOneEvent->getTarget()->getState());
-            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
-            $this->assertSame('The TestCase is disabled', $testOneEvent->getTarget()->getException()->getMessage());
+            $this->assertSame(TestState::Disabled(), $testOneResult->getState());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneResult->getException());
+            $this->assertSame('The TestCase is disabled', $testOneResult->getException()->getMessage());
         });
     }
 
     public function testExplicitTestSuiteTestSuiteDisabledCustomMessage() {
         Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('TestSuiteDisabledCustomMessage');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PROCESSED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->explicitTestSuitePath('TestSuiteDisabledCustomMessage'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $testOneResult = $this->fetchTestResultForTest(ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestCase::class, 'testOne');
 
-            $this->assertCount(1, $state->events);
-
-            $testOneEvent = $this->fetchTestProcessedEventForTest($state->events, ExplicitTestSuite\TestSuiteDisabledCustomMessage\MyTestCase::class, 'testOne');
-
-            $this->assertSame(TestState::Disabled(), $testOneEvent->getTarget()->getState());
-            $this->assertInstanceOf(TestDisabledException::class, $testOneEvent->getTarget()->getException());
-            $this->assertSame('The AttachToTestSuite is disabled', $testOneEvent->getTarget()->getException()->getMessage());
+            $this->assertSame(TestState::Disabled(), $testOneResult->getState());
+            $this->assertInstanceOf(TestDisabledException::class, $testOneResult->getException());
+            $this->assertSame('The AttachToTestSuite is disabled', $testOneResult->getException()->getMessage());
         });
     }
 
-    public function testImplicitDefaultTestSuiteTestDisabledEvents() {
+    public function testImplicitDefaultTestSuiteTestEventsHaveCorrectState() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestDisabledEvents');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestDisabledEvents'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $failingResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testFailingFloatEquals');
 
-            $this->assertCount(3, $state->events);
+            $this->assertSame(TestState::Failed(), $failingResult->getState());
 
-            $failingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testFailingFloatEquals');
+            $passingResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsTrue');
 
-            $this->assertInstanceOf(TestFailedEvent::class, $failingEvent);
-            $this->assertSame(TestState::Failed(), $failingEvent->getTarget()->getState());
+            $this->assertSame(TestState::Passed(), $passingResult->getState());
 
-            $passingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsTrue');
+            $disabledResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsDisabled');
 
-            $this->assertInstanceOf(TestPassedEvent::class, $passingEvent);
-            $this->assertSame(TestState::Passed(), $passingEvent->getTarget()->getState());
-
-            $disabledEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestDisabledEvents\MyTestCase::class, 'testIsDisabled');
-
-            $this->assertInstanceOf(TestDisabledEvent::class, $disabledEvent);
-            $this->assertSame(TestState::Disabled(), $disabledEvent->getTarget()->getState());
+            $this->assertSame(TestState::Disabled(), $disabledResult->getState());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestHasOutput() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestHasOutput');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->events = [];
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->events[] = $event);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestHasOutput'));
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            $failingResult = $this->fetchTestResultForTest(ImplicitDefaultTestSuite\TestHasOutput\MyTestCase::class, 'testProducesOutput');
 
-            $this->assertCount(1, $state->events);
-
-            $failingEvent = $this->fetchTestProcessedEventForTest($state->events, ImplicitDefaultTestSuite\TestHasOutput\MyTestCase::class, 'testProducesOutput');
-
-            $this->assertInstanceOf(TestFailedEvent::class, $failingEvent);
-            $this->assertInstanceOf(TestOutputException::class, $failingEvent->getTarget()->getException());
-            $this->assertSame("Test had unexpected output:\n\n\"testProducesOutput\"", $failingEvent->getTarget()->getException()->getMessage());
+            $this->assertInstanceOf(TestOutputException::class, $failingResult->getException());
+            $this->assertSame("Test had unexpected output:\n\n\"testProducesOutput\"", $failingResult->getException()->getMessage());
         });
     }
 
@@ -938,1387 +564,92 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testImplicitDefaultTestSuiteTestExpectsExceptionOnly() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionOnly');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->passed = new stdClass();
-            $state->passed->events = [];
-            $state->failed = new stdClass();
-            $state->failed->events = [];
-            $state->disabled = new stdClass();
-            $state->disabled->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsExceptionOnly'));
 
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->passed->events);
-            $this->assertCount(0, $state->failed->events);
-            $this->assertCount(0, $state->disabled->events);
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Passed(), $this->actual[0]->getState());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongType() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongType');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->passed = new stdClass();
-            $state->passed->events = [];
-            $state->failed = new stdClass();
-            $state->failed->events = [];
-            $state->disabled = new stdClass();
-            $state->disabled->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongType'));
 
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(0, $state->passed->events);
-            $this->assertCount(1, $state->failed->events);
-            $this->assertCount(0, $state->disabled->events);
-
-            /** @var TestFailedEvent $testFailedEvent */
-            $testFailedEvent = $state->failed->events[0];
-
-            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $this->assertCount(1, $this->actual);
+            $this->assertInstanceOf(TestFailedException::class, $this->actual[0]->getException());
             $expected = sprintf(
                 'Failed asserting that thrown exception %s extends expected %s',
                 InvalidStateException::class,
                 InvalidArgumentException::class
             );
-            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
+            $this->assertSame($expected, $this->actual[0]->getException()->getMessage());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestExpectsExceptionMessage() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionMessage');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->passed = new stdClass();
-            $state->passed->events = [];
-            $state->failed = new stdClass();
-            $state->failed->events = [];
-            $state->disabled = new stdClass();
-            $state->disabled->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsExceptionMessage'));
 
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->passed->events);
-            $this->assertCount(0, $state->failed->events);
-            $this->assertCount(0, $state->disabled->events);
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Passed(), $this->actual[0]->getState());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestExpectsExceptionWrongMessage() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongMessage');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->passed = new stdClass();
-            $state->passed->events = [];
-            $state->failed = new stdClass();
-            $state->failed->events = [];
-            $state->disabled = new stdClass();
-            $state->disabled->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsExceptionWrongMessage'));
 
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(0, $state->passed->events);
-            $this->assertCount(1, $state->failed->events);
-            $this->assertCount(0, $state->disabled->events);
-            $testFailedEvent = $state->failed->events[0];
-
-            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $this->assertCount(1, $this->actual);
+            $this->assertInstanceOf(TestFailedException::class, $this->actual[0]->getException());
             $expected = sprintf(
                 'Failed asserting that thrown exception message "%s" equals expected "%s"',
                 'This is NOT the message that I expect',
                 'This is the message that I expect'
             );
-            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
+            $this->assertSame($expected, $this->actual[0]->getException()->getMessage());
         });
     }
 
     public function testImplicitDefaultTestSuiteTestExpectsExceptionDoesNotThrow() {
         Loop::run(function() {
-            $dir = $this->implicitDefaultTestSuitePath('TestExpectsExceptionDoesNotThrow');
-            $results = yield $this->parser->parse($dir);
-            $state = new stdClass();
-            $state->passed = new stdClass();
-            $state->passed->events = [];
-            $state->failed = new stdClass();
-            $state->failed->events = [];
-            $state->disabled = new stdClass();
-            $state->disabled->events = [];
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsExceptionDoesNotThrow'));
 
-            $this->emitter->on(Events::TEST_PASSED, fn($event) => $state->passed->events[] = $event);
-            $this->emitter->on(Events::TEST_FAILED, fn($event) => $state->failed->events[] = $event);
-            $this->emitter->on(Events::TEST_DISABLED, fn($event) => $state->disabled->events[] = $event);
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(0, $state->passed->events);
-            $this->assertCount(1, $state->failed->events);
-            $this->assertCount(0, $state->disabled->events);
-            $testFailedEvent = $state->failed->events[0];
-
-            $this->assertInstanceOf(TestFailedException::class, $testFailedEvent->getTarget()->getException());
+            $this->assertCount(1, $this->actual);
+            $this->assertInstanceOf(TestFailedException::class, $this->actual[0]->getException());
             $expected = sprintf(
                 'Failed asserting that an exception of type %s is thrown',
                 InvalidArgumentException::class
             );
-            $this->assertSame($expected, $testFailedEvent->getTarget()->getException()->getMessage());
-        });
-    }
-
-    public function testTestSuiteStartedEventHasTestSuiteSummary() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('KitchenSink'));
-            $state = new stdClass();
-            $state->data = [];
-            $this->emitter->on(Events::TEST_SUITE_STARTED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(3, $state->data);
-
-            $this->assertInstanceOf(TestSuiteSummary::class, $state->data[0]->getTarget());
-            $this->assertInstanceOf(TestSuiteSummary::class, $state->data[1]->getTarget());
-            $this->assertInstanceOf(TestSuiteSummary::class, $state->data[2]->getTarget());
-        });
-    }
-
-    public function testTestCaseStartedEventHasTestCaseSummary() : void {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTest'));
-            $state = new stdClass();
-            $state->data = [];
-            $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            $this->assertInstanceOf(TestCaseSummary::class, $state->data[0]->getTarget());
+            $this->assertSame($expected, $this->actual[0]->getException()->getMessage());
         });
     }
 
     public function testTestProcessingEventsEmittedInOrder() {
         Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('SingleTest'));
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::TEST_PROCESSED, function() use($state) {
-                $state->data[] = 'test invoked';
-            });
-            $this->emitter->on(Events::PROCESSING_FINISHED, function() use($state) {
-                $state->data[] = 'test processing finished';
-            });
-            $this->emitter->on(Events::PROCESSING_STARTED, function() use($state) {
-                $state->data[] = 'test processing started';
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertSame(['test processing started', 'test invoked', 'test processing finished'], $state->data);
-        });
-    }
-
-    public function testTestProcessingStartedHasAggregateSummary() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('TestCaseDisabled'));
-            $state = new stdClass();
-            $state->data = [];
-            $this->emitter->on(Events::PROCESSING_STARTED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingStartedEvent $testStartedEvent */
-            $testStartedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingStartedEvent::class, $testStartedEvent);
-            $this->assertInstanceOf(AggregateSummary::class, $testStartedEvent->getTarget());
-        });
-    }
-
-    public function processedAggregateSummaryTestSuiteInfoProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [ImplicitTestSuite::class]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitTestSuite::class, ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class, ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryTestSuiteInfoProvider
-     */
-    public function testTestProcessingFinishedHasProcessedAggregateSummaryWithCorrectTestSuiteNames(string $path, array $expected) {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-
-            $summary = $testFinishedEvent->getTarget();
-
-            $this->assertEqualsCanonicalizing(
-                $expected,
-                $summary->getTestSuiteNames()
-            );
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectTotalTestSuiteCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 3]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectTotalTestSuiteCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectTotalTestSuiteCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getTotalTestSuiteCount());
-        });
-    }
-
-
-    public function processedAggregateSummaryWithCorrectDisabledTestSuiteCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 0],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 1]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectDisabledTestSuiteCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectDisabledTestSuiteCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getDisabledTestSuiteCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectTotalTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 6],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 2]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectTotalTestCaseCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectTotalTestCaseCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getTotalTestCaseCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectDisabledTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 0],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 2],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 1]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectDisabledTestCaseCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectDisabledTestCaseCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getDisabledTestCaseCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectTotalTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 12],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 3],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectTotalTestCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectTotalTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getTotalTestCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectDisabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 3],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 3],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectDisabledTestCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectDisabledTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getDisabledTestCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectPassedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 8],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectPassedTestCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectPassedTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getPassedTestCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectFailedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 1],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), 1]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectFailedTestCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectFailedTestCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getFailedTestCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('MultipleTest'), 3],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 4],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), 18]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectAssertionCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectAssertionCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getAssertionCount());
-        });
-    }
-
-    public function processedAggregateSummaryWithCorrectAsyncAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('MultipleTest'), 0],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 6],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), 4]
-        ];
-    }
-
-    /**
-     * @dataProvider processedAggregateSummaryWithCorrectAsyncAssertionCountProvider
-     */
-    public function testProcessedAggregateSummaryWithCorrectAsyncAssertionCount(string $path, int $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->data[] = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $state->data);
-            /** @var ProcessingFinishedEvent $testFinishedEvent */
-            $testFinishedEvent = $state->data[0];
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
-            $this->assertSame($expected, $testFinishedEvent->getTarget()->getAsyncAssertionCount());
-        });
-    }
-
-    public function processedTestSuiteSummaryTestSuiteNameProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [ImplicitTestSuite::class]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryTestSuiteNameProvider
-     */
-    public function testProcessedTestSuiteSummaryHasCorrectTestSuiteName(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $state = new stdClass();
-            $state->data = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use($state) {
-                $state->data[] = $event->getTarget()->getTestSuiteName();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEqualsCanonicalizing($expected, $state->data);
-        });
-    }
-
-    public function processedTestSuiteSummaryTestCaseNamesProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitTestSuite::class => [ImplicitDefaultTestSuite\SingleTest\MyTestCase::class]
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class,
-                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class,
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class,
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class,
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class,
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class
-                ]
-            ]],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
-                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => [
-                    ExplicitTestSuite\TestSuiteDisabled\FirstTestCase::class,
-                    ExplicitTestSuite\TestSuiteDisabled\SecondTestCase::class
-                ]
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryTestCaseNamesProvider
-     */
-    public function testProcessedTestSuiteSummaryHasTestCaseNames(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
             $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCaseNames();
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test invoked';
+            });
+            $this->emitter->on(Events::PROCESSING_FINISHED, function() use(&$actual) {
+                $actual[] = 'test processing finished';
+            });
+            $this->emitter->on(Events::PROCESSING_STARTED, function() use(&$actual) {
+                $actual[] = 'test processing started';
             });
 
-            yield $this->testSuiteRunner->runTestSuites($results);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleTest'));
 
-            $this->assertEqualsCanonicalizing($expected, $actual);
+            $this->assertSame(['test processing started', 'test invoked', 'test processing finished'], $actual);
         });
     }
 
-    public function processedTestSuiteSummaryTotalTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitTestSuite::class => 1,
-            ]],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [
-                ImplicitTestSuite::class => 3
-            ]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
-            ]],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
-                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 2
-            ]]
-        ];
-    }
 
-    /**
-     * @dataProvider processedTestSuiteSummaryTotalTestCaseCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasTotalTestCaseCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCaseCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryDisabledTestCaseCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitTestSuite::class => 0,
-            ]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
-                ImplicitTestSuite::class => 1
-            ]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
-            ]],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
-                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 2
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryDisabledTestCaseCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasDisabledTestCaseCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getDisabledTestCaseCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryTotalTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitTestSuite::class => 1,
-            ]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
-                ImplicitTestSuite::class => 3
-            ]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
-            ]],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
-                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 3
-            ]],
-            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
-                ImplicitTestSuite::class => 2
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryTotalTestCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasTotalTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryDisabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitTestSuite::class => 0,
-            ]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [
-                ImplicitTestSuite::class => 3
-            ]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
-            ]],
-            [$this->explicitTestSuitePath('TestSuiteDisabled'), [
-                ExplicitTestSuite\TestSuiteDisabled\MyTestSuite::class => 3
-            ]],
-            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
-                ImplicitTestSuite::class => 1
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryDisabledTestCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasDisabledTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getDisabledTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryPassedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [ImplicitTestSuite::class => 1,]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 2
-            ]],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 8]],
-            [$this->implicitDefaultTestSuitePath('TestDisabled'), [
-                ImplicitTestSuite::class => 1
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryPassedTestCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasPassedTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getPassedTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryFailedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 1,]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
-            ]],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 1]],
-            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryFailedTestCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasFailedTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getFailedTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 1,]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 1,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 1
-            ]],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 18]],
-            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryAssertionCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasAssertionCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getAssertionCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestSuiteSummaryAsyncAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 0,]],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
-            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
-                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 1
-            ]],
-            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 4]],
-            [$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion'), [ImplicitTestSuite::class => 1]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestSuiteSummaryAsyncAssertionCountProvider
-     */
-    public function testProcessedTestSuiteSummaryHasAsyncAssertionCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getAsyncAssertionCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryTestSuiteNameProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => ImplicitTestSuite::class
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => ImplicitTestSuite::class
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryTestSuiteNameProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectTestSuiteName(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestSuiteName();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryTestNamesProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => [
-                    ImplicitDefaultTestSuite\SingleTest\MyTestCase::class . '::ensureSomethingHappens'
-                ]
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::testOne',
-                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::testTwo',
-                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::disabledTest'
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class . '::checkTwo',
-                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class . '::checkTwoDisabled'
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class . '::isBestHobbit',
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class . '::isBestHobbit'
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class . '::isBestHobbit'
-                ],
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#0',
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#1',
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#2',
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#3'
-                ]
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryTestNamesProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectTestNames(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestNames();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 3,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 2,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryTestCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryDisabledTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryDisabledTestCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectDisabledTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getDisabledTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryPassedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 2,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryPassedTestCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectPassedTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getPassedTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryFailedTestCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
-            ]],
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [
-                ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::class => 1,
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryFailedTestCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectFailedTestCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getFailedTestCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
-            ]],
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [
-                ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::class => 1,
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class =>1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryAssertionCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectAssertionCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getAssertionCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function processedTestCaseSummaryAsyncAssertionCountProvider() : array {
-        return [
-            [$this->implicitDefaultTestSuitePath('SingleTest'), [
-                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
-            ]],
-            [$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion'), [
-                ImplicitDefaultTestSuite\SingleTestAsyncAssertion\MyTestCase::class => 1,
-            ]],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
-                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
-                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class =>1,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
-            ]]
-        ];
-    }
-
-    /**
-     * @dataProvider processedTestCaseSummaryAsyncAssertionCountProvider
-     */
-    public function testProcessedTestCaseSummaryHasCorrectAsyncAssertionCount(string $path, array $expected) : void {
-        Loop::run(function() use($path, $expected) {
-            $results = yield $this->parser->parse($path);
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getAsyncAssertionCount();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            ksort($expected);
-            ksort($actual);
-            $this->assertEquals($expected, $actual);
-        });
-    }
-
-    public function testProcessedAggregateSummaryHasDuration() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
-            $state = new stdClass();
-            $state->event = null;
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->event = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $state->event);
-            $this->assertGreaterThan(600, $state->event->getTarget()->getDuration()->asMilliseconds());
-        });
-    }
-
-    public function testTestSuiteSummaryHasDuration() : void {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
-            $state = new stdClass();
-            $state->event = null;
-
-            $this->emitter->on(Events::TEST_SUITE_FINISHED, function($event) use($state) {
-                $state->event = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertInstanceOf(TestSuiteFinishedEvent::class, $state->event);
-            $this->assertGreaterThan(600, $state->event->getTarget()->getDuration()->asMilliseconds());
-        });
-    }
-
-    public function testTestCaseSummaryHasDuration() : void {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getDuration()->asMilliseconds();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $expected = [
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class => 100,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class => 200,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class => 300
-            ];
-
-            foreach ($expected as $testCase => $duration) {
-                $this->assertGreaterThanOrEqual($duration, $actual[$testCase]);
-            }
-        });
-    }
-
-    public function testTestResultHasDuration() : void {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) use(&$actual) {
-                $actual[$event->getTarget()->getTestCase()::class . '::' . $event->getTarget()->getTestMethod()] = $event->getTarget()->getDuration()->asMilliseconds();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $expected = [
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class . '::checkOne' => 99,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class . '::checkOne' => 99,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class . '::checkTwo' => 99,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkOne' => 99,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkTwo' => 99,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkThree' => 99
-            ];
-
-            foreach ($expected as $testCase => $duration) {
-                $this->assertGreaterThanOrEqual($duration, $actual[$testCase], $testCase . ' did not execute long enough');
-            }
-        });
-    }
-
-    public function testDisabledTestHasZeroDuration() : void {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
-            $actual = [];
-
-            $this->emitter->on(Events::TEST_DISABLED, function(TestDisabledEvent $event) use(&$actual) {
-                $actual[] = $event->getTarget()->getDuration()->asMilliseconds();
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertCount(1, $actual);
-            $this->assertSame(0.0, $actual[0]);
-        });
-    }
-
-    public function testProcessedAggregateSummaryHasMemoryUsageInBytes() {
-        Loop::run(function() {
-            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('SingleTest'));
-            $state = new stdClass();
-            $state->event = null;
-
-            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
-                $state->event = $event;
-            });
-
-            yield $this->testSuiteRunner->runTestSuites($results);
-
-            $this->assertInstanceOf(ProcessingFinishedEvent::class, $state->event);
-            $this->assertGreaterThan(1000, $state->event->getTarget()->getMemoryUsageInBytes());
-        });
-    }
-
-    private function fetchTestProcessedEventForTest(array $events, string $testClass, string $method) : Event {
-        foreach ($events as $event) {
-            if ($event->getTarget()->getTestCase()::class === $testClass && $event->getTarget()->getTestMethod() === $method) {
-                return $event;
+    private function fetchTestResultForTest(string $testClass, string $method) : TestResult {
+        foreach ($this->actual as $testResult) {
+            if ($testResult->getTestCase()::class === $testClass && $testResult->getTestMethod() === $method) {
+                return $testResult;
             }
         }
-        $this->fail('Expected events to have a TestCase and method matching ' . $testClass . '::' . $method);
+        $this->fail('Expected $this->actual to have a TestCase and method matching ' . $testClass . '::' . $method);
     }
 }
