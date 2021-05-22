@@ -88,7 +88,7 @@ final class TestSuiteRunner {
                         yield $this->invokeHooks($testCaseModel->getClass(), $testCaseModel, HookType::BeforeAll(), TestCaseSetUpException::class, [$testSuite]);
                     }
 
-                    $testMethodModels = $this->randomizer->randomize($testCaseModel->getTestMethodModels());
+                    $testMethodModels = $this->randomizer->randomize($testCaseModel->getTestModels());
                     foreach ($testMethodModels as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */

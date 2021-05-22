@@ -344,13 +344,13 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestCaseProcessingEventEmitted() {
         Loop::run(function() {
             $actual = [];
-            $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use(&$actual) {
+            $this->emitter->on(Events::TEST_CASE_STARTED, function() use(&$actual) {
                 $actual[] = 'test case started';
             });
             $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
                 $actual[] = 'test processed';
             });
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function($event) use(&$actual) {
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function() use(&$actual) {
                 $actual[] = 'test case finished';
             });
 
@@ -550,12 +550,12 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
                 ->withConsecutive(
                     [$testSuites],
                     [$testSuites[0]->getTestCaseModels()],
-                    [$testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()]
+                    [$testSuites[0]->getTestCaseModels()[0]->getTestModels()]
                 )
                 ->willReturnOnConsecutiveCalls(
                     $testSuites,
                     $testSuites[0]->getTestCaseModels(),
-                    $testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()
+                    $testSuites[0]->getTestCaseModels()[0]->getTestModels()
                 );
 
             yield $testSuiteRunner->runTestSuites($results);

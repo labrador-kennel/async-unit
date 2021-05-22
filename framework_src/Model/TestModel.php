@@ -6,6 +6,7 @@ final class TestModel {
 
     use MethodModelTrait;
     use CanBeDisabledTrait;
+    use CanHaveTimeoutTrait;
 
     private ?string $dataProvider = null;
 
