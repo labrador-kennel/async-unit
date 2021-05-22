@@ -27,7 +27,7 @@ class MyTestCase extends TestCase {
     #[Test]
     public function ensureSomethingHappensThreeTimes() {
         return call(function() {
-            $this->invoked[] = __METHOD__;
+            $this->invoked[] = self::class . '::ensureSomethingHappensThreeTimes';
             $this->assert()->intEquals(42, 42);
         });
     }
