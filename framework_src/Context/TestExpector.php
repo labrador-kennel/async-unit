@@ -8,4 +8,6 @@ interface TestExpector {
 
     public function exceptionMessage(string $message) : void;
 
+    public function noAssertions() : void;
+
 }

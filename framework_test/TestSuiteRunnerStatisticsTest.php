@@ -1123,9 +1123,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             yield $this->testSuiteRunner->runTestSuites($results);
 
             $expected = [
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class => 100,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class => 200,
-                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class => 300
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class => 199,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class => 299
             ];
 
             foreach ($expected as $testCase => $duration) {

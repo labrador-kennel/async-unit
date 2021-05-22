@@ -643,6 +643,34 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteTestExpectsNoAssertionsHasPassedState() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsNoAssertions'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Passed()->toString(), $this->actual[0]->getState()->toString());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteExpectsNoAssertionsAssertMade() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsNoAssertionsAssertMade'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed()->toString(), $this->actual[0]->getState()->toString());
+            $this->assertSame('Expected ' . ImplicitDefaultTestSuite\TestExpectsNoAssertionsAssertMade\MyTestCase::class .  '::testNoAssertionAssertionMade to make 0 assertions but made 2', $this->actual[0]->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteExpectsNoAssertionsAsyncAssertMade() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestExpectsNoAsyncAssertionsAssertMade'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed()->toString(), $this->actual[0]->getState()->toString());
+            $this->assertSame('Expected ' . ImplicitDefaultTestSuite\TestExpectsNoAsyncAssertionsAssertMade\MyTestCase::class .  '::noAssertionButAsyncAssertionMade to make 0 assertions but made 2', $this->actual[0]->getException()->getMessage());
+        });
+    }
 
     private function fetchTestResultForTest(string $testClass, string $method) : TestResult {
         foreach ($this->actual as $testResult) {

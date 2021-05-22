@@ -19,6 +19,8 @@ final class ExpectationContext implements TestExpector {
 
     private ?string $expectedExceptionMessage = null;
 
+    private ?int $expectedAssertionCount = null;
+
     private function __construct(
         private TestModel $testModel,
         private AssertionContext $assertionContext,
@@ -41,6 +43,10 @@ final class ExpectationContext implements TestExpector {
         $this->expectedExceptionMessage = $exceptionMessage;
     }
 
+    public function noAssertions() : void {
+        $this->expectedAssertionCount = 0;
+    }
+
     public function validateExpectations() : Promise {
         return call(function() {
             return $this->validateThrownException() ??
@@ -51,7 +57,27 @@ final class ExpectationContext implements TestExpector {
     }
 
     private function validateAssertionCount() : ?TestFailedException {
-        if (is_null($this->expectedExceptionClass) && $this->assertionContext->getAssertionCount() === 0 && $this->asyncAssertionContext->getAssertionCount() === 0) {
+        // If there is an expected exception we should not assume that assertions were ran
+        if (!is_null($this->expectedExceptionClass)) {
+            return null;
+        }
+
+        if (!is_null($this->expectedAssertionCount)) {
+            $totalAssertionCount = $this->assertionContext->getAssertionCount() + $this->asyncAssertionContext->getAssertionCount();
+            if ($totalAssertionCount !== $this->expectedAssertionCount) {
+                $msg = sprintf(
+                    'Expected %s::%s to make 0 assertions but made %s',
+                    $this->testModel->getClass(),
+                    $this->testModel->getMethod(),
+                    $totalAssertionCount
+                );
+                return new TestFailedException($msg);
+            }
+
+            return null;
+        }
+
+        if ($this->assertionContext->getAssertionCount() === 0 && $this->asyncAssertionContext->getAssertionCount() === 0) {
             $msg = sprintf(
                 'Expected "%s::%s" #[Test] to make at least 1 Assertion but none were made.',
                 $this->testModel->getClass(),
