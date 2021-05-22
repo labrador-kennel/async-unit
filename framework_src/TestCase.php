@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
+use Cspray\Labrador\AsyncUnit\Context\TestExpector;
 
 /**
  * Represents a type that acts a collection of #[Test] methods to be ran as well as the code necessary to support
@@ -51,12 +52,8 @@ abstract class TestCase {
         return $this->setAssertionFileAndLine($this->asyncAssertionContext, __FUNCTION__, debug_backtrace(10));
     }
 
-    final protected function expectException(string $exceptionClass) : void {
-        $this->expectationContext->setExpectedExceptionClass($exceptionClass);
-    }
-
-    final protected function expectExceptionMessage(string $exceptionMessage) : void {
-        $this->expectationContext->setExpectedExceptionMessage($exceptionMessage);
+    final protected function expect() : TestExpector {
+        return $this->expectationContext;
     }
 
     private function setAssertionFileAndLine(AssertionContext|AsyncAssertionContext $context, string $method, array $backtrace) {

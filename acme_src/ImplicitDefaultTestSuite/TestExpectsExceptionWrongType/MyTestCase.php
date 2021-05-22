@@ -11,7 +11,7 @@ class MyTestCase extends TestCase {
 
     #[Test]
     public function checkWrongExceptionThrown() {
-        $this->expectException(InvalidArgumentException::class);
+        $this->expect()->exception(InvalidArgumentException::class);
 
         throw new InvalidStateException();
     }
