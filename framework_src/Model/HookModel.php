@@ -19,11 +19,8 @@ final class HookModel {
 
     private HookType $type;
 
-    public function __construct(ClassMethod $classMethod, HookType $type) {
-        $this->setClassAndMethod(
-            $classMethod->getAttribute('parent')->namespacedName->toString(),
-            $classMethod->name->toString()
-        );
+    public function __construct(string $class, string $classMethod, HookType $type) {
+        $this->setClassAndMethod($class, $classMethod);
         $this->type = $type;
     }
 

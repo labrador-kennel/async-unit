@@ -18,6 +18,10 @@ final class TestCaseModel {
         return $this->testSuiteClass;
     }
 
+    public function setTestSuiteClass(string $testSuiteClass) : void {
+        $this->testSuiteClass = $testSuiteClass;
+    }
+
     public function getClass() : string {
         return $this->testCaseClass;
     }

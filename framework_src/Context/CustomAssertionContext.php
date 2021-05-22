@@ -16,6 +16,9 @@ final class CustomAssertionContext {
     private array $assertions = [];
     private array $asyncAssertions = [];
 
+    /**
+     * @codeCoverageIgnore
+     */
     private function __construct() {}
 
     public function registerAssertion(string $methodName, callable $assertionFactory) : void {

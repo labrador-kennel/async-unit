@@ -5,8 +5,8 @@ namespace Cspray\Labrador\AsyncUnit\Model;
 trait MethodModelTrait {
 
     public function __construct(
-        private String $class,
-        private String $method
+        private string $class,
+        private string $method
     ) {}
 
     public function getClass() : string {

@@ -6,6 +6,7 @@ use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
+use SebastianBergmann\Timer\Duration;
 
 /**
  * A type that is responsible for conveying the details about the processing of a specific test.
@@ -24,7 +25,11 @@ interface TestResult {
 
     public function getTestMethod() : string;
 
+    public function getDataSetLabel() : ?string;
+
     public function getState() : TestState;
+
+    public function getDuration() : Duration;
 
     /**
      * @return TestFailedException|AssertionFailedException|TestDisabledException|null

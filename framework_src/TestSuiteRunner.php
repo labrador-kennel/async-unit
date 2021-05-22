@@ -14,6 +14,8 @@ use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
+use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\ProcessingStartedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteStartedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
@@ -21,7 +23,6 @@ use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
-use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
@@ -29,7 +30,11 @@ use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
+use Cspray\Labrador\AsyncUnit\Parser\ParserResult;
+use Cspray\Labrador\AsyncUnit\Statistics\ProcessedSummaryBuilder;
 use ReflectionClass;
+use SebastianBergmann\Timer\Duration;
+use SebastianBergmann\Timer\Timer;
 use Throwable;
 use function Amp\call;
 
@@ -46,22 +51,36 @@ final class TestSuiteRunner {
         private Randomizer $randomizer
     ) {}
 
-    public function runTestSuites(TestSuiteModel... $testSuiteModels) : Promise {
-        return call(function() use($testSuiteModels) {
-            $testSuiteModels = $this->randomizer->randomize($testSuiteModels);
+    public function runTestSuites(ParserResult $parserResult) : Promise {
+        return call(function() use($parserResult) {
+            yield $this->emitter->emit(
+                new ProcessingStartedEvent($parserResult->getAggregateSummary())
+            );
+
+            $testSuiteModels = $this->randomizer->randomize($parserResult->getTestSuiteModels());
+
+            $aggregateSummaryBuilder = new ProcessedSummaryBuilder();
+            $aggregateSummaryBuilder->startProcessing();
+
             foreach ($testSuiteModels as $testSuiteModel) {
                 $testSuiteClass = $testSuiteModel->getClass();
                 /** @var TestSuite $testSuite */
                 $testSuite = (new ReflectionClass($testSuiteClass))->newInstanceWithoutConstructor();
+                $testSuiteSummary = $parserResult->getTestSuiteSummary($testSuite::class);
+                yield $this->emitter->emit(new TestSuiteStartedEvent($testSuiteSummary));
 
-                yield $this->emitter->emit(new TestSuiteStartedEvent($testSuiteModel));
+                $aggregateSummaryBuilder->startTestSuite($testSuiteModel);
                 if (!$testSuiteModel->isDisabled()) {
                     yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeAll(), TestSuiteSetUpException::class);
                 }
 
+                /** @var TestCaseModel[] $testCaseModels */
                 $testCaseModels = $this->randomizer->randomize($testSuiteModel->getTestCaseModels());
                 foreach ($testCaseModels as $testCaseModel) {
-                    yield $this->emitter->emit(new TestCaseStartedEvent($testCaseModel));
+                    $testCaseSummary = $parserResult->getTestCaseSummary($testCaseModel->getClass());
+                    yield $this->emitter->emit(new TestCaseStartedEvent($testCaseSummary));
+
+                    $aggregateSummaryBuilder->startTestCase($testCaseModel);
                     if (!$testSuiteModel->isDisabled()) {
                         yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeEach(), TestSuiteSetUpException::class);
                     }
@@ -77,9 +96,9 @@ final class TestSuiteRunner {
                         if ($testMethodModel->getDataProvider() !== null) {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCase->$dataProvider();
-                            foreach ($dataSets as $args) {
+                            foreach ($dataSets as $label => $args) {
                                 yield $this->invokeTest(
-                                    $testSuite,
+                                    $aggregateSummaryBuilder,
                                     $testCase,
                                     $assertionContext,
                                     $asyncAssertionContext,
@@ -87,13 +106,14 @@ final class TestSuiteRunner {
                                     $testSuiteModel,
                                     $testCaseModel,
                                     $testMethodModel,
-                                    $args
+                                    $args,
+                                    (string) $label // make sure 0-index array keys are treated as strings
                                 );
                                 [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                             }
                         } else {
                             yield $this->invokeTest(
-                                $testSuite,
+                                $aggregateSummaryBuilder,
                                 $testCase,
                                 $assertionContext,
                                 $asyncAssertionContext,
@@ -111,14 +131,20 @@ final class TestSuiteRunner {
                     if (!$testSuiteModel->isDisabled()) {
                         yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::AfterEach(), TestSuiteTearDownException::class);
                     }
-                    yield $this->emitter->emit(new TestCaseFinishedEvent($testCaseModel));
+                    yield $this->emitter->emit(new TestCaseFinishedEvent($aggregateSummaryBuilder->finishTestCase($testCaseModel)));
+                    ;
                 }
 
                 if (!$testSuiteModel->isDisabled()) {
                     yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::AfterAll(), TestSuiteTearDownException::class);
                 }
-                yield $this->emitter->emit(new TestSuiteFinishedEvent($testSuiteModel));
+                yield $this->emitter->emit(new TestSuiteFinishedEvent($aggregateSummaryBuilder->finishTestSuite($testSuiteModel)));
             }
+
+
+            yield $this->emitter->emit(
+                new ProcessingFinishedEvent($aggregateSummaryBuilder->finishProcessing())
+            );
         });
     }
 
@@ -152,7 +178,7 @@ final class TestSuiteRunner {
     }
 
     private function invokeTest(
-        TestSuite $testSuite,
+        ProcessedSummaryBuilder $aggregateSummaryBuilder,
         TestCase $testCase,
         AssertionContext $assertionContext,
         AsyncAssertionContext $asyncAssertionContext,
@@ -160,9 +186,10 @@ final class TestSuiteRunner {
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
         TestModel $testMethodModel,
-        array $args = []
+        array $args = [],
+        ?string $dataSetLabel = null
     ) : Promise {
-        return call(function() use($testSuite, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+        return call(function() use($aggregateSummaryBuilder, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args, $dataSetLabel) {
             if ($testMethodModel->isDisabled()) {
                 $msg = $testMethodModel->getDisabledReason() ??
                     $testCaseModel->getDisabledReason() ??
@@ -172,14 +199,17 @@ final class TestSuiteRunner {
                 $testResult = $this->getDisabledTestResult($testCase, $testMethodModel->getMethod(), $exception);
                 yield $this->emitter->emit(new TestProcessedEvent($testResult));
                 yield $this->emitter->emit(new TestDisabledEvent($testResult));
+                $aggregateSummaryBuilder->processedTest($testResult);
                 return;
             }
 
-            yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::BeforeEachTest(), TestSetupException::class);
+            yield $this->invokeHooks($testCase->testSuite(), $testSuiteModel, HookType::BeforeEachTest(), TestSetupException::class);
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::BeforeEach(), TestSetupException::class);
 
             $testCaseMethod = $testMethodModel->getMethod();
             $failureException = null;
+            $timer = new Timer();
+            $timer->start();
             try {
                 ob_start();
                 yield call(fn() => $testCase->$testCaseMethod(...$args));
@@ -194,11 +224,11 @@ final class TestSuiteRunner {
                     $failureException = yield $expectationContext->validateExpectations();
                 }
                 $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
-                $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $failureException);
+                $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $timer->stop(), $failureException, $dataSetLabel);
             }
 
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::AfterEach(), TestTearDownException::class);
-            yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::AfterEachTest(), TestTearDownException::class);
+            yield $this->invokeHooks($testCase->testSuite(), $testSuiteModel, HookType::AfterEachTest(), TestTearDownException::class);
 
             yield $this->emitter->emit(new TestProcessedEvent($testResult));
 
@@ -207,6 +237,8 @@ final class TestSuiteRunner {
             } else {
                 yield $this->emitter->emit(new TestFailedEvent($testResult));
             }
+
+            $aggregateSummaryBuilder->processedTest($testResult);
 
             unset($testCase);
             unset($failureException);
@@ -222,7 +254,7 @@ final class TestSuiteRunner {
         return $this->reflectionCache[$class];
     }
 
-    private function getDisabledTestResult(TestCase $testCase, string $testMethod, TestDisabledException $exception) {
+    private function getDisabledTestResult(TestCase $testCase, string $testMethod, TestDisabledException $exception) : TestResult {
         return new class($testCase, $testMethod, $exception) implements TestResult {
 
             public function __construct(
@@ -239,8 +271,16 @@ final class TestSuiteRunner {
                 return $this->testMethod;
             }
 
+            public function getDataSetLabel() : ?string {
+                return null;
+            }
+
             public function getState() : TestState {
                 return TestState::Disabled();
+            }
+
+            public function getDuration() : Duration {
+                return Duration::fromNanoseconds(0);
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
@@ -253,15 +293,19 @@ final class TestSuiteRunner {
         TestCase $testCase,
         string $method,
         TestState $state,
-        ?TestFailedException $testFailedException
+        Duration $duration,
+        ?TestFailedException $testFailedException,
+        ?string $dataSetLabel
     ) : TestResult {
-        return new class($testCase, $method, $state, $testFailedException) implements TestResult {
+        return new class($testCase, $method, $state, $duration, $testFailedException, $dataSetLabel) implements TestResult {
 
             public function __construct(
                 private TestCase $testCase,
                 private string $method,
                 private TestState $state,
-                private ?TestFailedException $testFailedException
+                private Duration $duration,
+                private ?TestFailedException $testFailedException,
+                private ?string $dataSetLabel
             ) {}
 
             public function getTestCase() : TestCase {
@@ -272,8 +316,16 @@ final class TestSuiteRunner {
                 return $this->method;
             }
 
+            public function getDataSetLabel() : ?string {
+                return $this->dataSetLabel;
+            }
+
             public function getState() : TestState {
                 return $this->state;
+            }
+
+            public function getDuration() : Duration {
+                return $this->duration;
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {

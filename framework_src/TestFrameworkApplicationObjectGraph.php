@@ -4,6 +4,8 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Auryn\Injector;
 use Cspray\Labrador\Application;
+use Cspray\Labrador\AsyncUnit\Parser\Parser;
+use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\CoreApplicationObjectGraph;
 
@@ -15,7 +17,8 @@ final class TestFrameworkApplicationObjectGraph extends CoreApplicationObjectGra
         $customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
         $injector->share($customAssertionContext);
 
-        $injector->share(Parser::class);
+        $injector->share(StaticAnalysisParser::class);
+        $injector->alias(Parser::class, StaticAnalysisParser::class);
         $injector->share(TestSuiteRunner::class);
         $injector->share(new ShuffleRandomizer());
         $injector->alias(Randomizer::class, ShuffleRandomizer::class);

@@ -5,7 +5,7 @@ namespace Cspray\Labrador\AsyncUnitCli;
 use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
-use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplication;
 use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
@@ -24,7 +24,7 @@ final class AsyncUnitFrameworkRunner {
 
         $emitter = $injector->make(EventEmitter::class);
         $hasFailedTests = false;
-        $emitter->once(Events::TEST_PROCESSING_FINISHED, function(TestProcessingFinishedEvent $event) use(&$hasFailedTests) {
+        $emitter->once(Events::PROCESSING_FINISHED, function(ProcessingFinishedEvent $event) use(&$hasFailedTests) {
             $hasFailedTests = $event->getTarget()->getFailedTestCount() !== 0;
         });
 

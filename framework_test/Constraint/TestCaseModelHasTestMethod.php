@@ -32,6 +32,6 @@ class TestCaseModelHasTestMethod extends Constraint {
     }
 
     public function toString() : string {
-        // TODO: Implement toString() method.
+        return '';
     }
 }

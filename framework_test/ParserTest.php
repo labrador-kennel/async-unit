@@ -11,6 +11,8 @@ use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Acme\DemoSuites\ErrorConditions;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
+use Cspray\Labrador\AsyncUnit\Statistics\SummaryCalculator;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 class ParserTest extends PHPUnitTestCase {
@@ -19,11 +21,11 @@ class ParserTest extends PHPUnitTestCase {
     use UsesAcmeSrc;
 
     private string $acmeSrcDir;
-    private Parser $subject;
+    private StaticAnalysisParser $subject;
 
     public function setUp() : void {
         $this->acmeSrcDir = dirname(__DIR__) . '/acme_src';
-        $this->subject = new Parser();
+        $this->subject = new StaticAnalysisParser();
     }
 
 
@@ -132,7 +134,7 @@ class ParserTest extends PHPUnitTestCase {
         });
     }
 
-    public function testDefaultTestSuiteName() {
+    public function testDefaultTestSuiteName() : void {
         Loop::run(function() {
             $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
             $testSuites = $results->getTestSuiteModels();
@@ -141,6 +143,22 @@ class ParserTest extends PHPUnitTestCase {
             $testSuite = $testSuites[0];
 
             $this->assertSame(ImplicitTestSuite::class, $testSuite->getClass());
+        });
+    }
+
+    public function testTestCaseModelAlwaysHasTestSuite() : void {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('SingleTest'));
+            $testSuites = $results->getTestSuiteModels();
+
+            $this->assertCount(1, $testSuites);
+            $testSuite = $testSuites[0];
+
+            $testCases = $testSuites[0]->getTestCaseModels();
+
+            $this->assertCount(1, $testCases);
+
+            $this->assertSame(ImplicitTestSuite::class, $testCases[0]->getTestSuiteClass());
         });
     }
 
@@ -377,16 +395,6 @@ class ParserTest extends PHPUnitTestCase {
             $myTestSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\MyTestSuite::class);
             $this->assertCount(1, $myTestSuite->getTestCaseModels());
             $this->assertTestCaseClassBelongsToTestSuite(ExplicitTestSuite\TestCaseDefinedAndImplicitDefaultTestSuite\SecondTestCase::class, $myTestSuite);
-        });
-    }
-
-    public function testImplicitDefaultTestSuitePathExtendedTestCases() {
-        Loop::run(function() {
-            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('ExtendedTestCases'));
-
-            $this->assertEquals(1, $results->getTestSuiteCount());
-            $this->assertEquals(3, $results->getTotalTestCaseCount());
-            $this->assertEquals(9, $results->getTotalTestCount());
         });
     }
 

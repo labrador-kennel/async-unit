@@ -6,7 +6,7 @@ use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
-use Cspray\Labrador\AsyncUnit\Event\TestProcessingFinishedEvent;
+use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
@@ -34,11 +34,11 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
         $successOutput = $output->green();
         $failedOutput = $output->red();
         $disabledOutput = $output->yellow();
-        $emitter->once(Events::TEST_PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
+        $emitter->once(Events::PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
         $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($successOutput));
         $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $failedOutput));
         $emitter->on(Events::TEST_DISABLED, fn($event) => $this->testDisabled($event, $disabledOutput));
-        $emitter->once(Events::TEST_PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
+        $emitter->once(Events::PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
     }
 
     private function testProcessingStarted(TerminalOutputStream $output) : Generator {
@@ -67,7 +67,7 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
         yield $output->write('X');
     }
 
-    private function testProcessingFinished(TestProcessingFinishedEvent $event, TerminalOutputStream $output) : Generator {
+    private function testProcessingFinished(ProcessingFinishedEvent $event, TerminalOutputStream $output) : Generator {
         yield $output->br(2);
         yield $output->writeln((new ResourceUsageFormatter())->resourceUsage($event->getTarget()->getDuration()));
         yield $output->br();
