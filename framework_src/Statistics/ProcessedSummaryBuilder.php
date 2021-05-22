@@ -38,7 +38,6 @@ final class ProcessedSummaryBuilder {
 
     public function startTestSuite(TestSuiteModel $testSuiteModel) : void {
         $timer = new Timer();
-        $timer->start();
         $this->testSuites[$testSuiteModel->getClass()] = [
             'enabled' => [],
             'disabled' => [],
@@ -47,6 +46,7 @@ final class ProcessedSummaryBuilder {
         if ($testSuiteModel->isDisabled()) {
             $this->disabledTestSuiteCount++;
         }
+        $timer->start();
     }
 
     public function finishTestSuite(TestSuiteModel $testSuiteModel) : ProcessedTestSuiteSummary {
@@ -56,19 +56,116 @@ final class ProcessedSummaryBuilder {
     }
 
     public function startTestCase(TestCaseModel $testCaseModel) : void {
+        $timer = new Timer();
         $key = $testCaseModel->isDisabled() ? 'disabled' : 'enabled';
         $this->testSuites[$testCaseModel->getTestSuiteClass()][$key][$testCaseModel->getClass()] = [
             TestState::Passed()->toString() => [],
             TestState::Failed()->toString() => [],
-            TestState::Disabled()->toString() => []
+            TestState::Disabled()->toString() => [],
+            'timer' => $timer
         ];
         $this->totalTestCaseCount++;
         if ($testCaseModel->isDisabled()) {
             $this->disabledTestCaseCount++;
         }
+        $timer->start();
     }
 
-    public function processedTestCase(TestCaseModel $testCaseModel) : void {
+    public function finishTestCase(TestCaseModel $testCaseModel) : ProcessedTestCaseSummary {
+        $key = $testCaseModel->isDisabled() ? 'disabled' : 'enabled';
+        $duration = $this->testSuites[$testCaseModel->getTestSuiteClass()][$key][$testCaseModel->getClass()]['timer']->stop();
+        unset($this->testSuites[$testCaseModel->getTestSuiteClass()][$key][$testCaseModel->getClass()]['timer']);
+        $this->testSuites[$testCaseModel->getTestSuiteClass()][$key][$testCaseModel->getClass()]['duration'] = $duration;
+        $tests = $this->testSuites[$testCaseModel->getTestSuiteClass()][$key][$testCaseModel->getClass()];
+        $coalescedTests = [];
+        $disabledTestCount = 0;
+        $passedTestCount = 0;
+        $failedTestCount = 0;
+        $assertionCount = 0;
+        $asyncAssertionCount = 0;
+        foreach ($tests as $state =>  $stateTests) {
+            if ($state === 'duration') {
+                continue;
+            }
+            $coalescedTests = array_merge($coalescedTests, array_keys($stateTests));
+            if ($state === TestState::Disabled()->toString()) {
+                $disabledTestCount += count($stateTests);
+            } else if ($state === TestState::Passed()->toString()) {
+                $passedTestCount += count($stateTests);
+            } else if ($state === TestState::Failed()->toString()) {
+                $failedTestCount += count($stateTests);
+            }
+            foreach ($stateTests as $test) {
+                $assertionCount += $test['assertion'];
+                $asyncAssertionCount += $test['asyncAssertion'];
+            }
+        }
+        return new class(
+            $testCaseModel->getTestSuiteClass(),
+            $testCaseModel->getClass(),
+            $coalescedTests,
+            count($coalescedTests),
+            $disabledTestCount,
+            $passedTestCount,
+            $failedTestCount,
+            $assertionCount,
+            $asyncAssertionCount,
+            $duration
+        ) implements ProcessedTestCaseSummary {
+
+            public function __construct(
+                private string $testSuiteClass,
+                private string $testCaseClass,
+                private array $testNames,
+                private int $testCount,
+                private int $disabledTestCount,
+                private int $passedTestCount,
+                private int $failedTestCount,
+                private int $assertionCount,
+                private int $asyncAssertionCount,
+                private Duration $duration
+            ) {}
+
+            public function getTestSuiteName() : string {
+                return $this->testSuiteClass;
+            }
+
+            public function getTestCaseName() : string {
+                return $this->testCaseClass;
+            }
+
+            public function getTestNames() : array {
+                return $this->testNames;
+            }
+
+            public function getTestCount() : int {
+                return $this->testCount;
+            }
+
+            public function getDisabledTestCount() : int {
+                return $this->disabledTestCount;
+            }
+
+            public function getPassedTestCount() : int {
+                return $this->passedTestCount;
+            }
+
+            public function getFailedTestCount() : int {
+                return $this->failedTestCount;
+            }
+
+            public function getAssertionCount() : int {
+                return $this->assertionCount;
+            }
+
+            public function getAsyncAssertionCount() : int {
+                return $this->asyncAssertionCount;
+            }
+
+            public function getDuration() : Duration {
+                return $this->duration;
+            }
+        };
     }
 
     public function processedTest(TestResult $testResult) : void {
@@ -77,7 +174,11 @@ final class ProcessedSummaryBuilder {
         $key =  isset($this->testSuites[$testSuiteClass]['enabled'][$testCaseClass]) ? 'enabled' : 'disabled';
         $stateKey = $testResult->getState()->toString();
 
-        $testName = sprintf('%s::%s', $testCaseClass, $testResult->getTestMethod());
+        if (is_null($testResult->getDataSetLabel())) {
+            $testName = sprintf('%s::%s', $testCaseClass, $testResult->getTestMethod());
+        } else {
+            $testName = sprintf('%s::%s#%s', $testCaseClass, $testResult->getTestMethod(), $testResult->getDataSetLabel());
+        }
         $this->testSuites[$testSuiteClass][$key][$testCaseClass][$stateKey][$testName] = [
             'assertion' => $testResult->getTestCase()->getAssertionCount(),
             'asyncAssertion' => $testResult->getTestCase()->getAsyncAssertionCount()

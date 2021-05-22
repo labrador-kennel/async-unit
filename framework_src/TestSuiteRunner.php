@@ -33,6 +33,8 @@ use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\Parser\ParserResult;
 use Cspray\Labrador\AsyncUnit\Statistics\ProcessedSummaryBuilder;
 use ReflectionClass;
+use SebastianBergmann\Timer\Duration;
+use SebastianBergmann\Timer\Timer;
 use Throwable;
 use function Amp\call;
 
@@ -94,7 +96,7 @@ final class TestSuiteRunner {
                         if ($testMethodModel->getDataProvider() !== null) {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCase->$dataProvider();
-                            foreach ($dataSets as $args) {
+                            foreach ($dataSets as $label => $args) {
                                 yield $this->invokeTest(
                                     $aggregateSummaryBuilder,
                                     $testCase,
@@ -104,7 +106,8 @@ final class TestSuiteRunner {
                                     $testSuiteModel,
                                     $testCaseModel,
                                     $testMethodModel,
-                                    $args
+                                    $args,
+                                    (string) $label // make sure 0-index array keys are treated as strings
                                 );
                                 [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                             }
@@ -128,8 +131,8 @@ final class TestSuiteRunner {
                     if (!$testSuiteModel->isDisabled()) {
                         yield $this->invokeHooks($testSuite, $testSuiteModel, HookType::AfterEach(), TestSuiteTearDownException::class);
                     }
-                    yield $this->emitter->emit(new TestCaseFinishedEvent($testCaseModel));
-                    $aggregateSummaryBuilder->processedTestCase($testCaseModel);
+                    yield $this->emitter->emit(new TestCaseFinishedEvent($aggregateSummaryBuilder->finishTestCase($testCaseModel)));
+                    ;
                 }
 
                 if (!$testSuiteModel->isDisabled()) {
@@ -183,9 +186,10 @@ final class TestSuiteRunner {
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
         TestModel $testMethodModel,
-        array $args = []
+        array $args = [],
+        ?string $dataSetLabel = null
     ) : Promise {
-        return call(function() use($aggregateSummaryBuilder, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args) {
+        return call(function() use($aggregateSummaryBuilder, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args, $dataSetLabel) {
             if ($testMethodModel->isDisabled()) {
                 $msg = $testMethodModel->getDisabledReason() ??
                     $testCaseModel->getDisabledReason() ??
@@ -204,6 +208,8 @@ final class TestSuiteRunner {
 
             $testCaseMethod = $testMethodModel->getMethod();
             $failureException = null;
+            $timer = new Timer();
+            $timer->start();
             try {
                 ob_start();
                 yield call(fn() => $testCase->$testCaseMethod(...$args));
@@ -218,7 +224,7 @@ final class TestSuiteRunner {
                     $failureException = yield $expectationContext->validateExpectations();
                 }
                 $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
-                $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $failureException);
+                $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $timer->stop(), $failureException, $dataSetLabel);
             }
 
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::AfterEach(), TestTearDownException::class);
@@ -265,8 +271,16 @@ final class TestSuiteRunner {
                 return $this->testMethod;
             }
 
+            public function getDataSetLabel() : ?string {
+                return null;
+            }
+
             public function getState() : TestState {
                 return TestState::Disabled();
+            }
+
+            public function getDuration() : Duration {
+                return Duration::fromNanoseconds(0);
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
@@ -279,15 +293,19 @@ final class TestSuiteRunner {
         TestCase $testCase,
         string $method,
         TestState $state,
-        ?TestFailedException $testFailedException
+        Duration $duration,
+        ?TestFailedException $testFailedException,
+        ?string $dataSetLabel
     ) : TestResult {
-        return new class($testCase, $method, $state, $testFailedException) implements TestResult {
+        return new class($testCase, $method, $state, $duration, $testFailedException, $dataSetLabel) implements TestResult {
 
             public function __construct(
                 private TestCase $testCase,
                 private string $method,
                 private TestState $state,
-                private ?TestFailedException $testFailedException
+                private Duration $duration,
+                private ?TestFailedException $testFailedException,
+                private ?string $dataSetLabel
             ) {}
 
             public function getTestCase() : TestCase {
@@ -298,8 +316,16 @@ final class TestSuiteRunner {
                 return $this->method;
             }
 
+            public function getDataSetLabel() : ?string {
+                return $this->dataSetLabel;
+            }
+
             public function getState() : TestState {
                 return $this->state;
+            }
+
+            public function getDuration() : Duration {
+                return $this->duration;
             }
 
             public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {

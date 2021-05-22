@@ -4,7 +4,6 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
 use Amp\Success;
-use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\Event;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
@@ -34,8 +33,6 @@ use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
 use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use Cspray\Labrador\AsyncUnit\Statistics\AggregateSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\PostRunSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\ProcessedAggregateSummary;
 use Cspray\Labrador\AsyncUnit\Statistics\TestCaseSummary;
 use Cspray\Labrador\AsyncUnit\Statistics\TestSuiteSummary;
 use Exception;
@@ -1883,6 +1880,323 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function processedTestCaseSummaryTestSuiteNameProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => ImplicitTestSuite::class
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => ImplicitTestSuite::class
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryTestSuiteNameProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectTestSuiteName(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestSuiteName();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryTestNamesProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => [
+                    ImplicitDefaultTestSuite\SingleTest\MyTestCase::class . '::ensureSomethingHappens'
+                ]
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::testOne',
+                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::testTwo',
+                    ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class . '::disabledTest'
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class . '::checkTwo',
+                    ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class . '::checkTwoDisabled'
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class . '::isBestHobbit',
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class . '::isBestHobbit'
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class . '::isBestHobbit'
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#0',
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#1',
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#2',
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#3'
+                ]
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryTestNamesProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectTestNames(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestNames();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 3,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 2,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryTestCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryDisabledTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryDisabledTestCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectDisabledTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getDisabledTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryPassedTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 2,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryPassedTestCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectPassedTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getPassedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryFailedTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [
+                ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::class => 1,
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryFailedTestCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectFailedTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getFailedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryAssertionCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [
+                ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::class => 1,
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class =>1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryAssertionCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectAssertionCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getAssertionCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryAsyncAssertionCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion'), [
+                ImplicitDefaultTestSuite\SingleTestAsyncAssertion\MyTestCase::class => 1,
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 1,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class =>1,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryAsyncAssertionCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectAsyncAssertionCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getAsyncAssertionCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
     public function testProcessedAggregateSummaryHasDuration() {
         Loop::run(function() {
             $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
@@ -1900,7 +2214,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
-    public function testTestSuiteSummaryHasDuration() {
+    public function testTestSuiteSummaryHasDuration() : void {
         Loop::run(function() {
             $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
             $state = new stdClass();
@@ -1914,6 +2228,71 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(TestSuiteFinishedEvent::class, $state->event);
             $this->assertGreaterThan(600, $state->event->getTarget()->getDuration()->asMilliseconds());
+        });
+    }
+
+    public function testTestCaseSummaryHasDuration() : void {
+        Loop::run(function() {
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getDuration()->asMilliseconds();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $expected = [
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class => 100,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class => 200,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class => 300
+            ];
+
+            foreach ($expected as $testCase => $duration) {
+                $this->assertGreaterThanOrEqual($duration, $actual[$testCase]);
+            }
+        });
+    }
+
+    public function testTestResultHasDuration() : void {
+        Loop::run(function() {
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MultipleTestsKnownDuration'));
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCase()::class . '::' . $event->getTarget()->getTestMethod()] = $event->getTarget()->getDuration()->asMilliseconds();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $expected = [
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\FirstTestCase::class . '::checkOne' => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class . '::checkOne' => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\SecondTestCase::class . '::checkTwo' => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkOne' => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkTwo' => 99,
+                ImplicitDefaultTestSuite\MultipleTestsKnownDuration\ThirdTestCase::class . '::checkThree' => 99
+            ];
+
+            foreach ($expected as $testCase => $duration) {
+                $this->assertGreaterThanOrEqual($duration, $actual[$testCase], $testCase . ' did not execute long enough');
+            }
+        });
+    }
+
+    public function testDisabledTestHasZeroDuration() : void {
+        Loop::run(function() {
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('TestDisabled'));
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_DISABLED, function(TestDisabledEvent $event) use(&$actual) {
+                $actual[] = $event->getTarget()->getDuration()->asMilliseconds();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertCount(1, $actual);
+            $this->assertSame(0.0, $actual[0]);
         });
     }
 

@@ -4,6 +4,8 @@
 namespace Cspray\Labrador\AsyncUnit\Statistics;
 
 
+use SebastianBergmann\Timer\Duration;
+
 interface ProcessedTestCaseSummary {
 
     public function getTestSuiteName() : string;
@@ -23,5 +25,7 @@ interface ProcessedTestCaseSummary {
     public function getAssertionCount() : int;
 
     public function getAsyncAssertionCount() : int;
+
+    public function getDuration() : Duration;
 
 }
