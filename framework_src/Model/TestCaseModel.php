@@ -6,8 +6,9 @@ final class TestCaseModel {
 
     use HookAware;
     use CanBeDisabledTrait;
+    use CanHaveTimeoutTrait;
 
-    private array $testMethodModels = [];
+    private array $testModels = [];
 
     public function __construct(
         private string $testCaseClass,
@@ -26,15 +27,15 @@ final class TestCaseModel {
         return $this->testCaseClass;
     }
 
-    public function addTestMethodModel(TestModel $testMethodModel) : void {
-        $this->testMethodModels[] = $testMethodModel;
+    public function addTestModel(TestModel $testMethodModel) : void {
+        $this->testModels[] = $testMethodModel;
     }
 
     /**
      * @return TestModel[]
      */
-    public function getTestMethodModels() : array {
-        return $this->testMethodModels;
+    public function getTestModels() : array {
+        return $this->testModels;
     }
 
 }

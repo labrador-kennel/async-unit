@@ -5,7 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AssertionResult;
 
-class AssertIsEmpty implements Assertion {
+final class AssertIsEmpty implements Assertion {
 
     public function __construct(private mixed $actual) {}
 

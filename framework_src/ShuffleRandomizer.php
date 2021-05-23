@@ -2,7 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
-class ShuffleRandomizer implements Randomizer {
+final class ShuffleRandomizer implements Randomizer {
 
     public function randomize(array $items) : array {
         shuffle($items);

@@ -47,7 +47,7 @@ final class SummaryCalculator {
                     $this->modelRelationships[$testSuite][$testCase] = [];
                 }
 
-                foreach ($testCaseModel->getTestMethodModels() as $testModel) {
+                foreach ($testCaseModel->getTestModels() as $testModel) {
                     $this->testCount++;
                     $testName = sprintf(
                         '%s::%s',
