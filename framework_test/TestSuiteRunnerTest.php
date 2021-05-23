@@ -672,6 +672,20 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteTestHasTimeoutExceedsValueIsFailedTest() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestHasTimeout'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed()->toString(), $this->actual[0]->getState()->toString());
+            $msg = sprintf(
+                'Expected %s::timeOutTest to complete within 100ms',
+                ImplicitDefaultTestSuite\TestHasTimeout\MyTestCase::class
+            );
+            $this->assertSame($msg, $this->actual[0]->getException()->getMessage());
+        });
+    }
+
     private function fetchTestResultForTest(string $testClass, string $method) : TestResult {
         foreach ($this->actual as $testResult) {
             if ($testResult->getTestCase()::class === $testClass && $testResult->getTestMethod() === $method) {

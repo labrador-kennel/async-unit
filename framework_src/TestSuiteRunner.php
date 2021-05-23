@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\Loop;
 use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
@@ -185,18 +186,18 @@ final class TestSuiteRunner {
         ExpectationContext $expectationContext,
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
-        TestModel $testMethodModel,
+        TestModel $testModel,
         array $args = [],
         ?string $dataSetLabel = null
     ) : Promise {
-        return call(function() use($aggregateSummaryBuilder, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testMethodModel, $args, $dataSetLabel) {
-            if ($testMethodModel->isDisabled()) {
-                $msg = $testMethodModel->getDisabledReason() ??
+        return call(function() use($aggregateSummaryBuilder, $testCase, $assertionContext, $asyncAssertionContext, $expectationContext, $testSuiteModel, $testCaseModel, $testModel, $args, $dataSetLabel) {
+            if ($testModel->isDisabled()) {
+                $msg = $testModel->getDisabledReason() ??
                     $testCaseModel->getDisabledReason() ??
                     $testSuiteModel->getDisabledReason() ??
-                    sprintf('%s::%s has been marked disabled via annotation', $testCaseModel->getClass(), $testMethodModel->getMethod());
+                    sprintf('%s::%s has been marked disabled via annotation', $testCaseModel->getClass(), $testModel->getMethod());
                 $exception = new TestDisabledException($msg);
-                $testResult = $this->getDisabledTestResult($testCase, $testMethodModel->getMethod(), $exception);
+                $testResult = $this->getDisabledTestResult($testCase, $testModel->getMethod(), $exception);
                 yield $this->emitter->emit(new TestProcessedEvent($testResult));
                 yield $this->emitter->emit(new TestDisabledEvent($testResult));
                 $aggregateSummaryBuilder->processedTest($testResult);
@@ -206,10 +207,30 @@ final class TestSuiteRunner {
             yield $this->invokeHooks($testCase->testSuite(), $testSuiteModel, HookType::BeforeEachTest(), TestSetupException::class);
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::BeforeEach(), TestSetupException::class);
 
-            $testCaseMethod = $testMethodModel->getMethod();
+            $testCaseMethod = $testModel->getMethod();
             $failureException = null;
             $timer = new Timer();
             $timer->start();
+            $timeoutWatcherId = null;
+            if (!is_null($testModel->getTimeout())) {
+                $timeoutWatcherId = Loop::delay($testModel->getTimeout(), function() use(&$timeoutWatcherId, $testModel) {
+                    Loop::cancel($timeoutWatcherId);
+                    $msg = sprintf(
+                        'Expected %s::%s to complete within %sms',
+                        $testModel->getClass(),
+                        $testModel->getMethod(),
+                        $testModel->getTimeout()
+                    );
+                    throw new TestFailedException($msg);
+                });
+            }
+            Loop::setErrorHandler(function(Throwable $error) use(&$failureException, $expectationContext) {
+                if ($error instanceof TestFailedException) {
+                    $failureException = $error;
+                } else {
+                    $expectationContext->setThrownException($error);
+                }
+            });
             try {
                 ob_start();
                 yield call(fn() => $testCase->$testCaseMethod(...$args));
@@ -218,6 +239,10 @@ final class TestSuiteRunner {
             } catch (Throwable $throwable) {
                 $expectationContext->setThrownException($throwable);
             } finally {
+                Loop::setErrorHandler(null);
+                if (isset($timeoutWatcherId)) {
+                    Loop::cancel($timeoutWatcherId);
+                }
                 $expectationContext->setActualOutput(ob_get_clean());
                 // If something else failed we don't need to make validations about expectations
                 if (is_null($failureException)) {
