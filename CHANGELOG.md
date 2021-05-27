@@ -5,17 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 0.5.0 - 2021-05-??
 
 ### Added
 
 - Introduced the `amphp/file` library to handle async I/O on the filesystem.
+- Introduced a `StaticAnalysisParser` that uses PHP-Parser and makes significant improvements over the 
+previous parser implementation.
+- Added the `labrador-kennel/styled-byte-stream` project to support formatted terminal output.
+- Adds the ability to expect that no assertions are expected to take place. If a test expects no assertions 
+and an assertion is made it results in a failure. This method accounts for both `Assertion` and `AsyncAssertion` types.
+- Adds a `Context\TestExpector` that represents the expectations, for example whether an exception is thrown 
+or the amount of assertions to expect, that a test can make.
+- Adds a `#[Timeout]` Attribute that can be annotated on tests, `TestCase`, or `TestSuite` to cause a TestFailure 
+if the test takes longer than the provided number of milliseconds.
+- Introduces a comprehensive statistics API that's accessible through the event system to gather information about the 
+system both pre and post test processing.
 
 ### Changed
 
+- **Breaking Change!** Refactored the `Parser` implementation into an interface to support different types of parsers in the future.
 - **Breaking Change!** Updates the `Parser::parse` return type to be a `Promise` and use async I/O.
 - **Breaking Change!** The `TestFrameworkApplication` now expects to get a `Parser` implementation and the directories to
 parse as a constructor dependency. The `TestFrameworkApplication` is now responsible for initiating parsing.
+- **Breaking Change!** Removes the `TestCase::expectException*` methods. A `TestCase::expect()` now returns a `TestExpector`
 
 ## 0.4.2 - 2021-05-09
 

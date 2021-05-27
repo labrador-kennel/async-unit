@@ -33,7 +33,8 @@
       "Cspray\\Labrador\\AsyncUnitCli\\": "cli_test",
       "Acme\\DemoSuites\\": "acme_src",
       "Acme\\Examples\\SimpleEquals\\": "examples/simple_equals_src",
-      "Acme\\Examples\\CustomAssertion\\": "examples/custom_assertion_src"
+      "Acme\\Examples\\CustomAssertion\\": "examples/custom_assertion_src",
+      "Acme\\Examples\\BlogIntroduction\\": "examples/blog_introduction_src"
     }
   }
 }

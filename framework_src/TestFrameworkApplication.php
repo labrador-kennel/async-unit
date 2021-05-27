@@ -32,7 +32,7 @@ final class TestFrameworkApplication extends AbstractApplication {
 
     protected function doStart() : Promise {
         return call(function() {
-            $parserResults = yield $this->parser->parse(...$this->dirs);
+            $parserResults = yield $this->parser->parse($this->dirs);
 
             gc_collect_cycles();
 

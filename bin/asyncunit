@@ -22,7 +22,7 @@ $application = new AsyncUnitConsoleApplication(
     $configurationFactory,
     new TestFrameworkApplicationObjectGraph($environment, $logger),
     $cwd,
-    '0.5.0-dev'
+    '0.5.0'
 );
 
 $application->run();
