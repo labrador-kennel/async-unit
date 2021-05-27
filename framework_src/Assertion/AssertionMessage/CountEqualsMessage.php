@@ -5,7 +5,7 @@ namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage;
 use Countable;
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class CountEqualsMessage implements AssertionMessage {
+final class CountEqualsMessage implements AssertionMessage {
 
     public function __construct(private int $expected, private array|Countable $actual) {}
 

@@ -176,7 +176,7 @@ class ParserTest extends PHPUnitTestCase {
 
             $testCaseModel = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-            $this->assertCount(1, $testCaseModel->getTestMethodModels());
+            $this->assertCount(1, $testCaseModel->getTestModels());
             $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCaseModel);
         });
     }
@@ -197,7 +197,7 @@ class ParserTest extends PHPUnitTestCase {
 
             $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-            $this->assertCount(3, $testCase->getTestMethodModels());
+            $this->assertCount(3, $testCase->getTestModels());
             $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
             $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensTwice', $testCase);
             $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappensThreeTimes', $testCase);
@@ -221,7 +221,7 @@ class ParserTest extends PHPUnitTestCase {
 
             $testCase = $this->fetchTestCaseModel($testSuite, $expectedTestCase);
 
-            $this->assertCount(1, $testCase->getTestMethodModels());
+            $this->assertCount(1, $testCase->getTestModels());
             $this->assertTestMethodBelongsToTestCase($expectedTestCase . '::ensureSomethingHappens', $testCase);
         });
     }
@@ -247,9 +247,9 @@ class ParserTest extends PHPUnitTestCase {
             $bazTestCase = $this->fetchTestCaseModel($testSuite, $bazTestCaseClass);
             $fooTestCase = $this->fetchTestCaseModel($testSuite, $fooTestCaseClass);
 
-            $this->assertCount(1, $barTestCase->getTestMethodModels());
-            $this->assertCount(1, $bazTestCase->getTestMethodModels());
-            $this->assertCount(2, $fooTestCase->getTestMethodModels());
+            $this->assertCount(1, $barTestCase->getTestModels());
+            $this->assertCount(1, $bazTestCase->getTestModels());
+            $this->assertCount(2, $fooTestCase->getTestModels());
         });
     }
 
@@ -271,17 +271,17 @@ class ParserTest extends PHPUnitTestCase {
             $this->assertTestCaseClassBelongsToTestSuite($fifthTestCaseClass, $testSuite);
 
             $firstTestCase = $this->fetchTestCaseModel($testSuite, $firstTestCaseClass);
-            $this->assertCount(1, $firstTestCase->getTestMethodModels());
+            $this->assertCount(1, $firstTestCase->getTestModels());
             $this->assertTestMethodBelongsToTestCase($firstTestCaseClass . '::firstEnsureSomething', $firstTestCase);
 
             $thirdTestCase = $this->fetchTestCaseModel($testSuite, $thirdTestCaseClass);
-            $this->assertCount(3, $thirdTestCase->getTestMethodModels());
+            $this->assertCount(3, $thirdTestCase->getTestModels());
             $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::firstEnsureSomething', $thirdTestCase);
             $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::secondEnsureSomething', $thirdTestCase);
             $this->assertTestMethodBelongsToTestCase($thirdTestCaseClass . '::thirdEnsureSomething', $thirdTestCase);
 
             $fifthTestCase = $this->fetchTestCaseModel($testSuite, $fifthTestCaseClass);
-            $this->assertCount(5, $fifthTestCase->getTestMethodModels());
+            $this->assertCount(5, $fifthTestCase->getTestModels());
             $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::firstEnsureSomething', $fifthTestCase);
             $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::secondEnsureSomething', $fifthTestCase);
             $this->assertTestMethodBelongsToTestCase($fifthTestCaseClass . '::thirdEnsureSomething', $fifthTestCase);
@@ -343,8 +343,8 @@ class ParserTest extends PHPUnitTestCase {
             $testCaseModel = $testSuite->getTestCaseModels()[0];
 
             $this->assertSame(ImplicitDefaultTestSuite\HasDataProvider\MyTestCase::class, $testCaseModel->getClass());
-            $this->assertCount(1, $testCaseModel->getTestMethodModels());
-            $testMethodModel = $testCaseModel->getTestMethodModels()[0];
+            $this->assertCount(1, $testCaseModel->getTestModels());
+            $testMethodModel = $testCaseModel->getTestModels()[0];
 
             $this->assertSame('ensureStringsEqual', $testMethodModel->getMethod());
             $this->assertSame('myDataProvider', $testMethodModel->getDataProvider());
@@ -543,6 +543,54 @@ class ParserTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteTestHasTimeoutTestModelHasCorrectValue() : void {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestHasTimeout'));
+
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $results->getTestSuiteModels()[0];
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+
+            $test = $this->fetchTestModel($testSuite->getTestCaseModels()[0], 'timeOutTest');
+
+            $this->assertSame(100, $test->getTimeout());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestCaseHasTimeoutIsSetOnTestModel() : void {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseHasTimeout'));
+
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $results->getTestSuiteModels()[0];
+            $this->assertCount(1, $testSuite->getTestCaseModels());
+            $testCase = $testSuite->getTestCaseModels()[0];
+            $this->assertCount(2, $testCase->getTestModels());
+
+            $actual = [
+                $testCase->getTestModels()[0]->getTimeout(),
+                $testCase->getTestModels()[1]->getTimeout(),
+            ];
+
+            $this->assertSame([150, 150], $actual);
+        });
+    }
+
+    public function testExplicitTestSuiteTestSuiteHasTimeoutIsSetOnAllTestModels() : void {
+        Loop::run(function() {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestSuiteHasTimeout'));
+
+            $this->assertCount(1, $results->getTestSuiteModels());
+            $testSuite = $results->getTestSuiteModels()[0];
+            $this->assertCount(2, $testSuite->getTestCaseModels());
+            $this->assertCount(1, $testSuite->getTestCaseModels()[0]->getTestModels());
+            $this->assertCount(1, $testSuite->getTestCaseModels()[1]->getTestModels());
+
+            $this->assertSame(125, $testSuite->getTestCaseModels()[0]->getTestModels()[0]->getTimeout());
+            $this->assertSame(125, $testSuite->getTestCaseModels()[1]->getTestModels()[0]->getTimeout());
+        });
+    }
+
     /**
      * @param TestSuiteModel[] $testSuites
      * @param string $testSuiteClassName
@@ -567,7 +615,7 @@ class ParserTest extends PHPUnitTestCase {
     }
 
     private function fetchTestModel(TestCaseModel $model, string $methodName) : TestModel {
-        foreach ($model->getTestMethodModels() as $testMethodModel) {
+        foreach ($model->getTestModels() as $testMethodModel) {
             if ($testMethodModel->getMethod() === $methodName) {
                 return $testMethodModel;
             }

@@ -13,6 +13,7 @@ use Cspray\Labrador\AsyncUnit\Attribute\DataProvider;
 use Cspray\Labrador\AsyncUnit\Attribute\DefaultTestSuite;
 use Cspray\Labrador\AsyncUnit\Attribute\Disabled;
 use Cspray\Labrador\AsyncUnit\Attribute\Test;
+use Cspray\Labrador\AsyncUnit\Attribute\Timeout;
 use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\HookType;
 use Cspray\Labrador\AsyncUnit\Model\HookModel;
@@ -58,6 +59,9 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                     }
                     $testSuiteModel->markDisabled($reason);
                 }
+                if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$node->attrGroups)) {
+                    $testSuiteModel->setTimeout($timeoutAttribute->args[0]->value->value);
+                }
                 $this->collector->attachTestSuite($testSuiteModel);
             } else if (is_subclass_of($class, TestCase::class)) {
                 if ($node->isAbstract()) {
@@ -78,6 +82,10 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                     }
                     $testCaseModel->markDisabled($reason);
                 }
+                if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$node->attrGroups)) {
+                    $testCaseModel->setTimeout($timeoutAttribute->args[0]->value->value);
+                }
+
                 $this->collector->attachTestCase($testCaseModel);
             } else {
                 foreach ($validPluginTypes as $validPluginType) {
@@ -141,6 +149,10 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
         if (!is_null($dataProviderAttribute)) {
             // TODO Make sure that the data provider value is a string, otherwise throw an error
             $testModel->setDataProvider($dataProviderAttribute->args[0]->value->value);
+        }
+        if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$classMethod->attrGroups)) {
+            $value = $timeoutAttribute->args[0]->value->value;
+            $testModel->setTimeout($value);
         }
 
         $this->collector->attachTest($testModel);

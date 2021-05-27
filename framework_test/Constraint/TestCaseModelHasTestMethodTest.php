@@ -31,7 +31,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testPassingMethodBelongsToTestCaseIsTrue() {
         $testCaseModel = new TestCaseModel('FooClass');
-        $testCaseModel->addTestMethodModel(new TestModel('FooClass', 'method'));
+        $testCaseModel->addTestModel(new TestModel('FooClass', 'method'));
 
         $result = (new TestCaseModelHasTestMethod('FooClass', 'method'))->evaluate($testCaseModel, returnResult: true);
 
@@ -40,7 +40,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testPassingMethodNotBelongsToTestCaseIsFalse() {
         $testCaseModel = new TestCaseModel('BarClass');
-        $testCaseModel->addTestMethodModel(new TestModel('BarClass', 'ensureSomething'));
+        $testCaseModel->addTestModel(new TestModel('BarClass', 'ensureSomething'));
 
         $result = (new TestCaseModelHasTestMethod('BarClass', 'ensureSomethingElse'))->evaluate($testCaseModel, returnResult: true);
 
@@ -49,7 +49,7 @@ class TestCaseModelHasTestMethodTest extends TestCase {
 
     public function testClassesDontMatchIsFalse() {
         $testCaseModel = new TestCaseModel('FooClass');
-        $testCaseModel->addTestMethodModel(new TestModel('FooClass', 'ensureSomething'));
+        $testCaseModel->addTestModel(new TestModel('FooClass', 'ensureSomething'));
 
         $result = (new TestCaseModelHasTestMethod('BarClass', 'ensureSomething'))->evaluate($testCaseModel, returnResult: true);
 

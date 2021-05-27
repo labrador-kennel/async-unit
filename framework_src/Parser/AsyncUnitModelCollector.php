@@ -95,6 +95,9 @@ final class AsyncUnitModelCollector {
             if ($testSuiteModel->isDisabled()) {
                 $testCaseModel->markDisabled($testSuiteModel->getDisabledReason());
             }
+            if (!is_null($testSuiteModel->getTimeout())) {
+                $testCaseModel->setTimeout($testSuiteModel->getTimeout());
+            }
             $testSuiteModel->addTestCaseModel($testCaseModel);
             foreach ($this->testModels as $testModel) {
                 $testClass = $testModel->getClass();
@@ -103,10 +106,14 @@ final class AsyncUnitModelCollector {
                     if ($testCaseModel->isDisabled()) {
                         $testCaseTest->markDisabled($testCaseModel->getDisabledReason());
                     }
-                    $testCaseModel->addTestMethodModel($testCaseTest);
+                    $testCaseTimeout = $testCaseModel->getTimeout();
+                    if (!is_null($testCaseTimeout)) {
+                        $testCaseTest->setTimeout($testCaseTimeout);
+                    }
+                    $testCaseModel->addTestModel($testCaseTest);
                 }
             }
-            if (empty($testCaseModel->getTestMethodModels())) {
+            if (empty($testCaseModel->getTestModels())) {
                 $msg = sprintf(
                     'Failure compiling "%s". There were no #[Test] found.',
                     $testCaseModel->getClass()

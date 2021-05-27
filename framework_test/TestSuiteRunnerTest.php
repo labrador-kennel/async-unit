@@ -344,13 +344,13 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     public function testTestCaseProcessingEventEmitted() {
         Loop::run(function() {
             $actual = [];
-            $this->emitter->on(Events::TEST_CASE_STARTED, function($event) use(&$actual) {
+            $this->emitter->on(Events::TEST_CASE_STARTED, function() use(&$actual) {
                 $actual[] = 'test case started';
             });
             $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
                 $actual[] = 'test processed';
             });
-            $this->emitter->on(Events::TEST_CASE_FINISHED, function($event) use(&$actual) {
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function() use(&$actual) {
                 $actual[] = 'test case finished';
             });
 
@@ -550,12 +550,12 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
                 ->withConsecutive(
                     [$testSuites],
                     [$testSuites[0]->getTestCaseModels()],
-                    [$testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()]
+                    [$testSuites[0]->getTestCaseModels()[0]->getTestModels()]
                 )
                 ->willReturnOnConsecutiveCalls(
                     $testSuites,
                     $testSuites[0]->getTestCaseModels(),
-                    $testSuites[0]->getTestCaseModels()[0]->getTestMethodModels()
+                    $testSuites[0]->getTestCaseModels()[0]->getTestModels()
                 );
 
             yield $testSuiteRunner->runTestSuites($results);
@@ -669,6 +669,20 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $this->assertCount(1, $this->actual);
             $this->assertSame(TestState::Failed()->toString(), $this->actual[0]->getState()->toString());
             $this->assertSame('Expected ' . ImplicitDefaultTestSuite\TestExpectsNoAsyncAssertionsAssertMade\MyTestCase::class .  '::noAssertionButAsyncAssertionMade to make 0 assertions but made 2', $this->actual[0]->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestHasTimeoutExceedsValueIsFailedTest() : void {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestHasTimeout'));
+
+            $this->assertCount(1, $this->actual);
+            $this->assertSame(TestState::Failed()->toString(), $this->actual[0]->getState()->toString());
+            $msg = sprintf(
+                'Expected %s::timeOutTest to complete within 100ms',
+                ImplicitDefaultTestSuite\TestHasTimeout\MyTestCase::class
+            );
+            $this->assertSame($msg, $this->actual[0]->getException()->getMessage());
         });
     }
 

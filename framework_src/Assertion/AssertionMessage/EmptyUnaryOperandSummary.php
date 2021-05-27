@@ -2,7 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage;
 
-class EmptyUnaryOperandSummary extends UnaryOperandSummary {
+final class EmptyUnaryOperandSummary extends UnaryOperandSummary {
 
     protected function getExpectedDescriptor() : string {
         return 'empty';

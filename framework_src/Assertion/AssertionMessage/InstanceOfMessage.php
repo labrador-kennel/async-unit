@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage;
 
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class InstanceOfMessage implements AssertionMessage {
+final class InstanceOfMessage implements AssertionMessage {
 
     public function __construct(
         private string|object $expected,

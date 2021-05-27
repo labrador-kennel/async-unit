@@ -6,7 +6,7 @@ use Cspray\Labrador\AsyncUnit\Assertion;
 use Cspray\Labrador\AsyncUnit\AssertionResult;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 
-class AssertInstanceOf implements Assertion {
+final class AssertInstanceOf implements Assertion {
 
     private string|object $expected;
     private object $actual;

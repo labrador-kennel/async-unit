@@ -21,7 +21,7 @@ class TestCaseModelHasTestMethod extends Constraint {
         if ($this->testClass !== $other->getClass()) {
             return false;
         }
-        $testMethods = $other->getTestMethodModels();
+        $testMethods = $other->getTestModels();
         foreach ($testMethods as $testMethod) {
             if ($testMethod->getMethod() === $this->method) {
                 return true;

@@ -7,7 +7,7 @@ use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Assertion;
 use Generator;
 
-class AsyncAssertCountEquals extends AbstractAsyncAssertion {
+final class AsyncAssertCountEquals extends AbstractAsyncAssertion {
 
     public function __construct(private int $expected, Promise|Generator|Coroutine $actual) {
         parent::__construct($actual);

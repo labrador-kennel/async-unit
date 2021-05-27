@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnit\Assertion\AssertionMessage;
 
 use Cspray\Labrador\AsyncUnit\AssertionMessage;
 
-class BinaryOperandDetails implements AssertionMessage {
+final class BinaryOperandDetails implements AssertionMessage {
 
     public function __construct(private mixed $expected, private mixed $actual) {}
 

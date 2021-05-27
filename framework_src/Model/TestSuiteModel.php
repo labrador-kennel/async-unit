@@ -6,6 +6,7 @@ final class TestSuiteModel {
 
     use HookAware;
     use CanBeDisabledTrait;
+    use CanHaveTimeoutTrait;
 
     private array $testCaseModels = [];
 
