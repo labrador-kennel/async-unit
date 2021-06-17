@@ -9,7 +9,7 @@ use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\CoreApplicationObjectGraph;
 
-final class TestFrameworkApplicationObjectGraph extends CoreApplicationObjectGraph {
+final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
 
     public function wireObjectGraph() : Injector {
         $injector = parent::wireObjectGraph();
@@ -24,7 +24,7 @@ final class TestFrameworkApplicationObjectGraph extends CoreApplicationObjectGra
         $injector->alias(Randomizer::class, ShuffleRandomizer::class);
 
         $injector->share(Application::class);
-        $injector->alias(Application::class, TestFrameworkApplication::class);
+        $injector->alias(Application::class, AsyncUnitApplication::class);
         $injector->prepare(Application::class, function(Application $application) use($customAssertionContext) {
             $application->registerPluginLoadHandler(CustomAssertionPlugin::class, function(CustomAssertionPlugin $plugin) use($customAssertionContext) {
                 yield $plugin->registerCustomAssertions($customAssertionContext);

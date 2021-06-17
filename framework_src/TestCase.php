@@ -29,7 +29,8 @@ abstract class TestCase {
         private TestSuite $testSuite,
         private AssertionContext $assertionContext,
         private AsyncAssertionContext $asyncAssertionContext,
-        private ExpectationContext $expectationContext
+        private ExpectationContext $expectationContext,
+        private ?MockBridge $mockBridge = null
     ) {}
 
     final public function testSuite() : TestSuite {

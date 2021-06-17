@@ -34,7 +34,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     public function setUp() : void {
         $environment = new StandardEnvironment(EnvironmentType::Test());
         $logger = new NullLogger();
-        $objectGraph = (new TestFrameworkApplicationObjectGraph($environment, $logger))->wireObjectGraph();
+        $objectGraph = (new AsyncUnitApplicationObjectGraph($environment, $logger))->wireObjectGraph();
         $objectGraph->alias(Randomizer::class, NullRandomizer::class);
 
         $this->emitter = $objectGraph->make(EventEmitter::class);
@@ -61,7 +61,7 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
             $state->disabled->events[] = $event;
         });
         $this->injector->define(Application::class, [':dirs' => $dirs]);
-        /** @var TestFrameworkApplication $application */
+        /** @var AsyncUnitApplication $application */
         return [$state, $this->injector->make(Engine::class)];
     }
 

@@ -10,7 +10,7 @@ use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use Cspray\Labrador\Plugin\Pluggable;
 use function Amp\call;
 
-final class TestFrameworkApplication extends AbstractApplication {
+final class AsyncUnitApplication extends AbstractApplication {
 
     private Parser $parser;
     private TestSuiteRunner $testSuiteRunner;

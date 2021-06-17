@@ -12,7 +12,6 @@ use Acme\DemoSuites\ErrorConditions;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
 use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
-use Cspray\Labrador\AsyncUnit\Statistics\SummaryCalculator;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 class ParserTest extends PHPUnitTestCase {
@@ -152,7 +151,6 @@ class ParserTest extends PHPUnitTestCase {
             $testSuites = $results->getTestSuiteModels();
 
             $this->assertCount(1, $testSuites);
-            $testSuite = $testSuites[0];
 
             $testCases = $testSuites[0]->getTestCaseModels();
 

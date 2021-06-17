@@ -20,7 +20,7 @@ $configurationFactory = new ConfigurationFactory();
 
 $application = new AsyncUnitConsoleApplication(
     $configurationFactory,
-    new TestFrameworkApplicationObjectGraph($environment, $logger),
+    new AsyncUnitApplicationObjectGraph($environment, $logger),
     $cwd,
     '0.5.0'
 );

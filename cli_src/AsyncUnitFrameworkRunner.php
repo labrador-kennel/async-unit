@@ -7,15 +7,15 @@ use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
-use Cspray\Labrador\AsyncUnit\TestFrameworkApplication;
-use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
+use Cspray\Labrador\AsyncUnit\AsyncUnitApplication;
+use Cspray\Labrador\AsyncUnit\AsyncUnitApplicationObjectGraph;
 use Cspray\Labrador\AsyncUnit\ResultPrinterPlugin;
 use Cspray\Labrador\Engine;
 
 final class AsyncUnitFrameworkRunner {
 
     public function __construct(
-        private TestFrameworkApplicationObjectGraph $applicationObjectGraph,
+        private AsyncUnitApplicationObjectGraph $applicationObjectGraph,
         private string $version
     ) {}
 
@@ -28,7 +28,7 @@ final class AsyncUnitFrameworkRunner {
             $hasFailedTests = $event->getTarget()->getFailedTestCount() !== 0;
         });
 
-        /** @var TestFrameworkApplication $app */
+        /** @var AsyncUnitApplication $app */
         $app = $injector->make(Application::class, [':dirs' => $testDirs]);
         $app->registerPluginLoadHandler(ResultPrinterPlugin::class, function(ResultPrinterPlugin $resultPrinterPlugin) use($emitter, $terminalOutput) {
             $resultPrinterPlugin->registerEvents($emitter, $terminalOutput);

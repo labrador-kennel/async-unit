@@ -4,14 +4,14 @@ namespace Cspray\Labrador\AsyncUnitCli;
 
 use Cspray\Labrador\AsyncUnitCli\Command\RunTestsCommand;
 use Cspray\Labrador\AsyncUnitCli\Command\RunTestsFromConfigurationCommand;
-use Cspray\Labrador\AsyncUnit\TestFrameworkApplicationObjectGraph;
+use Cspray\Labrador\AsyncUnit\AsyncUnitApplicationObjectGraph;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
 final class AsyncUnitConsoleApplication extends ConsoleApplication {
 
     public function __construct(
         private ConfigurationFactory $configurationFactory,
-        private TestFrameworkApplicationObjectGraph $applicationObjectGraph,
+        private AsyncUnitApplicationObjectGraph $applicationObjectGraph,
         private string $cwd,
         string $version
     ) {
