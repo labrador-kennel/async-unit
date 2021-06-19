@@ -1,0 +1,6 @@
+{
+  "testDirs": [
+    "tests"
+  ],
+  "resultPrinter": "ResultPrinterClass"
+}

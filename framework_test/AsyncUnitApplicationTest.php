@@ -2,19 +2,18 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\ByteStream\OutputBuffer;
+use Amp\Success;
 use Auryn\Injector;
 use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
-use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
-use Cspray\Labrador\AsyncUnit\Event\ProcessingStartedEvent;
-use Cspray\Labrador\AsyncUnit\Statistics\PostRunSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\AggregateSummary;
-use Cspray\Labrador\AsyncUnit\Statistics\ProcessedAggregateSummary;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
+use Cspray\Labrador\AsyncUnit\Stub\TestConfiguration;
 use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
@@ -23,26 +22,46 @@ use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Psr\Log\NullLogger;
 use stdClass;
 
-class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
+class AsyncUnitApplicationTest extends \PHPUnit\Framework\TestCase {
 
     use UsesAcmeSrc;
 
     private Injector $injector;
 
-    private EventEmitter $emitter;
-
-    public function setUp() : void {
+    private function getStateAndApplication(
+        string $configPath,
+        Configuration $configuration,
+        ConfigurationValidationResults $configurationValidationResults = null
+    ) : array {
         $environment = new StandardEnvironment(EnvironmentType::Test());
         $logger = new NullLogger();
-        $objectGraph = (new AsyncUnitApplicationObjectGraph($environment, $logger))->wireObjectGraph();
+        if (is_null($configurationValidationResults)) {
+            $configurationValidationResults = new ConfigurationValidationResults([]);
+        }
+        $configurationFactory = $this->createMock(ConfigurationFactory::class);
+        $configurationFactory->expects($this->once())
+            ->method('make')
+            ->with($configPath)
+            ->willReturn(new Success($configuration));
+
+        $configurationValidator = $this->createMock(ConfigurationValidator::class);
+        $configurationValidator->expects($this->once())
+            ->method('validate')
+            ->with($configuration)
+            ->willReturn(new Success($configurationValidationResults));
+        $objectGraph = (new AsyncUnitApplicationObjectGraph(
+            $environment,
+            $logger,
+            $configurationValidator,
+            $configurationFactory,
+            new OutputBuffer(),
+            $configPath
+        ))->wireObjectGraph();
         $objectGraph->alias(Randomizer::class, NullRandomizer::class);
 
-        $this->emitter = $objectGraph->make(EventEmitter::class);
+        $emitter = $objectGraph->make(EventEmitter::class);
         $this->injector = $objectGraph;
-        $this->injector->define(DefaultResultPrinter::class, [':version' => 'test']);
-    }
 
-    private function getStateAndApplication(array $dirs) : array {
         $state = new stdClass();
         $state->data = [];
         $state->passed = new stdClass();
@@ -51,22 +70,23 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         $state->failed->events = [];
         $state->disabled = new stdClass();
         $state->disabled->events = [];
-        $this->emitter->on(Events::TEST_PASSED, function($event) use($state) {
+        $emitter->on(Events::TEST_PASSED, function($event) use($state) {
             $state->passed->events[] = $event;
         });
-        $this->emitter->on(Events::TEST_FAILED, function($event) use($state) {
+        $emitter->on(Events::TEST_FAILED, function($event) use($state) {
             $state->failed->events[] = $event;
         });
-        $this->emitter->on(Events::TEST_DISABLED, function($event) use($state) {
+        $emitter->on(Events::TEST_DISABLED, function($event) use($state) {
             $state->disabled->events[] = $event;
         });
-        $this->injector->define(Application::class, [':dirs' => $dirs]);
-        /** @var AsyncUnitApplication $application */
+
         return [$state, $this->injector->make(Engine::class)];
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTest() {
-        [$state, $engine] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('SingleTest')]);
+        [$state, $engine] = $this->getStateAndApplication('singleTest', $configuration);
         $engine->run($this->injector->make(Application::class));
 
         $this->assertCount(1, $state->passed->events);
@@ -83,7 +103,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteSingleTestAsyncAssertion() {
-        [$state, $engine] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('SingleTestAsyncAssertion')]);
+        [$state, $engine] = $this->getStateAndApplication('singleTestAsync', $configuration);
         $engine->run($this->injector->make(Application::class));
 
         $this->assertCount(1, $state->passed->events);
@@ -100,7 +122,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteNoAssertions() {
-        [$state, $engine] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('NoAssertions')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('NoAssertions')]);
+        [$state, $engine] = $this->getStateAndApplication('noAssertions', $configuration);
         $engine->run($this->injector->make(Application::class));
 
         $this->assertCount(0, $state->passed->events);
@@ -123,7 +147,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testSimpleTestCaseImplicitDefaultTestSuiteFailedAssertion() {
-        [$state, $engine] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('FailedAssertion')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('FailedAssertion')]);
+        [$state, $engine] = $this->getStateAndApplication('failedAssertion', $configuration);
         $engine->run($this->injector->make(Application::class));
 
         $this->assertCount(0, $state->passed->events);
@@ -137,8 +163,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testLoadingCustomAssertionPlugins() {
-        /** @var Application $application */
-        [,$engine] = $this->getStateAndApplication([$this->implicitDefaultTestSuitePath('SingleTest')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('SingleTest')]);
+        [,$engine] = $this->getStateAndApplication('singleTest', $configuration);
 
         $this->injector->share(FooAssertionPlugin::class);
         $this->injector->share(BarAssertionPlugin::class);
@@ -160,7 +187,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testExplicitTestSuiteTestSuiteStateShared() {
-        [$state, $engine] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestSuiteStateBeforeAll')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->explicitTestSuitePath('TestSuiteStateBeforeAll')]);
+        [$state, $engine] = $this->getStateAndApplication('testSuiteBeforeAll', $configuration);
 
         $engine->run($this->injector->make(Application::class));
 
@@ -169,7 +198,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testExplicitTestSuiteTestCaseBeforeAllHasTestSuiteState() {
-        [$state, $engine] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseBeforeAllHasTestSuiteState')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->explicitTestSuitePath('TestCaseBeforeAllHasTestSuiteState')]);
+        [$state, $engine] = $this->getStateAndApplication('testCaseBeforeAllHasTestSuiteState', $configuration);
 
         $engine->run($this->injector->make(Application::class));
 
@@ -178,7 +209,9 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testExplicitTestSuiteTestCaseAfterAllHasTestSuiteState() {
-        [$state, $engine] = $this->getStateAndApplication([$this->explicitTestSuitePath('TestCaseAfterAllHasTestSuiteState')]);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->explicitTestSuitePath('TestCaseAfterAllHasTestSuiteState')]);
+        [$state, $engine] = $this->getStateAndApplication('testCaseAfterAllHasTestSuiteState', $configuration);
 
         $engine->run($this->injector->make(Application::class));
 
@@ -188,5 +221,23 @@ class TestFrameworkApplicationTest extends \PHPUnit\Framework\TestCase {
         $this->assertSame('AsyncUnit', $state->passed->events[0]->getTarget()->getTestCase()->getState());
     }
 
+    public function testConfigurationInvalidThrowsException() {
+        $validationResults = new ConfigurationValidationResults(['1st error', '2nd error', '3rd error']);
+        [, $engine] = $this->getStateAndApplication('invalidConfig', new TestConfiguration(), $validationResults);
+
+        $this->expectException(InvalidConfigurationException::class);
+        $expectedMessage = <<<'msg'
+The configuration at path "invalidConfig" has the following errors:
+
+- 1st error
+- 2nd error
+- 3rd error
+
+Please fix the errors listed above and try running your tests again.
+msg;
+        $this->expectExceptionMessage($expectedMessage);
+
+        $engine->run($this->injector->make(Application::class));
+    }
 
 }

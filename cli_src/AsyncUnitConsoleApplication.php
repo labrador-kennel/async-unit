@@ -2,36 +2,36 @@
 
 namespace Cspray\Labrador\AsyncUnitCli;
 
+use Amp\ByteStream\OutputStream;
+use Cspray\Labrador\AsyncUnit\AsyncUnitApplication;
+use Cspray\Labrador\AsyncUnit\AsyncUnitFrameworkRunner;
+use Cspray\Labrador\AsyncUnit\ConfigurationFactory;
 use Cspray\Labrador\AsyncUnitCli\Command\RunTestsCommand;
-use Cspray\Labrador\AsyncUnitCli\Command\RunTestsFromConfigurationCommand;
-use Cspray\Labrador\AsyncUnit\AsyncUnitApplicationObjectGraph;
+use Cspray\Labrador\Environment;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
 final class AsyncUnitConsoleApplication extends ConsoleApplication {
 
     public function __construct(
+        private Environment $environment,
+        private LoggerInterface $logger,
         private ConfigurationFactory $configurationFactory,
-        private AsyncUnitApplicationObjectGraph $applicationObjectGraph,
-        private string $cwd,
-        string $version
+        private OutputStream $testResultOutput
     ) {
-        parent::__construct('AsyncUnit', $version);
+        parent::__construct('AsyncUnit', AsyncUnitApplication::VERSION);
         $this->registerCommands();
     }
 
     private function registerCommands() {
-        $frameworkRunner = new AsyncUnitFrameworkRunner($this->applicationObjectGraph, $this->getVersion());
-        $this->add(new RunTestsFromConfigurationCommand(
-            $frameworkRunner,
+        $frameworkRunner = new AsyncUnitFrameworkRunner(
+            $this->environment,
+            $this->logger,
             $this->configurationFactory,
-            $this->cwd . '/async-unit.json'
-        ));
-        $this->setDefaultCommand('run-config');
-
-        $this->add(new RunTestsCommand(
-            $frameworkRunner,
-            $this->cwd
-        ));
+            $this->testResultOutput
+        );
+        $this->add(new RunTestsCommand($frameworkRunner));
+        $this->setDefaultCommand('run');
     }
 
 }

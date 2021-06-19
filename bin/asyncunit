@@ -8,21 +8,21 @@ $cwd = getcwd();
 require_once $cwd . '/vendor/autoload.php';
 
 use Cspray\Labrador\AsyncUnitCli\AsyncUnitConsoleApplication;
-use Cspray\Labrador\AsyncUnitCli\ConfigurationFactory;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Psr\Log\NullLogger;
+use function Amp\ByteStream\getStdout;
 
 $environment = new StandardEnvironment(EnvironmentType::Development());
 $logger = new NullLogger();
 
-$configurationFactory = new ConfigurationFactory();
+$configurationFactory = new JsonConfigurationFactory();
 
 $application = new AsyncUnitConsoleApplication(
+    $environment,
+    $logger,
     $configurationFactory,
-    new AsyncUnitApplicationObjectGraph($environment, $logger),
-    $cwd,
-    '0.5.0'
+    getStdout()
 );
 
 $application->run();

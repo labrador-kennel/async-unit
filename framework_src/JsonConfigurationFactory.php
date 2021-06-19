@@ -1,14 +1,14 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnitCli;
+namespace Cspray\Labrador\AsyncUnit;
 
-use Cspray\Labrador\AsyncUnitCli\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
 use Opis\JsonSchema\Schema;
 use Opis\JsonSchema\Uri;
 use Opis\JsonSchema\Validator;
 use stdClass;
 
-final class ConfigurationFactory {
+final class JsonConfigurationFactory {
 
     private Validator $validator;
     private Schema $schema;
@@ -50,6 +50,10 @@ final class ConfigurationFactory {
 
             public function getPlugins() : array {
                 return $this->config->plugins ?? [];
+            }
+
+            public function getResultPrinterClass(): string {
+                return '';
             }
         };
     }

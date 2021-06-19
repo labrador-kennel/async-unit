@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace Cspray\Labrador\AsyncUnitCli;
+namespace Cspray\Labrador\AsyncUnit;
 
 interface Configuration {
 
@@ -13,5 +13,10 @@ interface Configuration {
      * @return string[]
      */
     public function getPlugins() : array;
+
+    /**
+     * @return string
+     */
+    public function getResultPrinterClass() : string;
 
 }

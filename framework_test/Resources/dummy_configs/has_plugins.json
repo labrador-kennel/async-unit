@@ -1,4 +1,5 @@
 {
   "testDirs": ["foo"],
+  "resultPrinter": "ResultPrinterClass",
   "plugins": ["FooBar"]
 }

@@ -18,6 +18,9 @@
             <directory suffix=".phpt">cli_test/Integration</directory>
             <directory suffix="Test.php">cli_test/Unit</directory>
         </testsuite>
+        <testsuite name="framework">
+            <directory suffix="Test.php">framework_test</directory>
+        </testsuite>
     </testsuites>
 
     <coverage cacheDirectory=".phpunit.cache/code-coverage"
