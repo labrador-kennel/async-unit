@@ -204,6 +204,7 @@ final class TestSuiteRunner {
                 return;
             }
 
+
             yield $this->invokeHooks($testCase->testSuite(), $testSuiteModel, HookType::BeforeEachTest(), TestSetupException::class);
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::BeforeEach(), TestSetupException::class);
 
