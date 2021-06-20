@@ -26,24 +26,13 @@ final class AsyncUnitFrameworkRunner {
         private OutputStream $testResultOutput
     ) {}
 
-    private function getConfiguration(?string $configFile) : Configuration {
-        if (isset($this->configurationOverride)) {
-            return $this->configurationOverride;
-        }
-
-        if (!isset($configFile)) {
-            return $this->getDefaultConfiguration();
-        }
-
-        return $this->configurationFactory->make($configFile);
-    }
-
-    public function run(string $configFile = null) : bool {
+    public function run(string $configFile) : bool {
         $injector = (new AsyncUnitApplicationObjectGraph(
             $this->environment,
             $this->logger,
-            $this->getConfiguration($configFile),
-            $this->testResultOutput
+            $this->configurationFactory,
+            $this->testResultOutput,
+            $configFile
         ))->wireObjectGraph();
 
         $emitter = $injector->make(EventEmitter::class);
@@ -54,23 +43,6 @@ final class AsyncUnitFrameworkRunner {
 
         $injector->execute(Engine::class . '::run');
         return !$hasFailedTests;
-    }
-
-    private function getDefaultConfiguration() : Configuration {
-        return new class implements Configuration {
-
-            public function getTestDirectories(): array {
-                return [getcwd()];
-            }
-
-            public function getPlugins(): array {
-                return [];
-            }
-
-            public function getResultPrinterClass(): string {
-                return '';
-            }
-        };
     }
 
 }

@@ -62,9 +62,16 @@ final class AsyncUnitApplication extends AbstractApplication {
                     "The configuration at path \"%s\" has the following errors:\n\n",
                     $this->configFilePath
                 );
+                $errorMessages = [];
+                foreach ($validationResults->getValidationErrors() as $messages) {
+                    $errorMessages = array_merge(
+                        $errorMessages,
+                        array_map(fn(string $msg) => "- $msg", $messages)
+                    );
+                }
                 $errorList = join(
                     PHP_EOL,
-                    array_map(fn(string $msg) => "- $msg", $validationResults->getValidationErrors())
+                    $errorMessages
                 );
                 $lastLine = "\n\nPlease fix the errors listed above and try running your tests again.";
 
@@ -81,7 +88,7 @@ final class AsyncUnitApplication extends AbstractApplication {
             $loadPlugin = $reflectedPluginManager->getMethod('loadPlugin');
             $loadPlugin->setAccessible(true);
 
-            yield $loadPlugin->invoke($this->pluginManager, $configuration->getResultPrinterClass());
+            yield $loadPlugin->invoke($this->pluginManager, $configuration->getResultPrinter());
         });
     }
 

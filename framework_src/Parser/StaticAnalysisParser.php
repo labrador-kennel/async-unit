@@ -76,6 +76,15 @@ final class StaticAnalysisParser implements Parser {
                 if (yield $this->filesystem->isdir($fullPath)) {
                     yield $this->traverseDir($fullPath);
                 } else {
+                    $pathFragments = explode(DIRECTORY_SEPARATOR, $fullPath);
+                    $lastPathFragment = array_pop($pathFragments);
+                    if (!strpos($lastPathFragment, '.')) {  // intentionally treating 0 as false because a hidden file shouldn't be tested
+                        continue;
+                    }
+                    $extension = strtolower(explode('.', $lastPathFragment, 2)[1]);
+                    if ($extension !== 'php') {
+                        continue;
+                    }
                     /** @var File $handle */
                     $handle = yield $this->filesystem->open($fullPath, 'r');
                     $contents = yield (new Payload($handle))->buffer();

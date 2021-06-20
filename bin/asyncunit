@@ -12,17 +12,19 @@ use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Psr\Log\NullLogger;
 use function Amp\ByteStream\getStdout;
+use function Amp\File\filesystem;
 
 $environment = new StandardEnvironment(EnvironmentType::Development());
 $logger = new NullLogger();
-
 $configurationFactory = new JsonConfigurationFactory();
 
 $application = new AsyncUnitConsoleApplication(
     $environment,
     $logger,
+    filesystem(),
     $configurationFactory,
-    getStdout()
+    getStdout(),
+    $cwd . '/async-unit.json'
 );
 
 $application->run();

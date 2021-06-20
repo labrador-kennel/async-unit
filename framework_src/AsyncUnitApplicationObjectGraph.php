@@ -17,7 +17,6 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
     public function __construct(
         Environment $environment,
         LoggerInterface $logger,
-        private ConfigurationValidator $configurationValidator,
         private ConfigurationFactory $configurationFactory,
         private OutputStream $testResultOutput,
         private string $configFilePath
@@ -36,8 +35,8 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         $injector->share(TestSuiteRunner::class);
         $injector->share(new ShuffleRandomizer());
         $injector->alias(Randomizer::class, ShuffleRandomizer::class);
-        $injector->share($this->configurationValidator);
-        $injector->alias(ConfigurationValidator::class, get_class($this->configurationValidator));
+        $injector->share(ConfigurationValidator::class);
+        $injector->alias(ConfigurationValidator::class, AsyncUnitConfigurationValidator::class);
         $injector->share($this->configurationFactory);
         $injector->alias(ConfigurationFactory::class, get_class($this->configurationFactory));
 

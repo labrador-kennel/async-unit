@@ -17,6 +17,6 @@ interface Configuration {
     /**
      * @return string
      */
-    public function getResultPrinterClass() : string;
+    public function getResultPrinter() : string;
 
 }

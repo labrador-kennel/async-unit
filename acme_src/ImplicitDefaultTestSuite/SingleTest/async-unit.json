@@ -1,4 +1,4 @@
 {
-  "testDirs": ["."],
+  "testDirs": ["./acme_src/ImplicitDefaultTestSuite/SingleTest"],
   "resultPrinter": "Cspray\\Labrador\\AsyncUnitCli\\DefaultResultPrinter"
 }

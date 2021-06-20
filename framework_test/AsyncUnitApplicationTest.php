@@ -14,7 +14,6 @@ use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\TestConfiguration;
-use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
@@ -30,29 +29,19 @@ class AsyncUnitApplicationTest extends \PHPUnit\Framework\TestCase {
 
     private function getStateAndApplication(
         string $configPath,
-        Configuration $configuration,
-        ConfigurationValidationResults $configurationValidationResults = null
+        Configuration $configuration
     ) : array {
         $environment = new StandardEnvironment(EnvironmentType::Test());
         $logger = new NullLogger();
-        if (is_null($configurationValidationResults)) {
-            $configurationValidationResults = new ConfigurationValidationResults([]);
-        }
         $configurationFactory = $this->createMock(ConfigurationFactory::class);
         $configurationFactory->expects($this->once())
             ->method('make')
             ->with($configPath)
             ->willReturn(new Success($configuration));
 
-        $configurationValidator = $this->createMock(ConfigurationValidator::class);
-        $configurationValidator->expects($this->once())
-            ->method('validate')
-            ->with($configuration)
-            ->willReturn(new Success($configurationValidationResults));
         $objectGraph = (new AsyncUnitApplicationObjectGraph(
             $environment,
             $logger,
-            $configurationValidator,
             $configurationFactory,
             new OutputBuffer(),
             $configPath
@@ -222,16 +211,17 @@ class AsyncUnitApplicationTest extends \PHPUnit\Framework\TestCase {
     }
 
     public function testConfigurationInvalidThrowsException() {
-        $validationResults = new ConfigurationValidationResults(['1st error', '2nd error', '3rd error']);
-        [, $engine] = $this->getStateAndApplication('invalidConfig', new TestConfiguration(), $validationResults);
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([]);
+        $configuration->setResultPrinterClass('Not a class');
+        [, $engine] = $this->getStateAndApplication('invalidConfig', $configuration);
 
         $this->expectException(InvalidConfigurationException::class);
         $expectedMessage = <<<'msg'
 The configuration at path "invalidConfig" has the following errors:
 
-- 1st error
-- 2nd error
-- 3rd error
+- Must provide at least one directory to scan but none were provided.
+- The result printer "Not a class" is not a class that can be found. Please ensure this class is configured to be autoloaded through Composer.
 
 Please fix the errors listed above and try running your tests again.
 msg;

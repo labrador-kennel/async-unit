@@ -1,10 +1,8 @@
 <?php declare(strict_types=1);
 
-
 namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
-use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncUnit\Stub\TestConfiguration;
 use Generator;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
@@ -70,10 +68,10 @@ class AsyncUnitConfigurationValidatorTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ConfigurationValidationResults::class, $results);
             $this->assertFalse($results->isValid());
-            $this->assertArrayHasKey('resultPrinterClass', $results->getValidationErrors());
+            $this->assertArrayHasKey('resultPrinter', $results->getValidationErrors());
             $this->assertSame(
                 ['The result printer "Not a class" is not a class that can be found. Please ensure this class is configured to be autoloaded through Composer.'],
-                $results->getValidationErrors()['resultPrinterClass']
+                $results->getValidationErrors()['resultPrinter']
             );
         });
     }
@@ -87,10 +85,10 @@ class AsyncUnitConfigurationValidatorTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ConfigurationValidationResults::class, $results);
             $this->assertFalse($results->isValid());
-            $this->assertArrayHasKey('resultPrinterClass', $results->getValidationErrors());
+            $this->assertArrayHasKey('resultPrinter', $results->getValidationErrors());
             $this->assertSame(
                 ['The result printer "Generator" is not a ' . ResultPrinterPlugin::class . '. Please ensure your result printer implements this interface.'],
-                $results->getValidationErrors()['resultPrinterClass']
+                $results->getValidationErrors()['resultPrinter']
             );
         });
     }

@@ -8,7 +8,7 @@ use Generator;
 use function Amp\call;
 use function Amp\File\filesystem;
 
-class AsyncUnitConfigurationValidator implements ConfigurationValidator {
+final class AsyncUnitConfigurationValidator implements ConfigurationValidator {
 
     private Driver $filesystem;
 
@@ -46,14 +46,14 @@ class AsyncUnitConfigurationValidator implements ConfigurationValidator {
     }
 
     private function validateResultPrinterClass(Configuration $configuration, array &$errors) : void {
-        $resultPrinterClass = $configuration->getResultPrinterClass();
+        $resultPrinterClass = $configuration->getResultPrinter();
         if (!class_exists($resultPrinterClass)) {
-            $errors['resultPrinterClass'] = [sprintf(
+            $errors['resultPrinter'] = [sprintf(
                 'The result printer "%s" is not a class that can be found. Please ensure this class is configured to be autoloaded through Composer.',
                 $resultPrinterClass
             )];
         } else if (!in_array(ResultPrinterPlugin::class, class_implements($resultPrinterClass))) {
-            $errors['resultPrinterClass'] = [sprintf(
+            $errors['resultPrinter'] = [sprintf(
                 'The result printer "%s" is not a %s. Please ensure your result printer implements this interface.',
                 $resultPrinterClass,
                 ResultPrinterPlugin::class

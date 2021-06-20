@@ -2,7 +2,9 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Amp\Loop;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use PHPUnit\Framework\TestCase;
 
 class JsonConfigurationFactoryTest extends TestCase {
@@ -34,27 +36,35 @@ class JsonConfigurationFactoryTest extends TestCase {
      * @dataProvider badSchemaProvider
      */
     public function testBadSchemaThrowsException(string $file) {
-        $this->expectException(InvalidConfigurationException::class);
-        $this->expectExceptionMessage(sprintf(
-            'The JSON file at "%s" does not adhere to the JSON Schema https://labrador-kennel.io/dev/async-unit/schema/cli-config.json',
-            $file
-        ));
+        Loop::run(function() use($file) {
+            $this->expectException(InvalidConfigurationException::class);
+            $this->expectExceptionMessage(sprintf(
+                'The JSON file at "%s" does not adhere to the JSON Schema https://labrador-kennel.io/dev/async-unit/schema/cli-config.json',
+                $file
+            ));
 
-        $this->subject->make($file);
+            yield $this->subject->make($file);
+        });
     }
 
     public function testMinimallyValidReturnsCorrectInformation() {
-        $configuration = $this->subject->make(__DIR__ . '/Resources/dummy_configs/minimally_valid.json');
+        Loop::run(function() {
+            /** @var Configuration $configuration */
+            $configuration = yield $this->subject->make(__DIR__ . '/Resources/dummy_configs/minimally_valid.json');
 
-        $this->assertSame(['tests'], $configuration->getTestDirectories());
-        $this->assertEmpty($configuration->getPlugins());
+            $this->assertSame([getcwd()], $configuration->getTestDirectories());
+            $this->assertSame(DefaultResultPrinter::class, $configuration->getResultPrinter());
+            $this->assertEmpty($configuration->getPlugins());
+        });
     }
 
     public function testHasPluginsReturnsCorrectInformation() {
-        $configuration = $this->subject->make(__DIR__ . '/Resources/dummy_configs/has_plugins.json');
+        Loop::run(function() {
+            $configuration = yield $this->subject->make(__DIR__ . '/Resources/dummy_configs/has_plugins.json');
 
-        $this->assertSame(['foo'], $configuration->getTestDirectories());
-        $this->assertSame(['FooBar'], $configuration->getPlugins());
+            $this->assertSame([getcwd()], $configuration->getTestDirectories());
+            $this->assertSame(['FooBar'], $configuration->getPlugins());
+        });
     }
 
 }

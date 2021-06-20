@@ -35,7 +35,7 @@ class TestConfiguration implements Configuration {
         $this->resultPrinterClass = $resultPrinterClass;
     }
 
-    public function getResultPrinterClass(): string {
+    public function getResultPrinter(): string {
         return $this->resultPrinterClass;
     }
 }
