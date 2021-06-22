@@ -13,6 +13,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Statistics\AggregateSummary;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Stub\MockBridgeFactoryStub;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 use stdClass;
 
@@ -20,6 +21,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
     use UsesAcmeSrc;
     use TestSuiteRunnerScaffolding;
+
+    public function setUp(): void {
+        $this->buildTestSuiteRunner(new MockBridgeFactoryStub());
+    }
 
     public function testTestProcessingStartedHasAggregateSummary() {
         Loop::run(function() {

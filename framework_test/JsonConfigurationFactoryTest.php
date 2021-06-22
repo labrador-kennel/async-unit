@@ -17,7 +17,10 @@ class JsonConfigurationFactoryTest extends TestCase {
 
     public function badSchemaProvider() : array {
         return [
-            'empty_object' => [__DIR__ . '/Resources/dummy_configs/empty_object.json'],
+            'empty_object' => [
+                __DIR__ . '/Resources/dummy_configs/empty_object.json',
+                []
+            ],
             'bad_keys' => [__DIR__ . '/Resources/dummy_configs/bad_keys.json'],
             'good_keys_bad_types' => [__DIR__ . '/Resources/dummy_configs/good_keys_bad_types.json'],
             'test_dirs_empty' => [__DIR__ . '/Resources/dummy_configs/test_dirs_empty.json'],

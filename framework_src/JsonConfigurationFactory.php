@@ -68,6 +68,10 @@ final class JsonConfigurationFactory implements ConfigurationFactory {
                 public function getResultPrinter(): string {
                     return $this->config->resultPrinter;
                 }
+
+                public function getMockBridge(): ?string {
+                    return '';
+                }
             };
         });
     }

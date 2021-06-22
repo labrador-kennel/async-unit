@@ -189,10 +189,9 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
             $this->assertNotNull($subject->getCreatedMock());
             $this->assertSame(LoggerInterface::class, $subject->getCreatedMock()->class);
 
+            // We do not expect initialize or finalize to be called here because that's controlled by the TestSuiteRunner
             $this->assertSame([
-                'initialize',
                 'createMock ' . LoggerInterface::class,
-                'finalize'
             ], $mockBridge->getCalls());
         });
     }
@@ -216,7 +215,7 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         $expectationContext = $reflectedExpectationContext->newInstanceWithoutConstructor();
         $expectationContextConstructor = $reflectedExpectationContext->getConstructor();
         $expectationContextConstructor->setAccessible(true);
-        $expectationContextConstructor->invoke($expectationContext, $fakeTestModel, $assertionContext, $asyncAssertionContext);
+        $expectationContextConstructor->invoke($expectationContext, $fakeTestModel, $assertionContext, $asyncAssertionContext, $mockBridge);
 
         $reflectedSubject = new \ReflectionClass($testCase);
         $constructor = $reflectedSubject->getConstructor();

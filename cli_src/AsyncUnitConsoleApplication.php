@@ -7,6 +7,7 @@ use Amp\File\Driver as FileDriver;
 use Cspray\Labrador\AsyncUnit\AsyncUnitApplication;
 use Cspray\Labrador\AsyncUnit\AsyncUnitFrameworkRunner;
 use Cspray\Labrador\AsyncUnit\ConfigurationFactory;
+use Cspray\Labrador\AsyncUnit\MockBridgeFactory;
 use Cspray\Labrador\AsyncUnitCli\Command\GenerateConfigurationCommand;
 use Cspray\Labrador\AsyncUnitCli\Command\RunTestsCommand;
 use Cspray\Labrador\Environment;

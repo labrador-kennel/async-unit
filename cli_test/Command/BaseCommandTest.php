@@ -6,6 +6,7 @@ namespace Cspray\Labrador\AsyncUnitCli\Command;
 use Amp\ByteStream\OutputBuffer;
 use Amp\File\Driver as FileDriver;
 use Cspray\Labrador\AsyncUnit\JsonConfigurationFactory;
+use Cspray\Labrador\AsyncUnit\SupportedMockBridgeFactory;
 use Cspray\Labrador\AsyncUnitCli\AsyncUnitConsoleApplication;
 use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use Cspray\Labrador\EnvironmentType;

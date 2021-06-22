@@ -19,7 +19,8 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         LoggerInterface $logger,
         private ConfigurationFactory $configurationFactory,
         private OutputStream $testResultOutput,
-        private string $configFilePath
+        private string $configFilePath,
+        private ?MockBridgeFactory $mockBridgeFactory = null,
     ) {
         parent::__construct($environment, $logger);
     }
@@ -30,6 +31,7 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         $customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
         $injector->share($customAssertionContext);
 
+        $mockBridgeFactory = $this->mockBridgeFactory ?? new SupportedMockBridgeFactory($injector);
         $injector->share(StaticAnalysisParser::class);
         $injector->alias(Parser::class, StaticAnalysisParser::class);
         $injector->share(TestSuiteRunner::class);
@@ -39,6 +41,8 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         $injector->alias(ConfigurationValidator::class, AsyncUnitConfigurationValidator::class);
         $injector->share($this->configurationFactory);
         $injector->alias(ConfigurationFactory::class, get_class($this->configurationFactory));
+        $injector->share($mockBridgeFactory);
+        $injector->alias(MockBridgeFactory::class, get_class($mockBridgeFactory));
 
         $injector->share(Application::class);
         $injector->alias(Application::class, AsyncUnitApplication::class);

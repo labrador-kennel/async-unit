@@ -23,7 +23,8 @@ final class AsyncUnitFrameworkRunner {
         private Environment $environment,
         private LoggerInterface $logger,
         private ConfigurationFactory $configurationFactory,
-        private OutputStream $testResultOutput
+        private OutputStream $testResultOutput,
+        private ?MockBridgeFactory $mockBridgeFactory = null
     ) {}
 
     public function run(string $configFile) : bool {
@@ -32,7 +33,8 @@ final class AsyncUnitFrameworkRunner {
             $this->logger,
             $this->configurationFactory,
             $this->testResultOutput,
-            $configFile
+            $configFile,
+            $this->mockBridgeFactory
         ))->wireObjectGraph();
 
         $emitter = $injector->make(EventEmitter::class);

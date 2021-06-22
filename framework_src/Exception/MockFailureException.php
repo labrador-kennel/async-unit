@@ -2,6 +2,6 @@
 
 namespace Cspray\Labrador\AsyncUnit\Exception;
 
-class InvalidConfigurationException extends Exception {
+class MockFailureException extends TestFailedException {
 
 }

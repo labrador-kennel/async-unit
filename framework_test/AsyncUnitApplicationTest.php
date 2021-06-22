@@ -13,11 +13,13 @@ use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
 use Cspray\Labrador\AsyncUnit\Stub\BarAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\Stub\FooAssertionPlugin;
+use Cspray\Labrador\AsyncUnit\Stub\MockBridgeStub;
 use Cspray\Labrador\AsyncUnit\Stub\TestConfiguration;
 use Cspray\Labrador\Engine;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
+use PHPUnit\Framework\MockObject\MockObject;
 use Psr\Log\NullLogger;
 use stdClass;
 
@@ -26,6 +28,10 @@ class AsyncUnitApplicationTest extends \PHPUnit\Framework\TestCase {
     use UsesAcmeSrc;
 
     private Injector $injector;
+
+    private MockBridgeFactory|MockObject $mockBridgeFactory;
+
+    private MockBridgeStub $mockBridgeStub;
 
     private function getStateAndApplication(
         string $configPath,
@@ -39,12 +45,16 @@ class AsyncUnitApplicationTest extends \PHPUnit\Framework\TestCase {
             ->with($configPath)
             ->willReturn(new Success($configuration));
 
+        $this->mockBridgeStub = new MockBridgeStub();
+        $this->mockBridgeFactory = $this->createMock(MockBridgeFactory::class);
+
         $objectGraph = (new AsyncUnitApplicationObjectGraph(
             $environment,
             $logger,
             $configurationFactory,
             new OutputBuffer(),
-            $configPath
+            $configPath,
+            $this->mockBridgeFactory,
         ))->wireObjectGraph();
         $objectGraph->alias(Randomizer::class, NullRandomizer::class);
 

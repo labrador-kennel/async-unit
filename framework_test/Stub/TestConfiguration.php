@@ -13,6 +13,8 @@ class TestConfiguration implements Configuration {
 
     private string $resultPrinterClass = DefaultResultPrinter::class;
 
+    private ?string $mockBridge = null;
+
     public function __construct() {}
 
     public function setTestDirectories(array $testDirs) : void {
@@ -37,5 +39,13 @@ class TestConfiguration implements Configuration {
 
     public function getResultPrinter(): string {
         return $this->resultPrinterClass;
+    }
+
+    public function setMockBridge(string $mockBridge) : void {
+        $this->mockBridge = $mockBridge;
+    }
+
+    public function getMockBridge(): ?string {
+        return $this->mockBridge;
     }
 }

@@ -19,4 +19,9 @@ interface Configuration {
      */
     public function getResultPrinter() : string;
 
+    /**
+     * @return string|null
+     */
+    public function getMockBridge() : ?string;
+
 }
