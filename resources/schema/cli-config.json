@@ -18,7 +18,8 @@
       "minLength": 1
     },
     "mockBridge": {
-
+      "type": "string",
+      "minLength": 1
     },
     "plugins": {
       "type": "array",

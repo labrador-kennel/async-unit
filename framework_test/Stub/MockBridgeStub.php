@@ -21,6 +21,10 @@ class MockBridgeStub implements MockBridge {
         return $object;
     }
 
+    public function getAssertionCount(): int {
+        return count($this->calls);
+    }
+
     public function finalize(): void {
         $this->calls[] = __FUNCTION__;
     }

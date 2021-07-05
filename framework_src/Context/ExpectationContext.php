@@ -30,12 +30,6 @@ final class ExpectationContext implements TestExpector {
         private ?MockBridge $mockBridge
     ) {}
 
-    public function startExpecting() : void {
-        if (!is_null($this->mockBridge)) {
-            $this->mockBridge->initialize();
-        }
-    }
-
     public function setActualOutput(string $output) : void {
         $this->actualOutput = $output;
     }

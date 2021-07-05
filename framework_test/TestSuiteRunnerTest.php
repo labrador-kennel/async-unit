@@ -15,9 +15,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
-use Cspray\Labrador\AsyncUnit\Stub\FailingMockBridgeFactory;
 use Cspray\Labrador\AsyncUnit\Stub\FailingMockBridgeStub;
-use Cspray\Labrador\AsyncUnit\Stub\MockBridgeFactoryStub;
 use Cspray\Labrador\AsyncUnit\Stub\MockBridgeStub;
 use Exception;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
@@ -34,7 +32,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     private array $actual = [];
 
     public function setUp() : void {
-        $this->buildTestSuiteRunner(new MockBridgeFactoryStub());
+        $this->buildTestSuiteRunner();
         $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) {
             $this->actual[] = $event->getTarget();
         });
@@ -459,7 +457,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testExplicitTestSuiteTestSuiteDisabledHookNotInvoked() {
         Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked');
             yield $this->parseAndRun($this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked'));
 
             $testSomethingResult = $this->fetchTestResultForTest(ExplicitTestSuite\TestSuiteDisabledHookNotInvoked\MyTestCase::class, 'testSomething');
@@ -717,13 +714,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
             $this->assertCount(1, $this->actual);
 
-            $mockBridges = $this->mockBridgeFactory->getCreatedMockBridges();
-
-            $this->assertCount(1, $mockBridges);
-
-            /** @var MockBridgeStub $mockBridge */
-            $mockBridge = $mockBridges[0]['mockBridge'];
-
+            $mockBridge = $this->actual[0]->getTestCase()->mocks();
             $expected = ['initialize', 'createMock ' . Application::class, 'finalize'];
             $actual = $mockBridge->getCalls();
 
@@ -733,7 +724,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testImplicitDefaultTestSuiteSingleMockTestWithFailingBridgeHasFailedTest() : void {
         Loop::run(function() {
-            $this->buildTestSuiteRunner(new FailingMockBridgeFactory());
+            $this->buildTestSuiteRunner();
             $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) {
                 $this->actual[] = $event->getTarget();
             });

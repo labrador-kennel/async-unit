@@ -41,6 +41,7 @@ final class AsyncUnitApplication extends AbstractApplication {
 
     protected function doStart() : Promise {
         return call(function() {
+            /** @var Configuration $configuration */
             $configuration = yield $this->configurationFactory->make($this->configFilePath);
             yield $this->validateConfiguration($configuration);
             $parserResults = yield $this->parser->parse($configuration->getTestDirectories());
@@ -48,6 +49,8 @@ final class AsyncUnitApplication extends AbstractApplication {
             gc_collect_cycles();
 
             yield $this->loadDynamicPlugins($configuration, $parserResults);
+
+            $this->testSuiteRunner->setMockBridgeClass($configuration->getMockBridge());
 
             yield $this->testSuiteRunner->runTestSuites($parserResults);
         });

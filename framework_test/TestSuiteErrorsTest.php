@@ -20,7 +20,7 @@ class TestSuiteErrorsTest extends PHPUnitTestCase {
     use TestSuiteRunnerScaffolding;
 
     public function setUp(): void {
-        $this->buildTestSuiteRunner(new MockBridgeFactoryStub());
+        $this->buildTestSuiteRunner();
     }
 
     public function testImplicitDefaultTestSuiteExceptionThrowingBeforeAllHaltsTestProcessing() {

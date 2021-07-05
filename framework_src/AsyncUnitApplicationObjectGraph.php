@@ -31,7 +31,6 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         $customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
         $injector->share($customAssertionContext);
 
-        $mockBridgeFactory = $this->mockBridgeFactory ?? new SupportedMockBridgeFactory($injector);
         $injector->share(StaticAnalysisParser::class);
         $injector->alias(Parser::class, StaticAnalysisParser::class);
         $injector->share(TestSuiteRunner::class);
@@ -41,6 +40,7 @@ final class AsyncUnitApplicationObjectGraph extends CoreApplicationObjectGraph {
         $injector->alias(ConfigurationValidator::class, AsyncUnitConfigurationValidator::class);
         $injector->share($this->configurationFactory);
         $injector->alias(ConfigurationFactory::class, get_class($this->configurationFactory));
+        $mockBridgeFactory = $this->mockBridgeFactory ?? new SupportedMockBridgeFactory($injector);
         $injector->share($mockBridgeFactory);
         $injector->alias(MockBridgeFactory::class, get_class($mockBridgeFactory));
 

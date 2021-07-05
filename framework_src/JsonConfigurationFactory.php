@@ -70,7 +70,7 @@ final class JsonConfigurationFactory implements ConfigurationFactory {
                 }
 
                 public function getMockBridge(): ?string {
-                    return '';
+                    return $this->config->mockBridge ?? null;
                 }
             };
         });

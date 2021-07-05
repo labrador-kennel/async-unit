@@ -18,4 +18,8 @@ class FailingMockBridgeStub implements MockBridge {
     public function createMock(string $class): object {
         return new \stdClass();
     }
+
+    public function getAssertionCount(): int {
+        return 0;
+    }
 }

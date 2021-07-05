@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\ByteStream\OutputBuffer;
 use Amp\Success;
+use Cspray\Labrador\AsyncUnit\MockBridge\MockeryMockBridge;
 use Cspray\Labrador\AsyncUnit\Stub\TestConfiguration;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
@@ -54,6 +55,28 @@ class AsyncUnitFrameworkRunnerTest extends PHPUnitTestCase {
         );
 
         $this->assertFalse($frameworkRunner->run('configPath'));
+    }
+
+    public function testSingleMockWithNoAssertion() {
+        $environment = new StandardEnvironment(EnvironmentType::Test());
+        $logger = new NullLogger();
+        $configuration = new TestConfiguration();
+        $configuration->setTestDirectories([$this->implicitDefaultTestSuitePath('MockeryTestNoAssertion')]);
+        $configuration->setMockBridge(MockeryMockBridge::class);
+        $configurationFactory = $this->createMock(ConfigurationFactory::class);
+        $configurationFactory->expects($this->once())
+            ->method('make')
+            ->with('configPath')
+            ->willReturn(new Success($configuration));
+
+        $frameworkRunner = new AsyncUnitFrameworkRunner(
+            $environment,
+            $logger,
+            $configurationFactory,
+            new OutputBuffer()
+        );
+
+        $this->assertTrue($frameworkRunner->run('configPath'));
     }
 
 }

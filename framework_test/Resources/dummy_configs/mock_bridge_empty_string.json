@@ -1,3 +1,5 @@
 {
+  "testDirs": ["."],
+  "resultPrinter": "SomeClass",
   "mockBridge": ""
 }

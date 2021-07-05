@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnit\MockBridge\MockeryMockBridge;
 use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
 use PHPUnit\Framework\TestCase;
 
@@ -17,10 +18,7 @@ class JsonConfigurationFactoryTest extends TestCase {
 
     public function badSchemaProvider() : array {
         return [
-            'empty_object' => [
-                __DIR__ . '/Resources/dummy_configs/empty_object.json',
-                []
-            ],
+            'empty_object' => [__DIR__ . '/Resources/dummy_configs/empty_object.json'],
             'bad_keys' => [__DIR__ . '/Resources/dummy_configs/bad_keys.json'],
             'good_keys_bad_types' => [__DIR__ . '/Resources/dummy_configs/good_keys_bad_types.json'],
             'test_dirs_empty' => [__DIR__ . '/Resources/dummy_configs/test_dirs_empty.json'],
@@ -31,7 +29,8 @@ class JsonConfigurationFactoryTest extends TestCase {
             'plugins_empty_string' => [__DIR__ . '/Resources/dummy_configs/plugins_empty_string.json'],
             'plugins_non_string' => [__DIR__ . '/Resources/dummy_configs/plugins_non_string.json'],
             'result_printer_null' => [__DIR__ . '/Resources/dummy_configs/result_printer_null.json'],
-            'result_printer_empty' => [__DIR__ . '/Resources/dummy_configs/result_printer_empty.json']
+            'result_printer_empty' => [__DIR__ . '/Resources/dummy_configs/result_printer_empty.json'],
+            'mock_bridge_empty_string' => [__DIR__ . '/Resources/dummy_configs/mock_bridge_empty_string.json']
         ];
     }
 
@@ -67,6 +66,15 @@ class JsonConfigurationFactoryTest extends TestCase {
 
             $this->assertSame([getcwd()], $configuration->getTestDirectories());
             $this->assertSame(['FooBar'], $configuration->getPlugins());
+        });
+    }
+
+    public function testHasMockBridgeReturnsCorrectInformation() {
+        Loop::run(function() {
+            $configuration = yield $this->subject->make(__DIR__ . '/Resources/dummy_configs/has_mock_bridge.json');
+
+            $this->assertSame([getcwd()], $configuration->getTestDirectories());
+            $this->assertSame(MockeryMockBridge::class, $configuration->getMockBridge());
         });
     }
 

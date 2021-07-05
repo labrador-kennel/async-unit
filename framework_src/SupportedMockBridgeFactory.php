@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Auryn\Injector;
 
-class SupportedMockBridgeFactory implements MockBridgeFactory {
+final class SupportedMockBridgeFactory implements MockBridgeFactory {
 
     private Injector $injector;
 

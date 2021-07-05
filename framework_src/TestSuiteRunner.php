@@ -55,7 +55,7 @@ final class TestSuiteRunner {
         private MockBridgeFactory $mockBridgeFactory
     ) {}
 
-    public function setMockBridgeClass(string $mockBridge) : void {
+    public function setMockBridgeClass(?string $mockBridge) : void {
         $this->mockBridgeClass = $mockBridge;
     }
 
@@ -100,7 +100,13 @@ final class TestSuiteRunner {
                     foreach ($testMethodModels as $testMethodModel) {
                         /** @var AssertionContext $assertionContext */
                         /** @var AsyncAssertionContext $asyncAssertionContext */
-                        [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
+                        [
+                            $testCase,
+                            $assertionContext,
+                            $asyncAssertionContext,
+                            $expectationContext,
+                            $mockBridge
+                        ] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                         if ($testMethodModel->getDataProvider() !== null) {
                             $dataProvider = $testMethodModel->getDataProvider();
                             $dataSets = $testCase->$dataProvider();
@@ -111,13 +117,20 @@ final class TestSuiteRunner {
                                     $assertionContext,
                                     $asyncAssertionContext,
                                     $expectationContext,
+                                    $mockBridge,
                                     $testSuiteModel,
                                     $testCaseModel,
                                     $testMethodModel,
                                     $args,
                                     (string) $label // make sure 0-index array keys are treated as strings
                                 );
-                                [$testCase, $assertionContext, $asyncAssertionContext, $expectationContext] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
+                                [
+                                    $testCase,
+                                    $assertionContext,
+                                    $asyncAssertionContext,
+                                    $expectationContext,
+                                    $mockBridge
+                                ] = $this->invokeTestCaseConstructor($testCaseModel->getClass(), $testSuite, $testMethodModel);
                             }
                         } else {
                             yield $this->invokeTest(
@@ -126,6 +139,7 @@ final class TestSuiteRunner {
                                 $assertionContext,
                                 $asyncAssertionContext,
                                 $expectationContext,
+                                $mockBridge,
                                 $testSuiteModel,
                                 $testCaseModel,
                                 $testMethodModel
@@ -191,6 +205,7 @@ final class TestSuiteRunner {
         AssertionContext $assertionContext,
         AsyncAssertionContext $asyncAssertionContext,
         ExpectationContext $expectationContext,
+        ?MockBridge $mockBridge,
         TestSuiteModel $testSuiteModel,
         TestCaseModel $testCaseModel,
         TestModel $testModel,
@@ -203,6 +218,7 @@ final class TestSuiteRunner {
             $assertionContext,
             $asyncAssertionContext,
             $expectationContext,
+            $mockBridge,
             $testSuiteModel,
             $testCaseModel,
             $testModel,
@@ -222,7 +238,9 @@ final class TestSuiteRunner {
                 return;
             }
 
-            $expectationContext->startExpecting();
+            if (isset($mockBridge)) {
+                $mockBridge->initialize();
+            }
 
             yield $this->invokeHooks($testCase->testSuite(), $testSuiteModel, HookType::BeforeEachTest(), TestSetupException::class);
             yield $this->invokeHooks($testCase, $testCaseModel, HookType::BeforeEach(), TestSetupException::class);
@@ -264,6 +282,9 @@ final class TestSuiteRunner {
                     Loop::cancel($timeoutWatcherId);
                 }
                 $expectationContext->setActualOutput(ob_get_clean());
+                if (isset($mockBridge)) {
+                    $assertionContext->addToAssertionCount($mockBridge->getAssertionCount());
+                }
                 // If something else failed we don't need to make validations about expectations
                 if (is_null($failureException)) {
                     $failureException = yield $expectationContext->validateExpectations();

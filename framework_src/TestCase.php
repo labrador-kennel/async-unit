@@ -6,7 +6,6 @@ use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Context\TestExpector;
-use Cspray\Labrador\AsyncUnit\Context\TestMocker;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 
 /**
@@ -32,7 +31,7 @@ abstract class TestCase {
         private AssertionContext $assertionContext,
         private AsyncAssertionContext $asyncAssertionContext,
         private ExpectationContext $expectationContext,
-        private ?TestMocker $testMocker = null
+        private ?MockBridge $testMocker = null
     ) {}
 
     final public function testSuite() : TestSuite {
@@ -59,7 +58,7 @@ abstract class TestCase {
         return $this->expectationContext;
     }
 
-    final protected function mocks() : TestMocker {
+    final public function mocks() : MockBridge {
         if (is_null($this->testMocker)) {
             $msg = 'Attempted to create a mock but no MockBridge was defined. Please ensure you\'ve configured a mockBridge in your configuration.';
             throw new InvalidStateException($msg);

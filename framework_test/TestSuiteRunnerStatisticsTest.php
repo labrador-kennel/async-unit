@@ -10,6 +10,7 @@ use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestSuiteFinishedEvent;
+use Cspray\Labrador\AsyncUnit\MockBridge\MockeryMockBridge;
 use Cspray\Labrador\AsyncUnit\Statistics\AggregateSummary;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
@@ -23,7 +24,7 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
     use TestSuiteRunnerScaffolding;
 
     public function setUp(): void {
-        $this->buildTestSuiteRunner(new MockBridgeFactoryStub());
+        $this->buildTestSuiteRunner();
     }
 
     public function testTestProcessingStartedHasAggregateSummary() {
@@ -1195,6 +1196,23 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ProcessingFinishedEvent::class, $state->event);
             $this->assertGreaterThan(1000, $state->event->getTarget()->getMemoryUsageInBytes());
+        });
+    }
+
+    public function testTestCaseSummaryMockBridgeAssertionCount() {
+        Loop::run(function() {
+            $results = yield $this->parser->parse($this->implicitDefaultTestSuitePath('MockeryTestNoAssertion'));
+            $state = new stdClass();
+            $state->event = null;
+            $this->emitter->on(Events::TEST_PROCESSED, function($event) use($state) {
+                 $state->event = $event;
+            });
+
+            $this->testSuiteRunner->setMockBridgeClass(MockeryMockBridge::class);
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertInstanceOf(TestProcessedEvent::class, $state->event);
+            $this->assertEquals(1, $state->event->getTarget()->getTestCase()->getAssertionCount());
         });
     }
 }
