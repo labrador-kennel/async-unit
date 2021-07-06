@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnitCli;
 
 use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncUnit\AsyncUnitApplication;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
@@ -27,8 +28,6 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
      */
     private array $disabledTests = [];
 
-    public function __construct(private string $version) {}
-
     public function registerEvents(EventEmitter $emitter, OutputStream $output) : void {
         $output = new TerminalOutputStream($output);
         $successOutput = $output->green();
@@ -49,7 +48,7 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
             'Alright, waking the hamsters up!',
         ];
         $inspirationalMessage = $inspirationalMessages[array_rand($inspirationalMessages)];
-        yield $output->writeln(sprintf("AsyncUnit v%s - %s\n", $this->version, $inspirationalMessage));
+        yield $output->writeln(sprintf("AsyncUnit v%s - %s\n", AsyncUnitApplication::VERSION, $inspirationalMessage));
         yield $output->writeln(sprintf("Runtime: PHP %s\n", phpversion()));
     }
 

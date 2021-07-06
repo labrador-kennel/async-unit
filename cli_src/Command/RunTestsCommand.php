@@ -2,41 +2,74 @@
 
 namespace Cspray\Labrador\AsyncUnitCli\Command;
 
-use Cspray\Labrador\AsyncUnitCli\AsyncUnitFrameworkRunner;
-use Cspray\Labrador\AsyncUnitCli\SymfonyConsoleTerminalOutput;
+use Amp\File\Driver as FileDriver;
+use Amp\Loop;
+use Cspray\Labrador\AsyncUnit\AsyncUnitFrameworkRunner;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use function Amp\ByteStream\getStdout;
+use Symfony\Component\Console\Style\SymfonyStyle;
 
-class RunTestsCommand extends Command {
+class RunTestsCommand extends AbstractCommand {
 
     public function __construct(
+        private FileDriver $fileDriver,
         private AsyncUnitFrameworkRunner $frameworkRunner,
-        private string $cwd
+        private string $defaultConfigFile
     ) {
-        parent::__construct('run');
+        parent::__construct();
     }
 
     protected function configure() {
-        $this->setDescription('Run a set of tests on an Amphp Loop');
-        $this->addArgument('test-dirs', InputArgument::REQUIRED | InputArgument::IS_ARRAY, 'The directories holding your tests');
+        $this->addOption('config', mode: InputOption::VALUE_REQUIRED);
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     * @return int
-     */
-    protected function execute(InputInterface $input, OutputInterface $output) {
-        $directories = [];
-        foreach ($input->getArgument('test-dirs') as $testDir) {
-            $directories[] = $this->cwd . '/' . $testDir;
+    public function execute(InputInterface $input, OutputInterface $output) : int {
+        $runTests = true;
+        $configPath = $input->getOption('config') ?? $this->defaultConfigFile;
+        Loop::run(function() use($input, $output, &$runTests, $configPath) {
+            if (!yield $this->fileDriver->isfile($configPath)) {
+                $style = new SymfonyStyle($input, $output);
+                $style->writeln($this->getNoDefaultConfigurationMessage());
+                $style->newLine();
+
+                $generateConfig = $this->confirm(
+                    $input,
+                    $output,
+                    'Would you like to run \'config:generate\' now?',
+                    true
+                );
+
+                if (!$generateConfig) {
+                    $style->writeln('Ok! Exiting.');
+                    $runTests = false;
+                } else {
+                    $generateConfigCommand = $this->getApplication()->find('config:generate');
+                    $args = new ArrayInput([
+                        '--file' => $configPath
+                    ]);
+                    $generateConfigCommand->run($args, $output);
+                }
+            }
+        });
+
+        if ($runTests) {
+            $this->frameworkRunner->run($configPath);
         }
 
-        $isOk = $this->frameworkRunner->run($directories, getStdout());
-        return $isOk ? Command::SUCCESS : Command::FAILURE;
+        return Command::SUCCESS;
     }
 
+    private function getNoDefaultConfigurationMessage() : string {
+        return <<<'shell'
+Running AsyncUnit tests without a configuration is no longer supported. You can run the 'config:generate' command to 
+create a default configuration and get started quickly. Otherwise please pass a file path to the --config option.
+shell;
+    }
+
+    protected function getCommandName(): string {
+        return 'run';
+    }
 }

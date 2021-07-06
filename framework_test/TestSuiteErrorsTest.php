@@ -11,6 +11,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Stub\MockBridgeFactoryStub;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
 class TestSuiteErrorsTest extends PHPUnitTestCase {
@@ -18,6 +19,9 @@ class TestSuiteErrorsTest extends PHPUnitTestCase {
     use UsesAcmeSrc;
     use TestSuiteRunnerScaffolding;
 
+    public function setUp(): void {
+        $this->buildTestSuiteRunner();
+    }
 
     public function testImplicitDefaultTestSuiteExceptionThrowingBeforeAllHaltsTestProcessing() {
         Loop::run(function() {

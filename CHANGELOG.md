@@ -2,40 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 0.5.0 - 2021-05-??
+## 0.6.0 - 2021-07-??
+
+This release has significant breaking changes in it. Please ensure you have read over what has changed before upgrading.
+
+### Added
+
+- Added a `bin/asyncunit config:generate` command that will create a standard `async-unit.json` file in your project's root directory.
+- Introduce concept of a `MockBridge` that allows third-party mocking libraries to be integrated into a test suite.
+- Introduce a `JsonConfigurationFactory` implementation that takes over the previous functionality provided by the `ConfigurationFactory`.
+- Introduce a `ConfigurationValidator` implementation that will ensure an instantiated `Configuration` is valid and tests can properly run.
+- Added an `AsyncUnitApplication::VERSION` constant for the current version of the application.
+
+### Changed
+
+- Renamed `TestFrameworkApplication` -> `AsyncUnitApplication`
+- Renamed `TestFameworkApplicationObjectGraph` -> `AsyncUnitApplicationObjectGraph`
+- Refactored the `ConfigurationFactory` into an interface with a single method to make `Configuration` instances.
+- Moved the `AsyncUnitFrameworkRunner` out of the CLI tool and into the framework itself. This allows for easier testing and more control over how the framework is processed. This implementation is meant to act as a facade that only requires its dependencies and can run the desired tests while returning a simple boolean value for whether there were test failures.
+- The `AsyncUnitApplication` now requires a `ConfigurationFactory` and `ConfigurationValidator` as constructor dependencies. Additionally, instead of passing the test directories to scan a configuration file is passed and the directories are read from that configuration.
+- Ensure that `ResultPrinterPlugin` custom loading happens within the object graph and isn't something necessary to add later as additional boilerplate.
+
+### Removed
+
+- Removed the `RunTestsFromConfgurationCommand` in the CLI app.
+
+## 0.5.0 - 2021-05-26
 
 ### Added
 
 - Introduced the `amphp/file` library to handle async I/O on the filesystem.
-- Introduced a `StaticAnalysisParser` that uses PHP-Parser and makes significant improvements over the 
-previous parser implementation.
+- Introduced a `StaticAnalysisParser` that uses PHP-Parser and makes significant improvements over the previous parser implementation.
 - Added the `labrador-kennel/styled-byte-stream` project to support formatted terminal output.
-- Adds the ability to expect that no assertions are expected to take place. If a test expects no assertions 
-and an assertion is made it results in a failure. This method accounts for both `Assertion` and `AsyncAssertion` types.
-- Adds a `Context\TestExpector` that represents the expectations, for example whether an exception is thrown 
-or the amount of assertions to expect, that a test can make.
-- Adds a `#[Timeout]` Attribute that can be annotated on tests, `TestCase`, or `TestSuite` to cause a TestFailure 
-if the test takes longer than the provided number of milliseconds.
-- Introduces a comprehensive statistics API that's accessible through the event system to gather information about the 
-system both pre and post test processing.
+- Adds the ability to expect that no assertions are expected to take place. If a test expects no assertions and an assertion is made it results in a failure. This method accounts for both `Assertion` and `AsyncAssertion` types.
+- Adds a `Context\TestExpector` that represents the expectations, for example whether an exception is thrown or the amount of assertions to expect, that a test can make.
+- Adds a `#[Timeout]` Attribute that can be annotated on tests, `TestCase`, or `TestSuite` to cause a TestFailure if the test takes longer than the provided number of milliseconds.
+- Introduces a comprehensive statistics API that's accessible through the event system to gather information about the system both pre and post test processing.
 
 ### Changed
 
 - **Breaking Change!** Refactored the `Parser` implementation into an interface to support different types of parsers in the future.
 - **Breaking Change!** Updates the `Parser::parse` return type to be a `Promise` and use async I/O.
-- **Breaking Change!** The `TestFrameworkApplication` now expects to get a `Parser` implementation and the directories to
-parse as a constructor dependency. The `TestFrameworkApplication` is now responsible for initiating parsing.
+- **Breaking Change!** The `TestFrameworkApplication` now expects to get a `Parser` implementation and the directories to parse as a constructor dependency. The `TestFrameworkApplication` is now responsible for initiating parsing.
 - **Breaking Change!** Removes the `TestCase::expectException*` methods. A `TestCase::expect()` now returns a `TestExpector`
 
 ## 0.4.2 - 2021-05-09
 
 ### Changed
 
-- Updates the exception thrown during compilation if a class annotated with an AsyncUnit Attribute cannot be loaded to 
-better inform the user what has happened.
+- Updates the exception thrown during compilation if a class annotated with an AsyncUnit Attribute cannot be loaded to better inform the user what has happened.
 
 ### Fixed
 
@@ -54,8 +71,7 @@ better inform the user what has happened.
 - Added a `#[Disabled]` Attribute that allows for annotating a test, TestCase, or TestSuite to not run. [#63](https://github.com/labrador-kennel/async-unit/pull/63)
 - Adds the total time and memory usage to default test output. [#64](https://github.com/labrador-kennel/async-unit/pull/64)
 - Ensures that any test that has output is marked as a failure. [#67](https://github.com/labrador-kennel/async-unit/pull/67)
-- Randomize all tests so none of them process in any specific order. Depending on the order of the tests is a code smell 
-  in your application or testing suite. [#68](https://github.com/labrador-kennel/async-unit/pull/68)
+- Randomize all tests so none of them process in any specific order. Depending on the order of the tests is a code smell in your application or testing suite. [#68](https://github.com/labrador-kennel/async-unit/pull/68)
 - Adds `assert()->instanceOf`, `assert()->isEmpty`, and `assert()->countEquals` along with their asynchronous counterparts. [#69](https://github.com/labrador-kennel/async-unit/pull/69)
 - Adds the ability to expect that an exception is thrown from your test. [#70](https://github.com/labrador-kennel/async-unit/pull/70)
 - Adds a `TestResult::getState` method that returns an enum whether test passed, failed, or was disabled.
@@ -71,16 +87,14 @@ been invoked if it was disabled.
 
 ### Removed
 
-- **Breaking Change!** Removed the `TestResult::isSuccessful` method. With the addition of a disabled boolean the state 
-of the test became too complex to manage with booleans.
+- **Breaking Change!** Removed the `TestResult::isSuccessful` method. With the addition of a disabled boolean the state of the test became too complex to manage with booleans.
 
 ## 0.3.0 - 2021-05-05
 
 ### Added
 
 - Adds initial implementation of an explicit TestSuite. [#50](https://github.com/labrador-kennel/async-unit/pull/50)
-- Invoke all existing hooks for an explicit TestSuite. Adds `#[BeforeEachTest]` and `#[AfterEachTest]` hooks for the 
-  TestSuite to have access to invoking hooks around each test. [#54](https://github.com/labrador-kennel/async-unit/pull/54)
+- Invoke all existing hooks for an explicit TestSuite. Adds `#[BeforeEachTest]` and `#[AfterEachTest]` hooks for the TestSuite to have access to invoking hooks around each test. [#54](https://github.com/labrador-kennel/async-unit/pull/54)
 - Allow for a TestSuite and TestCases associated to it to read and write arbitrary state. [#57](https://github.com/labrador-kennel/async-unit/pull/57)
 - Adds a `TestOutput` and `ResultPrinterPlugin` implementations to facilitate creating result output that's not tied to Symfony 
 Console. [#58](https://github.com/labrador-kennel/async-unit/pull/58)
@@ -90,11 +104,9 @@ Console. [#58](https://github.com/labrador-kennel/async-unit/pull/58)
   
 ### Changed
 
-- **Breaking Change!** Renamed the CLI namespace to `Cspray\Labrador\AsyncUnitCli` to more clearly separate it from the 
-framework itself.
+- **Breaking Change!** Renamed the CLI namespace to `Cspray\Labrador\AsyncUnitCli` to more clearly separate it from the framework itself.
 - **Breaking Change!** Renames Event classes to no longer suffix `Event` at the end of the class name.
-- **Breaking Change!** Refactor `AssertionResult` to return implementations of  new interface `AssertionMessage` that 
-  represents the summary and details of the Assertion.
+- **Breaking Change!** Refactor `AssertionResult` to return implementations of  new interface `AssertionMessage` that represents the summary and details of the Assertion.
 
 
 ## 0.2.0 - 2021-04-30
@@ -108,10 +120,7 @@ framework itself.
 
 ### Changed
 
-- **Breaking Change!** Changed the `Assertion::assert` and `AsyncAssertion::assert` methods to no longer take any parameters. This change is 
-required to better support custom Assertions. When interacting with a custom Assertion we don't know what's expected,
-actual, or a custom error message. Assertions are now expected to pass everything they need to perform their task into 
-the constructor, including the actual value being asserted.
+- **Breaking Change!** Changed the `Assertion::assert` and `AsyncAssertion::assert` methods to no longer take any parameters. This change is required to better support custom Assertions. When interacting with a custom Assertion we don't know what's expected, actual, or a custom error message. Assertions are now expected to pass everything they need to perform their task into the constructor, including the actual value being asserted.
   
 ### Fixes
 

@@ -3,8 +3,10 @@
 namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Amp\Promise;
+use Cspray\Labrador\AsyncUnit\Exception\MockFailureException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
+use Cspray\Labrador\AsyncUnit\MockBridge;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Throwable;
 use function Amp\call;
@@ -24,7 +26,8 @@ final class ExpectationContext implements TestExpector {
     private function __construct(
         private TestModel $testModel,
         private AssertionContext $assertionContext,
-        private AsyncAssertionContext $asyncAssertionContext
+        private AsyncAssertionContext $asyncAssertionContext,
+        private ?MockBridge $mockBridge
     ) {}
 
     public function setActualOutput(string $output) : void {
@@ -52,6 +55,7 @@ final class ExpectationContext implements TestExpector {
             return $this->validateThrownException() ??
                 $this->validateAssertionCount() ??
                 $this->validateOutput() ??
+                $this->validateMocks() ??
                 null;
         });
     }
@@ -134,6 +138,19 @@ final class ExpectationContext implements TestExpector {
                 $this->actualOutput
             );
             return new TestOutputException($msg);
+        }
+
+        return null;
+    }
+
+    private function validateMocks() : ?MockFailureException {
+        if (!is_null($this->mockBridge)) {
+            try {
+                $this->mockBridge->finalize();
+                return null;
+            } catch (MockFailureException $mockFailureException) {
+                return $mockFailureException;
+            }
         }
 
         return null;

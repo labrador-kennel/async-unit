@@ -4,16 +4,20 @@ namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
 use Amp\Success;
-use Cspray\Labrador\AsyncUnit\Assertion\AssertionComparisonDisplay\BinaryVarExportAssertionComparisonDisplay;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Stub\AssertNotTestCase;
 use Cspray\Labrador\AsyncUnit\Stub\CustomAssertionTestCase;
 use Cspray\Labrador\AsyncUnit\Stub\FailingTestCase;
+use Cspray\Labrador\AsyncUnit\Stub\MockAwareTestCase;
+use Cspray\Labrador\AsyncUnit\Stub\MockBridgeStub;
+use Psr\Log\LoggerInterface;
 use function Amp\call;
 
 class TestCaseTest extends \PHPUnit\Framework\TestCase {
@@ -162,7 +166,37 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         });
     }
 
-    public function getSubjectAndContexts(string $testCase) {
+    public function testCreatingMockWithNoBridge() {
+        Loop::run(function() {
+            /** @var MockAwareTestCase $subject */
+            [$subject] = $this->getSubjectAndContexts(MockAwareTestCase::class);
+
+            $this->expectException(InvalidStateException::class);
+            $this->expectExceptionMessage('Attempted to create a mock but no MockBridge was defined. Please ensure you\'ve configured a mockBridge in your configuration.');
+
+            $subject->checkCreatingMock();
+        });
+    }
+
+    public function testCreatingMockWithBridge() {
+        Loop::run(function() {
+            $mockBridge = new MockBridgeStub();
+            /** @var MockAwareTestCase $subject */
+            [$subject] = $this->getSubjectAndContexts(MockAwareTestCase::class, $mockBridge);
+
+            $subject->checkCreatingMock();
+
+            $this->assertNotNull($subject->getCreatedMock());
+            $this->assertSame(LoggerInterface::class, $subject->getCreatedMock()->class);
+
+            // We do not expect initialize or finalize to be called here because that's controlled by the TestSuiteRunner
+            $this->assertSame([
+                'createMock ' . LoggerInterface::class,
+            ], $mockBridge->getCalls());
+        });
+    }
+
+    public function getSubjectAndContexts(string $testCase, MockBridge $mockBridge = null) {
         $customAssertionContext = (new \ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
         $reflectedAssertionContext = new \ReflectionClass(AssertionContext::class);
         $assertionContext = $reflectedAssertionContext->newInstanceWithoutConstructor();
@@ -181,13 +215,20 @@ class TestCaseTest extends \PHPUnit\Framework\TestCase {
         $expectationContext = $reflectedExpectationContext->newInstanceWithoutConstructor();
         $expectationContextConstructor = $reflectedExpectationContext->getConstructor();
         $expectationContextConstructor->setAccessible(true);
-        $expectationContextConstructor->invoke($expectationContext, $fakeTestModel, $assertionContext, $asyncAssertionContext);
+        $expectationContextConstructor->invoke($expectationContext, $fakeTestModel, $assertionContext, $asyncAssertionContext, $mockBridge);
 
         $reflectedSubject = new \ReflectionClass($testCase);
         $constructor = $reflectedSubject->getConstructor();
         $constructor->setAccessible(true);
         $subject = $reflectedSubject->newInstanceWithoutConstructor();
-        $constructor->invoke($subject, (new \ReflectionClass(ImplicitTestSuite::class))->newInstanceWithoutConstructor(), $assertionContext, $asyncAssertionContext, $expectationContext);
+        $constructor->invoke(
+            $subject,
+            (new \ReflectionClass(ImplicitTestSuite::class))->newInstanceWithoutConstructor(),
+            $assertionContext,
+            $asyncAssertionContext,
+            $expectationContext,
+            $mockBridge
+        );
 
         return [$subject, $assertionContext, $asyncAssertionContext, $customAssertionContext, $expectationContext];
     }

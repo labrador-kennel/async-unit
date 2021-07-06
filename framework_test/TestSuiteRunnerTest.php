@@ -5,14 +5,18 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Loop;
 use Amp\Promise;
 use Amp\Success;
+use Cspray\Labrador\Application;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidArgumentException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
+use Cspray\Labrador\AsyncUnit\Exception\MockFailureException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Stub\FailingMockBridgeStub;
+use Cspray\Labrador\AsyncUnit\Stub\MockBridgeStub;
 use Exception;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 use function Amp\call;
@@ -20,9 +24,7 @@ use function Amp\call;
 class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     use UsesAcmeSrc;
-    use TestSuiteRunnerScaffolding {
-        setUp as constructDependencies;
-    }
+    use TestSuiteRunnerScaffolding;
 
     /**
      * @var TestResult[]
@@ -30,7 +32,7 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
     private array $actual = [];
 
     public function setUp() : void {
-        $this->constructDependencies();
+        $this->buildTestSuiteRunner();
         $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) {
             $this->actual[] = $event->getTarget();
         });
@@ -455,7 +457,6 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
 
     public function testExplicitTestSuiteTestSuiteDisabledHookNotInvoked() {
         Loop::run(function() {
-            $dir = $this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked');
             yield $this->parseAndRun($this->explicitTestSuitePath('TestSuiteDisabledHookNotInvoked'));
 
             $testSomethingResult = $this->fetchTestResultForTest(ExplicitTestSuite\TestSuiteDisabledHookNotInvoked\MyTestCase::class, 'testSomething');
@@ -536,11 +537,13 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             $results = yield $this->parser->parse($dir);
             $testSuites = $results->getTestSuiteModels();
             $randomizer = $this->getMockBuilder(Randomizer::class)->getMock();
+            $mockBridgeFactory = $this->createMock(MockBridgeFactory::class);
 
             $testSuiteRunner = new TestSuiteRunner(
                 $this->emitter,
                 $this->customAssertionContext,
-                $randomizer
+                $randomizer,
+                $mockBridgeFactory
             );
 
             $this->assertCount(1, $testSuites);
@@ -683,6 +686,57 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\TestHasTimeout\MyTestCase::class
             );
             $this->assertSame($msg, $this->actual[0]->getException()->getMessage());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteSingleMockTestWithBridgeSet() : void {
+        Loop::run(function() {
+            $this->testSuiteRunner->setMockBridgeClass(MockBridgeStub::class);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleMockTest'));
+
+            $this->assertCount(1, $this->actual);
+            $testResult = $this->actual[0];
+            /** @var ImplicitDefaultTestSuite\SingleMockTest\MyTestCase $testCase */
+            $testCase = $testResult->getTestCase();
+
+            $this->assertEquals(TestState::Passed(), $testResult->getState());
+            $this->assertNotNull($testCase->getCreatedMock());
+            $createdMock = $testCase->getCreatedMock()->class;
+
+            $this->assertSame(Application::class, $createdMock);
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteSingleMockTestWithBridgeSetInitializeAndFinalizeCalled() : void {
+        Loop::run(function() {
+            $this->testSuiteRunner->setMockBridgeClass(MockBridgeStub::class);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleMockTest'));
+
+            $this->assertCount(1, $this->actual);
+
+            $mockBridge = $this->actual[0]->getTestCase()->mocks();
+            $expected = ['initialize', 'createMock ' . Application::class, 'finalize'];
+            $actual = $mockBridge->getCalls();
+
+            $this->assertSame($expected, $actual);
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteSingleMockTestWithFailingBridgeHasFailedTest() : void {
+        Loop::run(function() {
+            $this->buildTestSuiteRunner();
+            $this->emitter->on(Events::TEST_PROCESSED, function(TestProcessedEvent $event) {
+                $this->actual[] = $event->getTarget();
+            });
+            $this->testSuiteRunner->setMockBridgeClass(FailingMockBridgeStub::class);
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('SingleMockTest'));
+
+            $this->assertCount(1, $this->actual);
+            $testResult = $this->actual[0];
+
+            $this->assertEquals(TestState::Failed(), $testResult->getState());
+            $this->assertInstanceOf(MockFailureException::class, $testResult->getException());
+            $this->assertSame('Thrown from the FailingMockBridgeStub', $testResult->getException()->getMessage());
         });
     }
 

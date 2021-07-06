@@ -6,6 +6,7 @@ use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Context\TestExpector;
+use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 
 /**
  * Represents a type that acts a collection of #[Test] methods to be ran as well as the code necessary to support
@@ -29,7 +30,8 @@ abstract class TestCase {
         private TestSuite $testSuite,
         private AssertionContext $assertionContext,
         private AsyncAssertionContext $asyncAssertionContext,
-        private ExpectationContext $expectationContext
+        private ExpectationContext $expectationContext,
+        private ?MockBridge $testMocker = null
     ) {}
 
     final public function testSuite() : TestSuite {
@@ -56,7 +58,16 @@ abstract class TestCase {
         return $this->expectationContext;
     }
 
-    private function setAssertionFileAndLine(AssertionContext|AsyncAssertionContext $context, string $method, array $backtrace) {
+    final public function mocks() : MockBridge {
+        if (is_null($this->testMocker)) {
+            $msg = 'Attempted to create a mock but no MockBridge was defined. Please ensure you\'ve configured a mockBridge in your configuration.';
+            throw new InvalidStateException($msg);
+        }
+
+        return $this->testMocker;
+    }
+
+    private function setAssertionFileAndLine(AssertionContext|AsyncAssertionContext $context, string $method, array $backtrace) : AssertionContext|AsyncAssertionContext {
         foreach ($backtrace as $trace) {
             if (!isset($trace['class']) && !isset($trace['function'])) {
                 continue;

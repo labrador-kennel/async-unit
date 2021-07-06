@@ -2,6 +2,7 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Auryn\Injector;
 use Cspray\Labrador\AsyncEvent\AmpEventEmitter;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
@@ -14,13 +15,20 @@ trait TestSuiteRunnerScaffolding {
     private EventEmitter $emitter;
     private CustomAssertionContext $customAssertionContext;
     private TestSuiteRunner $testSuiteRunner;
+    private MockBridgeFactory $mockBridgeFactory;
 
-    public function setUp() : void {
+    public function buildTestSuiteRunner() : void {
         $this->parser = new StaticAnalysisParser();
         $this->emitter = new AmpEventEmitter();
         /** @noinspection PhpFieldAssignmentTypeMismatchInspection */
         $this->customAssertionContext = (new ReflectionClass(CustomAssertionContext::class))->newInstanceWithoutConstructor();
-        $this->testSuiteRunner = new TestSuiteRunner($this->emitter, $this->customAssertionContext, new NullRandomizer());
+        $this->mockBridgeFactory = new SupportedMockBridgeFactory(new Injector());
+        $this->testSuiteRunner = new TestSuiteRunner(
+            $this->emitter,
+            $this->customAssertionContext,
+            new NullRandomizer(),
+            $this->mockBridgeFactory
+        );
     }
 
 }

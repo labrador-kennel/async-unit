@@ -28,6 +28,10 @@ final class AssertionContext {
 
     private function __construct(private CustomAssertionContext $customAssertionContext) {}
 
+    public function addToAssertionCount(int $assertionCount) : void {
+        $this->count += $assertionCount;
+    }
+
     public function arrayEquals(array $expected, array $actual, string $message = null) : void {
         $isNot = $this->isNot;
         $this->invokedAssertionContext();
