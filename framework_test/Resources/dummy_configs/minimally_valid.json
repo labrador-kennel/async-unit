@@ -1,5 +1,5 @@
 {
   "testDirs": ["."],
-  "resultPrinter": "Cspray\\Labrador\\AsyncUnitCli\\DefaultResultPrinter",
+  "resultPrinter": "Cspray\\Labrador\\AsyncUnitCli\\TerminalResultPrinter",
   "mockBridge": "Cspray\\Labrador\\AsyncUnit\\Stub\\MockBridgeStub"
 }

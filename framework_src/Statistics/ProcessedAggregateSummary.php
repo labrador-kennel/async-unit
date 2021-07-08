@@ -26,6 +26,8 @@ interface ProcessedAggregateSummary {
 
     public function getFailedTestCount() : int;
 
+    public function getErroredTestCount() : int;
+
     public function getAssertionCount() : int;
 
     public function getAsyncAssertionCount() : int;

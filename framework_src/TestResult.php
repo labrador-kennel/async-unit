@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidStateException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
+use Cspray\Labrador\AsyncUnit\Exception\TestErrorException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use SebastianBergmann\Timer\Duration;
 
@@ -31,10 +32,7 @@ interface TestResult {
 
     public function getDuration() : Duration;
 
-    /**
-     * @return TestFailedException|AssertionFailedException|TestDisabledException|null
-     */
-    public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null;
+    public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|TestErrorException|null;
 
 
 }

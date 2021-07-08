@@ -153,7 +153,7 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
     public function processedAggregateSummaryWithCorrectTotalTestCaseCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 6],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), 7],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), 2]
         ];
     }
@@ -218,9 +218,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
     public function processedAggregateSummaryWithCorrectTotalTestCountProvider() : array {
         return [
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), 12],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), 13],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), 3],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3]
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), 1]
         ];
     }
 
@@ -253,7 +254,8 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), 3],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), 3],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3]
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 3],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), 0]
         ];
     }
 
@@ -286,7 +288,8 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             [$this->implicitDefaultTestSuitePath('SingleTest'), 1],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), 8],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0]
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), 0]
         ];
     }
 
@@ -320,7 +323,8 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             [$this->implicitDefaultTestSuitePath('KitchenSink'), 1],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
             [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0],
-            [$this->implicitDefaultTestSuitePath('FailedAssertion'), 1]
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), 1],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), 0]
         ];
     }
 
@@ -345,6 +349,41 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
             $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
             $this->assertSame($expected, $testFinishedEvent->getTarget()->getFailedTestCount());
+        });
+    }
+
+    public function processedAggregateSummaryWithCorrectErroredTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), 0],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), 1],
+            [$this->explicitTestSuitePath('TestSuiteDisabled'), 0],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), 0],
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), 0],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), 1]
+        ];
+    }
+
+    /**
+     * @dataProvider processedAggregateSummaryWithCorrectErroredTestCountProvider
+     */
+    public function testProcessedAggregateSummaryWithCorrectErroredTestCount(string $path, int $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $state = new stdClass();
+            $state->data = [];
+
+            $this->emitter->on(Events::PROCESSING_FINISHED, function($event) use($state) {
+                $state->data[] = $event;
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertCount(1, $state->data);
+            /** @var ProcessingFinishedEvent $testFinishedEvent */
+            $testFinishedEvent = $state->data[0];
+
+            $this->assertInstanceOf(ProcessingFinishedEvent::class, $testFinishedEvent);
+            $this->assertSame($expected, $testFinishedEvent->getTarget()->getErroredTestCount());
         });
     }
 
@@ -459,8 +498,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                     ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class,
                     ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class,
                 ],
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => [
-                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class
+                ImplicitTestSuite::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class,
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class
                 ]
             ]],
             [$this->explicitTestSuitePath('TestSuiteDisabled'), [
@@ -486,7 +526,16 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
             yield $this->testSuiteRunner->runTestSuites($results);
 
-            $this->assertEqualsCanonicalizing($expected, $actual);
+            $testSuites = array_keys($actual);
+
+            $this->assertNotEmpty($testSuites);
+
+            foreach ($testSuites as $testSuite) {
+                $this->assertArrayHasKey($testSuite, $expected);
+
+                $this->assertEqualsCanonicalizing($expected[$testSuite], $actual[$testSuite]);
+            }
+
         });
     }
 
@@ -579,6 +628,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             ]],
             [$this->implicitDefaultTestSuitePath('TestDisabled'), [
                 ImplicitTestSuite::class => 2
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitTestSuite::class => 1
             ]]
         ];
     }
@@ -618,6 +670,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             ]],
             [$this->implicitDefaultTestSuitePath('TestDisabled'), [
                 ImplicitTestSuite::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitTestSuite::class => 0
             ]]
         ];
     }
@@ -651,6 +706,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
             [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 8]],
             [$this->implicitDefaultTestSuitePath('TestDisabled'), [
                 ImplicitTestSuite::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitTestSuite::class => 0
             ]]
         ];
     }
@@ -682,7 +740,8 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
             ]],
             [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 1]],
-            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]]
+            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 1]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [ImplicitTestSuite::class => 0]]
         ];
     }
 
@@ -696,6 +755,38 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
             $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
                 $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getFailedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestSuiteSummaryErroredTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [ImplicitTestSuite::class => 0]],
+            [$this->implicitDefaultTestSuitePath('TestCaseDisabled'), [ImplicitTestSuite::class => 0]],
+            [$this->explicitTestSuitePath('TestCaseDefinesTestSuite'), [
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MyFirstTestSuite::class => 0,
+                ExplicitTestSuite\TestCaseDefinesTestSuite\MySecondTestSuite::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), [ImplicitTestSuite::class => 0]],
+            [$this->implicitDefaultTestSuitePath('FailedNotAssertion'), [ImplicitTestSuite::class => 0]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [ImplicitTestSuite::class => 1]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestSuiteSummaryErroredTestCountProvider
+     */
+    public function testProcessedTestSuiteSummaryHasErroredTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_SUITE_FINISHED, function(TestSuiteFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestSuiteName()] = $event->getTarget()->getErroredTestCount();
             });
 
             yield $this->testSuiteRunner->runTestSuites($results);
@@ -777,7 +868,8 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class,
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => ImplicitTestSuite::class
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => ImplicitTestSuite::class,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => ImplicitTestSuite::class
             ]]
         ];
     }
@@ -833,6 +925,9 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                     ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#1',
                     ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#2',
                     ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class . '::checkFood#3'
+                ],
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => [
+                    ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class . '::throwException'
                 ]
             ]]
         ];
@@ -870,6 +965,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class => 1
             ]]
         ];
     }
@@ -906,6 +1005,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 1,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class => 0
             ]]
         ];
     }
@@ -942,6 +1045,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class => 0
             ]]
         ];
     }
@@ -981,6 +1088,10 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class => 0
             ]]
         ];
     }
@@ -995,6 +1106,49 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
 
             $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
                 $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getFailedTestCount();
+            });
+
+            yield $this->testSuiteRunner->runTestSuites($results);
+
+            ksort($expected);
+            ksort($actual);
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function processedTestCaseSummaryErroredTestCountProvider() : array {
+        return [
+            [$this->implicitDefaultTestSuitePath('SingleTest'), [
+                ImplicitDefaultTestSuite\SingleTest\MyTestCase::class => 0
+            ]],
+            [$this->implicitDefaultTestSuitePath('FailedAssertion'), [
+                ImplicitDefaultTestSuite\FailedAssertion\MyTestCase::class => 0,
+            ]],
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), [
+                ImplicitDefaultTestSuite\KitchenSink\FirstTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 1
+            ]],
+            [$this->implicitDefaultTestSuitePath('ExceptionThrowingTest'), [
+                ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class => 1
+            ]]
+        ];
+    }
+
+    /**
+     * @dataProvider processedTestCaseSummaryErroredTestCountProvider
+     */
+    public function testProcessedTestCaseSummaryHasCorrectErroredTestCount(string $path, array $expected) : void {
+        Loop::run(function() use($path, $expected) {
+            $results = yield $this->parser->parse($path);
+            $actual = [];
+
+            $this->emitter->on(Events::TEST_CASE_FINISHED, function(TestCaseFinishedEvent $event) use(&$actual) {
+                $actual[$event->getTarget()->getTestCaseName()] = $event->getTarget()->getErroredTestCount();
             });
 
             yield $this->testSuiteRunner->runTestSuites($results);
@@ -1020,6 +1174,7 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 1,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 0,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 0
             ]]
         ];
     }
@@ -1059,6 +1214,7 @@ class TestSuiteRunnerStatisticsTest extends PHPUnitTestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\FrodoTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\BilboTestCase::class => 0,
                 ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class => 4,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class => 0
             ]]
         ];
     }

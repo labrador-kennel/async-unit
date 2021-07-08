@@ -4,6 +4,7 @@ namespace Cspray\Labrador\AsyncUnit\Context;
 
 use Amp\Promise;
 use Cspray\Labrador\AsyncUnit\Exception\MockFailureException;
+use Cspray\Labrador\AsyncUnit\Exception\TestErrorException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestOutputException;
 use Cspray\Labrador\AsyncUnit\MockBridge;
@@ -93,7 +94,7 @@ final class ExpectationContext implements TestExpector {
         return null;
     }
 
-    private function validateThrownException() : ?TestFailedException {
+    private function validateThrownException() : TestFailedException|TestErrorException|null {
         if (isset($this->thrownException) && is_null($this->expectedExceptionClass)) {
             $msg = sprintf(
                 'An unexpected exception of type "%s" with code %s and message "%s" was thrown from #[Test] %s::%s',
@@ -103,7 +104,7 @@ final class ExpectationContext implements TestExpector {
                 $this->testModel->getClass(),
                 $this->testModel->getMethod()
             );
-            return new TestFailedException($msg, previous: $this->thrownException);
+            return new TestErrorException($msg, previous: $this->thrownException);
         } else if (is_null($this->thrownException) && isset($this->expectedExceptionClass)) {
             $msg = sprintf(
                 'Failed asserting that an exception of type %s is thrown',

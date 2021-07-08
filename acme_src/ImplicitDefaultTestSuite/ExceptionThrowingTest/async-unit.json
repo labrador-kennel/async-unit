@@ -1,4 +1,4 @@
 {
-  "testDirs": ["./acme_src/ImplicitDefaultTestSuite/SingleTest"],
+  "testDirs": ["./acme_src/ImplicitDefaultTestSuite/ExceptionThrowingTest"],
   "resultPrinter": "Cspray\\Labrador\\AsyncUnitCli\\TerminalResultPrinter"
 }

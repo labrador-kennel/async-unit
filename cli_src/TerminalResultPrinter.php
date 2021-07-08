@@ -6,6 +6,7 @@ use Amp\ByteStream\OutputStream;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
 use Cspray\Labrador\AsyncUnit\AsyncUnitApplication;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestErroredEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\ProcessingFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Events;
@@ -16,7 +17,7 @@ use Cspray\Labrador\StyledByteStream\TerminalOutputStream;
 use Generator;
 use SebastianBergmann\Timer\ResourceUsageFormatter;
 
-final class DefaultResultPrinter implements ResultPrinterPlugin {
+final class TerminalResultPrinter implements ResultPrinterPlugin {
 
     /**
      * @var TestFailedEvent[]
@@ -28,15 +29,22 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
      */
     private array $disabledTests = [];
 
+    /**
+     * @var TestErroredEvent[]
+     */
+    private array $erroredTests = [];
+
     public function registerEvents(EventEmitter $emitter, OutputStream $output) : void {
         $output = new TerminalOutputStream($output);
         $successOutput = $output->green();
-        $failedOutput = $output->red();
+        $failedOutput = $output->backgroundRed();
+        $erroredOutput = $output->red();
         $disabledOutput = $output->yellow();
         $emitter->once(Events::PROCESSING_STARTED, fn() => $this->testProcessingStarted($output));
         $emitter->on(Events::TEST_PASSED, fn() => $this->testPassed($successOutput));
         $emitter->on(Events::TEST_FAILED, fn($event) => $this->testFailed($event, $failedOutput));
         $emitter->on(Events::TEST_DISABLED, fn($event) => $this->testDisabled($event, $disabledOutput));
+        $emitter->on(Events::TEST_ERRORED, fn($event) => $this->testErrored($event, $erroredOutput));
         $emitter->once(Events::PROCESSING_FINISHED, fn($event) => $this->testProcessingFinished($event, $output));
     }
 
@@ -66,10 +74,40 @@ final class DefaultResultPrinter implements ResultPrinterPlugin {
         yield $output->write('X');
     }
 
+    private function testErrored(TestErroredEvent $erroredEvent, OutputStream $output) : Generator {
+        $this->erroredTests[] = $erroredEvent;
+        yield $output->write('E');
+    }
+
     private function testProcessingFinished(ProcessingFinishedEvent $event, TerminalOutputStream $output) : Generator {
         yield $output->br(2);
         yield $output->writeln((new ResourceUsageFormatter())->resourceUsage($event->getTarget()->getDuration()));
         yield $output->br();
+        if ($event->getTarget()->getErroredTestCount() > 0) {
+            yield $output->writeln(sprintf('There was %d error:', $event->getTarget()->getErroredTestCount()));
+            yield $output->br();
+            foreach ($this->erroredTests as $index => $erroredTestEvent) {
+                yield $output->writeln(sprintf(
+                    '%d) %s::%s',
+                    $index + 1,
+                    $erroredTestEvent->getTarget()->getTestCase()::class,
+                    $erroredTestEvent->getTarget()->getTestMethod()
+                ));
+                yield $output->writeln($erroredTestEvent->getTarget()->getException()->getMessage());
+                yield $output->br();
+                yield $output->writeln($erroredTestEvent->getTarget()->getException()->getTraceAsString());
+            }
+            yield $output->br();
+            yield $output->writeln('ERRORS');
+            yield $output->writeln(sprintf(
+                'Tests: %d, Errors: %d, Assertions: %d, Async Assertions: %d',
+                $event->getTarget()->getTotalTestCount(),
+                $event->getTarget()->getErroredTestCount(),
+                $event->getTarget()->getAssertionCount(),
+                $event->getTarget()->getAsyncAssertionCount()
+            ));
+        }
+
         if ($event->getTarget()->getFailedTestCount() > 0) {
             yield $output->writeln(sprintf("There was %d failure:\n", $event->getTarget()->getFailedTestCount()));
             foreach ($this->failedTests as $index => $failedTestEvent) {
