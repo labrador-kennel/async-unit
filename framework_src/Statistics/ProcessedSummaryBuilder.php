@@ -24,6 +24,7 @@ final class ProcessedSummaryBuilder {
     private int $disabledTestCount = 0;
     private int $passedTestCount = 0;
     private int $failedTestCount = 0;
+    private int $erroredTestCount = 0;
     private int $assertionCount = 0;
     private int $asyncAssertionCount = 0;
 
@@ -62,6 +63,7 @@ final class ProcessedSummaryBuilder {
             TestState::Passed()->toString() => [],
             TestState::Failed()->toString() => [],
             TestState::Disabled()->toString() => [],
+            TestState::Errored()->toString() => [],
             'timer' => $timer
         ];
         $this->totalTestCaseCount++;
@@ -81,6 +83,7 @@ final class ProcessedSummaryBuilder {
         $disabledTestCount = 0;
         $passedTestCount = 0;
         $failedTestCount = 0;
+        $erroredTestCount = 0;
         $assertionCount = 0;
         $asyncAssertionCount = 0;
         foreach ($tests as $state =>  $stateTests) {
@@ -94,6 +97,8 @@ final class ProcessedSummaryBuilder {
                 $passedTestCount += count($stateTests);
             } else if ($state === TestState::Failed()->toString()) {
                 $failedTestCount += count($stateTests);
+            } else if ($state === TestState::Errored()->toString()) {
+                $erroredTestCount += count($stateTests);
             }
             foreach ($stateTests as $test) {
                 $assertionCount += $test['assertion'];
@@ -108,6 +113,7 @@ final class ProcessedSummaryBuilder {
             $disabledTestCount,
             $passedTestCount,
             $failedTestCount,
+            $erroredTestCount,
             $assertionCount,
             $asyncAssertionCount,
             $duration
@@ -121,6 +127,7 @@ final class ProcessedSummaryBuilder {
                 private int $disabledTestCount,
                 private int $passedTestCount,
                 private int $failedTestCount,
+                private int $erroredTestCount,
                 private int $assertionCount,
                 private int $asyncAssertionCount,
                 private Duration $duration
@@ -152,6 +159,10 @@ final class ProcessedSummaryBuilder {
 
             public function getFailedTestCount() : int {
                 return $this->failedTestCount;
+            }
+
+            public function getErroredTestCount(): int {
+                return $this->erroredTestCount;
             }
 
             public function getAssertionCount() : int {
@@ -193,6 +204,8 @@ final class ProcessedSummaryBuilder {
             $this->passedTestCount++;
         } else if (TestState::Failed()->equals($testResult->getState())) {
             $this->failedTestCount++;
+        } else if (TestState::Errored()->equals($testResult->getState())) {
+            $this->erroredTestCount++;
         }
     }
 
@@ -214,6 +227,7 @@ final class ProcessedSummaryBuilder {
             $this->disabledTestCount,
             $this->passedTestCount,
             $this->failedTestCount,
+            $this->erroredTestCount,
             $this->assertionCount,
             $this->asyncAssertionCount,
             $this->duration,
@@ -230,6 +244,7 @@ final class ProcessedSummaryBuilder {
                 private int $disabledTestCount,
                 private int $passedTestCount,
                 private int $failedTestCount,
+                private int $erroredTestCount,
                 private int $assertionCount,
                 private int $asyncAssertionCount,
                 private Duration $duration,
@@ -272,6 +287,10 @@ final class ProcessedSummaryBuilder {
                 return $this->failedTestCount;
             }
 
+            public function getErroredTestCount(): int {
+                return $this->erroredTestCount;
+            }
+
             public function getDuration() : Duration {
                 return $this->duration;
             }
@@ -298,12 +317,14 @@ final class ProcessedSummaryBuilder {
         $disabledTestCount = 0;
         $passedTestCount = 0;
         $failedTestCount = 0;
+        $erroredTestCount = 0;
         $assertionCount = 0;
         $asyncAssertionCount = 0;
         foreach ($enabledTestCases as $testCase) {
             $tests = $this->testSuites[$testSuiteName]['enabled'][$testCase];
             $passedTestCount += count($tests[TestState::Passed()->toString()]);
             $failedTestCount += count($tests[TestState::Failed()->toString()]);
+            $erroredTestCount += count($tests[TestState::Errored()->toString()]);
             $disabledTestCount += count($tests[TestState::Disabled()->toString()]);
             foreach ($tests[TestState::Passed()->toString()] as $assertionCounts) {
                 $assertionCount += $assertionCounts['assertion'];
@@ -326,7 +347,7 @@ final class ProcessedSummaryBuilder {
             assert($failedDisabledTestCount === 0, 'A disabled TestCase had failed tests associated to it.');
         }
 
-        $totalTestCount = $disabledTestCount + $passedTestCount + $failedTestCount;
+        $totalTestCount = $disabledTestCount + $passedTestCount + $failedTestCount + $erroredTestCount;
 
         return new class(
             $testSuiteName,
@@ -337,6 +358,7 @@ final class ProcessedSummaryBuilder {
             $disabledTestCount,
             $passedTestCount,
             $failedTestCount,
+            $erroredTestCount,
             $assertionCount,
             $asyncAssertionCount,
             $this->testSuites[$testSuiteName]['duration']
@@ -351,6 +373,7 @@ final class ProcessedSummaryBuilder {
                 private int $disabledTestCount,
                 private int $passedTestCount,
                 private int $failedTestCount,
+                private int $erroredTestCount,
                 private int $assertionCount,
                 private int $asyncAssertionCount,
                 private Duration $duration
@@ -386,6 +409,10 @@ final class ProcessedSummaryBuilder {
 
             public function getFailedTestCount() : int {
                 return $this->failedTestCount;
+            }
+
+            public function getErroredTestCount(): int {
+                return $this->erroredTestCount;
             }
 
             public function getAssertionCount() : int {

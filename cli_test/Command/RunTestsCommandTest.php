@@ -111,8 +111,6 @@ shell;
         });
         // Actual style of output will be tested in an integration test
         $this->assertNotEmpty($testResultOutput);
-
     }
-
 
 }

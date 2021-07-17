@@ -5,6 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Loop;
 use Amp\Promise;
 use Cspray\Labrador\AsyncEvent\EventEmitter;
+use Cspray\Labrador\AsyncEvent\StandardEvent;
 use Cspray\Labrador\AsyncUnit\Context\AssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\AsyncAssertionContext;
 use Cspray\Labrador\AsyncUnit\Context\CustomAssertionContext;
@@ -12,6 +13,7 @@ use Cspray\Labrador\AsyncUnit\Context\ExpectationContext;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseFinishedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestCaseStartedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestDisabledEvent;
+use Cspray\Labrador\AsyncUnit\Event\TestErroredEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestFailedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestProcessedEvent;
 use Cspray\Labrador\AsyncUnit\Event\TestPassedEvent;
@@ -23,6 +25,7 @@ use Cspray\Labrador\AsyncUnit\Exception\AssertionFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestCaseTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestDisabledException;
+use Cspray\Labrador\AsyncUnit\Exception\TestErrorException;
 use Cspray\Labrador\AsyncUnit\Exception\TestFailedException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
@@ -289,7 +292,13 @@ final class TestSuiteRunner {
                 if (is_null($failureException)) {
                     $failureException = yield $expectationContext->validateExpectations();
                 }
-                $state = is_null($failureException) ? TestState::Passed() : TestState::Failed();
+                if (is_null($failureException)) {
+                    $state = TestState::Passed();
+                } else if ($failureException instanceof TestFailedException) {
+                    $state = TestState::Failed();
+                } else {
+                    $state = TestState::Errored();
+                }
                 $testResult = $this->getTestResult($testCase, $testCaseMethod, $state, $timer->stop(), $failureException, $dataSetLabel);
             }
 
@@ -300,6 +309,8 @@ final class TestSuiteRunner {
 
             if (TestState::Passed()->equals($testResult->getState())) {
                 yield $this->emitter->emit(new TestPassedEvent($testResult));
+            } else if (TestState::Errored()->equals($testResult->getState())) {
+                yield $this->emitter->emit(new TestErroredEvent($testResult));
             } else {
                 yield $this->emitter->emit(new TestFailedEvent($testResult));
             }
@@ -360,7 +371,7 @@ final class TestSuiteRunner {
         string $method,
         TestState $state,
         Duration $duration,
-        ?TestFailedException $testFailedException,
+        TestFailedException|TestErrorException|null $testFailedException,
         ?string $dataSetLabel
     ) : TestResult {
         return new class($testCase, $method, $state, $duration, $testFailedException, $dataSetLabel) implements TestResult {
@@ -370,7 +381,7 @@ final class TestSuiteRunner {
                 private string $method,
                 private TestState $state,
                 private Duration $duration,
-                private ?TestFailedException $testFailedException,
+                private TestFailedException|TestErrorException|null $testFailedException,
                 private ?string $dataSetLabel
             ) {}
 
@@ -394,7 +405,7 @@ final class TestSuiteRunner {
                 return $this->duration;
             }
 
-            public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|null {
+            public function getException() : TestFailedException|AssertionFailedException|TestDisabledException|TestErrorException|null {
                 return $this->testFailedException;
             }
         };

@@ -189,7 +189,8 @@ class SummaryCalculatorTest extends TestCase {
                 ImplicitDefaultTestSuite\KitchenSink\WhatAbout\SamwiseTestCase::class
             ]],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, [
-                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\FoodAndBeverageTestCase::class,
+                ImplicitDefaultTestSuite\KitchenSink\SecondBreakfast\BadTestCase::class
             ]]
         ];
     }
@@ -213,7 +214,7 @@ class SummaryCalculatorTest extends TestCase {
             [$this->implicitDefaultTestSuitePath('MultipleTest'), ImplicitTestSuite::class, 1],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class, 2],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class, 3],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, 1]
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, 2]
         ];
     }
 
@@ -261,7 +262,7 @@ class SummaryCalculatorTest extends TestCase {
             [$this->implicitDefaultTestSuitePath('ExtendedTestCases'), ImplicitTestSuite::class, 9],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\FirstTestSuite::class, 5],
             [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitDefaultTestSuite\KitchenSink\WhatAbout\PotatoTestSuite::class, 3],
-            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, 1]
+            [$this->implicitDefaultTestSuitePath('KitchenSink'), ImplicitTestSuite::class, 2]
         ];
     }
 

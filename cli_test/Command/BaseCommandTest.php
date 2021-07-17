@@ -8,7 +8,7 @@ use Amp\File\Driver as FileDriver;
 use Cspray\Labrador\AsyncUnit\JsonConfigurationFactory;
 use Cspray\Labrador\AsyncUnit\SupportedMockBridgeFactory;
 use Cspray\Labrador\AsyncUnitCli\AsyncUnitConsoleApplication;
-use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
+use Cspray\Labrador\AsyncUnitCli\TerminalResultPrinter;
 use Cspray\Labrador\EnvironmentType;
 use Cspray\Labrador\StandardEnvironment;
 use PHPUnit\Framework\MockObject\MockObject;
@@ -36,7 +36,7 @@ abstract class BaseCommandTest extends TestCase {
     protected function getDefaultConfigurationJson() : string {
         $expected = [
             'testDirectories' => ['./tests'],
-            'resultPrinter' => DefaultResultPrinter::class,
+            'resultPrinter' => TerminalResultPrinter::class,
             'plugins' => []
         ];
         return json_encode($expected, JSON_PRETTY_PRINT);

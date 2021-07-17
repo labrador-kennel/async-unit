@@ -4,7 +4,7 @@ namespace Cspray\Labrador\AsyncUnitCli\Command;
 
 use Amp\File\Driver as FileDriver;
 use Amp\Loop;
-use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
+use Cspray\Labrador\AsyncUnitCli\TerminalResultPrinter;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -50,7 +50,7 @@ class GenerateConfigurationCommand extends AbstractCommand {
             }
             $config = [
                 'testDirectories' => ['./tests'],
-                'resultPrinter' => DefaultResultPrinter::class,
+                'resultPrinter' => TerminalResultPrinter::class,
                 'plugins' => []
             ];
             yield $this->fileDriver->put($filePath, json_encode($config, JSON_PRETTY_PRINT));

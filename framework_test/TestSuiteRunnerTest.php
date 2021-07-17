@@ -165,12 +165,12 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
-    public function testImplicitDefaultTestSuiteExceptionThrowingTestEmitsTestProcessedEventWithFailedStateAndCorrectException() : void {
+    public function testImplicitDefaultTestSuiteExceptionThrowingTestEmitsTestProcessedEventWithErrorStateAndCorrectException() : void {
         Loop::run(function() {
             yield $this->parseAndRun($this->implicitDefaultTestSuitePath('ExceptionThrowingTest'));
 
             $this->assertCount(1, $this->actual);
-            $this->assertSame(TestState::Failed(), $this->actual[0]->getState());
+            $this->assertSame(TestState::Errored(), $this->actual[0]->getState());
 
             $this->assertNotNull($this->actual[0]->getException());
             $expectedMsg = 'An unexpected exception of type "Exception" with code 0 and message "Test failure" was thrown from #[Test] ' . ImplicitDefaultTestSuite\ExceptionThrowingTest\MyTestCase::class . '::throwsException';
@@ -307,6 +307,21 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
             yield $this->parseAndRun($this->implicitDefaultTestSuitePath('FailedAssertion'));
 
             $this->assertSame(['test invoked', 'test failed'], $actual);
+        });
+    }
+
+    public function testTestErrorEventEmittedAfterTestProcessedEvent() {
+        Loop::run(function() {
+            $actual = [];
+            $this->emitter->on(Events::TEST_PROCESSED, function() use(&$actual) {
+                $actual[] = 'test invoked';
+            });
+            $this->emitter->on(Events::TEST_ERRORED, function() use(&$actual) {
+                $actual[] = 'test error';
+            });
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('ExceptionThrowingTest'));
+
+            $this->assertSame(['test invoked', 'test error'], $actual);
         });
     }
 

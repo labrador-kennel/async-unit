@@ -5,7 +5,7 @@ namespace Cspray\Labrador\AsyncUnit;
 use Amp\Loop;
 use Cspray\Labrador\AsyncUnit\Exception\InvalidConfigurationException;
 use Cspray\Labrador\AsyncUnit\MockBridge\MockeryMockBridge;
-use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
+use Cspray\Labrador\AsyncUnitCli\TerminalResultPrinter;
 use PHPUnit\Framework\TestCase;
 
 class JsonConfigurationFactoryTest extends TestCase {
@@ -55,7 +55,7 @@ class JsonConfigurationFactoryTest extends TestCase {
             $configuration = yield $this->subject->make(__DIR__ . '/Resources/dummy_configs/minimally_valid.json');
 
             $this->assertSame([getcwd()], $configuration->getTestDirectories());
-            $this->assertSame(DefaultResultPrinter::class, $configuration->getResultPrinter());
+            $this->assertSame(TerminalResultPrinter::class, $configuration->getResultPrinter());
             $this->assertEmpty($configuration->getPlugins());
         });
     }

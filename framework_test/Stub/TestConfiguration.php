@@ -3,7 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit\Stub;
 
 use Cspray\Labrador\AsyncUnit\Configuration;
-use Cspray\Labrador\AsyncUnitCli\DefaultResultPrinter;
+use Cspray\Labrador\AsyncUnitCli\TerminalResultPrinter;
 
 class TestConfiguration implements Configuration {
 
@@ -11,7 +11,7 @@ class TestConfiguration implements Configuration {
 
     private array $plugins = [];
 
-    private string $resultPrinterClass = DefaultResultPrinter::class;
+    private string $resultPrinterClass = TerminalResultPrinter::class;
 
     private ?string $mockBridge = null;
 
