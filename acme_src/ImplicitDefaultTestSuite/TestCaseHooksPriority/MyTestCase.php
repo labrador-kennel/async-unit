@@ -80,6 +80,10 @@ class MyTestCase extends TestCase {
         self::$invokedAll[] = __FUNCTION__;
     }
 
+    public static function clearInvokedAll() {
+        self::$invokedAll = [];
+    }
+
     public function getInvokedAll() : array {
         return self::$invokedAll;
     }

@@ -38,6 +38,10 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function tearDown(): void {
+        ImplicitDefaultTestSuite\TestCaseHooksPriority\MyTestCase::clearInvokedAll();
+    }
+
     private function parseAndRun(string $path) : Promise {
         return call(function() use($path) {
             $results = yield $this->parser->parse($path);
