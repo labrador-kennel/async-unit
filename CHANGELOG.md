@@ -15,15 +15,21 @@ This release has significant breaking changes in it. Please ensure you have read
 - Introduce a `JsonConfigurationFactory` implementation that takes over the previous functionality provided by the `ConfigurationFactory`.
 - Introduce a `ConfigurationValidator` implementation that will ensure an instantiated `Configuration` is valid and tests can properly run.
 - Added an `AsyncUnitApplication::VERSION` constant for the current version of the application.
+- Introduced the concept of a test error distinctly separate from a test failure. If an unexpected exception is thrown by the test this will be properly marked as an error and not a failure.
+- Added appropriate test error counts to all relevant Statistics models.
+- Added a new `TestErroredEvent` that will be triggered when a test errors.
+- Added a `TestState::Errored` enum value.
 
 ### Changed
 
 - Renamed `TestFrameworkApplication` -> `AsyncUnitApplication`
 - Renamed `TestFameworkApplicationObjectGraph` -> `AsyncUnitApplicationObjectGraph`
+- Rename `DefaultResultPrinter` -> `TerminalResultPrinter`
 - Refactored the `ConfigurationFactory` into an interface with a single method to make `Configuration` instances.
 - Moved the `AsyncUnitFrameworkRunner` out of the CLI tool and into the framework itself. This allows for easier testing and more control over how the framework is processed. This implementation is meant to act as a facade that only requires its dependencies and can run the desired tests while returning a simple boolean value for whether there were test failures.
 - The `AsyncUnitApplication` now requires a `ConfigurationFactory` and `ConfigurationValidator` as constructor dependencies. Additionally, instead of passing the test directories to scan a configuration file is passed and the directories are read from that configuration.
 - Ensure that `ResultPrinterPlugin` custom loading happens within the object graph and isn't something necessary to add later as additional boilerplate.
+- Updated the `TerminalResultPrinter` to account for test errors and to output appropriate progress indicators.
 
 ### Removed
 
