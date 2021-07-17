@@ -14,7 +14,7 @@ use Acme\DemoSuites\ExplicitTestSuite;
 use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
-class ParserTest extends PHPUnitTestCase {
+class StaticAnalysisParserTest extends PHPUnitTestCase {
 
     use AsyncUnitAssertions;
     use UsesAcmeSrc;
