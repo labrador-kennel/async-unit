@@ -12,7 +12,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Configure PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8
+          ini-values: memory_limit=7M
       - name: Composer 8
         uses: php-actions/composer@v5
         with:
