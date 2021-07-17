@@ -8,4 +8,6 @@ use Attribute;
 #[Attribute]
 final class AfterEach {
 
+    public function __construct(private int $priority = 0) {}
+
 }

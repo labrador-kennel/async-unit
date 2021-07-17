@@ -83,6 +83,7 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                     $testCaseModel->markDisabled($reason);
                 }
                 if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$node->attrGroups)) {
+                    // TODO make sure we add more error checks around the presence of an argument and its value matching expected types
                     $testCaseModel->setTimeout($timeoutAttribute->args[0]->value->value);
                 }
 
@@ -102,15 +103,16 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
     private function collectIfHasAnyAsyncUnitAttribute(Node\Stmt\ClassMethod $classMethod) : void {
         $validAttributes = [
             Test::class => fn() => $this->validateTest($classMethod),
-            BeforeAll::class => fn() => $this->validateBeforeAll($classMethod),
-            BeforeEach::class => fn() => $this->validateBeforeEach($classMethod),
-            AfterAll::class => fn() => $this->validateAfterAll($classMethod),
-            AfterEach::class => fn() => $this->validateAfterEach($classMethod),
-            BeforeEachTest::class => fn() => $this->validateBeforeEachTest($classMethod),
-            AfterEachTest::class => fn() => $this->validateAfterEachTest($classMethod)
+            BeforeAll::class => fn(Node\Attribute $attribute) => $this->validateBeforeAll($attribute, $classMethod),
+            BeforeEach::class => fn(Node\Attribute $attribute) => $this->validateBeforeEach($attribute, $classMethod),
+            AfterAll::class => fn(Node\Attribute $attribute) => $this->validateAfterAll($attribute, $classMethod),
+            AfterEach::class => fn(Node\Attribute $attribute) => $this->validateAfterEach($attribute, $classMethod),
+            BeforeEachTest::class => fn(Node\Attribute $attribute) => $this->validateBeforeEachTest($attribute, $classMethod),
+            AfterEachTest::class => fn(Node\Attribute $attribute) => $this->validateAfterEachTest($attribute, $classMethod)
         ];
         foreach ($validAttributes as $validAttribute => $validator) {
-            if (!is_null($this->findAttribute($validAttribute, ...$classMethod->attrGroups))) {
+            $attribute = $this->findAttribute($validAttribute, ...$classMethod->attrGroups);
+            if (!is_null($attribute)) {
                 $className = $classMethod->getAttribute('parent')->namespacedName->toString();
                 if (!class_exists($className)) {
                     $msg = sprintf(
@@ -119,7 +121,7 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                     );
                     throw new TestCompilationException($msg);
                 }
-                $validator();
+                $validator($attribute);
             }
         }
     }
@@ -158,7 +160,7 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
         $this->collector->attachTest($testModel);
     }
 
-    private function validateBeforeEach(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateBeforeEach(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
         if (!is_subclass_of($className, TestSuite::class) && !is_subclass_of($className, TestCase::class)) {
             $msg = sprintf(
@@ -171,10 +173,17 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
             throw new TestCompilationException($msg);
         }
 
-        $this->collector->attachHook(new HookModel((string) $className, $classMethod->name->toString(), HookType::BeforeEach()));
+        $this->collector->attachHook(
+            new HookModel(
+                (string) $className,
+                $classMethod->name->toString(),
+                HookType::BeforeEach(),
+                $this->getPriority($attribute)
+            )
+        );
     }
 
-    private function validateAfterEach(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateAfterEach(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
         if (!is_subclass_of($className, TestSuite::class) && !is_subclass_of($className, TestCase::class)) {
             $msg = sprintf(
@@ -187,10 +196,17 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
             throw new TestCompilationException($msg);
         }
 
-        $this->collector->attachHook(new HookModel((string) $className, $classMethod->name->toString(), HookType::AfterEach()));
+        $this->collector->attachHook(
+            new HookModel(
+                (string) $className,
+                $classMethod->name->toString(),
+                HookType::AfterEach(),
+                $this->getPriority($attribute)
+            )
+        );
     }
 
-    private function validateBeforeAll(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateBeforeAll(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
         if (!is_subclass_of($className, TestSuite::class) && !is_subclass_of($className, TestCase::class)) {
             $msg = sprintf(
@@ -212,10 +228,18 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
             }
         }
 
-        $this->collector->attachHook(new HookModel((string) $className, $classMethod->name->toString(), HookType::BeforeAll()));
+
+        $this->collector->attachHook(
+            new HookModel(
+                (string) $className,
+                $classMethod->name->toString(),
+                HookType::BeforeAll(),
+                $this->getPriority($attribute)
+            )
+        );
     }
 
-    private function validateAfterAll(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateAfterAll(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
         if (!is_subclass_of($className, TestSuite::class) && !is_subclass_of($className, TestCase::class)) {
             $msg = sprintf(
@@ -237,16 +261,47 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
             }
         }
 
-        $this->collector->attachHook(new HookModel($className, $classMethod->name->toString(), HookType::AfterAll()));
+        $this->collector->attachHook(
+            new HookModel(
+                $className,
+                $classMethod->name->toString(),
+                HookType::AfterAll(),
+                $this->getPriority($attribute)
+            )
+        );
     }
 
-    private function validateBeforeEachTest(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateBeforeEachTest(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
-        $this->collector->attachHook(new HookModel($className, $classMethod->name->toString(), HookType::BeforeEachTest()));
+        $this->collector->attachHook(
+            new HookModel(
+                $className,
+                $classMethod->name->toString(),
+                HookType::BeforeEachTest(),
+                $this->getPriority($attribute)
+            )
+        );
     }
 
-    private function validateAfterEachTest(Node\Stmt\ClassMethod $classMethod) : void {
+    private function validateAfterEachTest(Node\Attribute $attribute, Node\Stmt\ClassMethod $classMethod) : void {
         $className = $classMethod->getAttribute('parent')->namespacedName->toString();
-        $this->collector->attachHook(new HookModel($className, $classMethod->name->toString(), HookType::AfterEachTest()));
+        $this->collector->attachHook(
+            new HookModel(
+                $className,
+                $classMethod->name->toString(),
+                HookType::AfterEachTest(),
+                $this->getPriority($attribute)
+            )
+        );
+    }
+
+    private function getPriority(Node\Attribute $attribute) : int {
+        $priority = 0;
+        if (count($attribute->args) === 1) {
+            // TODO make sure this is an integer value
+            $priority = $attribute->args[0]->value->value;
+        }
+
+        return $priority;
     }
 }

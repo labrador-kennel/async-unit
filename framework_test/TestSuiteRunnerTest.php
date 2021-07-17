@@ -755,6 +755,81 @@ class TestSuiteRunnerTest extends PHPUnitTestCase {
         });
     }
 
+    public function testImplicitDefaultTestSuiteTestCasePriorityEachHooks() {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestCaseHooksPriority'));
+
+            $this->assertCount(1, $this->actual);
+            $testResult = $this->actual[0];
+
+            $this->assertEquals(TestState::Passed(), $testResult->getState());
+
+            $expected = [
+                'beforeEachOne',
+                'beforeEachTwo',
+                'beforeEachThree',
+                'afterEachOne',
+                'afterEachTwo',
+                'afterEachThree',
+            ];
+            $this->assertEquals($expected, $testResult->getTestCase()->getInvokedEach());
+        });
+    }
+
+    public function testImplicitDefaultTestSuiteTestCasePriorityAllHooks() {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->implicitDefaultTestSuitePath('TestCaseHooksPriority'));
+
+            $this->assertCount(1, $this->actual);
+            $testResult = $this->actual[0];
+
+            $this->assertEquals(TestState::Passed(), $testResult->getState());
+
+            $expected = [
+                'beforeAllOne',
+                'beforeAllTwo',
+                'beforeAllThree',
+                'afterAllOne',
+                'afterAllTwo',
+                'afterAllThree',
+            ];
+            $this->assertEquals($expected, $testResult->getTestCase()->getInvokedAll());
+        });
+    }
+
+    public function testExplicitTestSuiteTestSuiteHookPriority() {
+        Loop::run(function() {
+            yield $this->parseAndRun($this->explicitTestSuitePath('TestSuiteHookPriority'));
+
+            $this->assertCount(1, $this->actual);
+            $testResult = $this->actual[0];
+
+            $this->assertEquals(TestState::Passed(), $testResult->getState());
+
+            $expected = [
+                'beforeAllOne',
+                'beforeAllTwo',
+                'beforeAllThree',
+                'beforeEachOne',
+                'beforeEachTwo',
+                'beforeEachThree',
+                'beforeEachTestOne',
+                'beforeEachTestTwo',
+                'beforeEachTestThree',
+                'afterEachTestOne',
+                'afterEachTestTwo',
+                'afterEachTestThree',
+                'afterEachOne',
+                'afterEachTwo',
+                'afterEachThree',
+                'afterAllOne',
+                'afterAllTwo',
+                'afterAllThree',
+            ];
+            $this->assertEquals($expected, $testResult->getTestCase()->testSuite()->getInvokedHooks());
+        });
+    }
+
     private function fetchTestResultForTest(string $testClass, string $method) : TestResult {
         foreach ($this->actual as $testResult) {
             if ($testResult->getTestCase()::class === $testClass && $testResult->getTestMethod() === $method) {
