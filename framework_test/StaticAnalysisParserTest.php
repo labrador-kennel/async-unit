@@ -12,6 +12,7 @@ use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Acme\DemoSuites\ErrorConditions;
 use Acme\DemoSuites\ImplicitDefaultTestSuite;
 use Acme\DemoSuites\ExplicitTestSuite;
+use Cspray\Labrador\AsyncUnit\Parser\ParserResult;
 use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
@@ -661,6 +662,28 @@ class StaticAnalysisParserTest extends PHPUnitTestCase {
         });
     }
 
+    public function testExplicitTestSuiteTestSuiteDefinesNamespaceToAttach() : void {
+        Loop::run(function() {
+            /** @var ParserResult $results */
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestSuiteDefinesNamespaceToAttach'));
+
+            $this->assertCount(2, $results->getTestSuiteModels());
+
+            $implicitSuite = $this->fetchTestSuiteModel(
+                $results->getTestSuiteModels(),
+                ImplicitTestSuite::class
+            );
+            $explicitSuite = $this->fetchTestSuiteModel(
+                $results->getTestSuiteModels(),
+                ExplicitTestSuite\TestSuiteDefinesNamespaceToAttach\MyTestSuite::class
+            );
+
+            $this->fetchTestCaseModel($implicitSuite, ExplicitTestSuite\TestSuiteDefinesNamespaceToAttach\MyTestCase::class);
+            $this->fetchTestCaseModel($implicitSuite, ExplicitTestSuite\TestSuiteDefinesNamespaceToAttach\HasImplicitTestSuite\MyTestCase::class);
+            $this->fetchTestCaseModel($explicitSuite, ExplicitTestSuite\TestSuiteDefinesNamespaceToAttach\HasExplicitTestSuite\MyTestCase::class);
+        });
+    }
+
     /**
      * @param TestSuiteModel[] $testSuites
      * @param string $testSuiteClassName
@@ -681,7 +704,7 @@ class StaticAnalysisParserTest extends PHPUnitTestCase {
                 return $testCaseModel;
             }
         }
-        $this->fail('Expected AttachToTestSuite to have TestCase ' . $className);
+        $this->fail('Expected ' . $testSuite->getClass() . ' to have TestCase ' . $className);
     }
 
     private function fetchTestModel(TestCaseModel $model, string $methodName) : TestModel {

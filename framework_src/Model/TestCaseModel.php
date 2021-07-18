@@ -23,6 +23,12 @@ final class TestCaseModel {
         $this->testSuiteClass = $testSuiteClass;
     }
 
+    public function getNamespace() : string {
+        $pieces = explode('\\', $this->getClass());
+        array_pop($pieces);
+        return implode('\\', $pieces);
+    }
+
     public function getClass() : string {
         return $this->testCaseClass;
     }

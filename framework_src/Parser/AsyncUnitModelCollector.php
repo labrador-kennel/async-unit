@@ -87,8 +87,22 @@ final class AsyncUnitModelCollector {
         }
 
         foreach ($this->testCaseModels as $testCaseModel) {
+            // This could potentially be set with the AttachToTestSuite attribute inside the node visitor
+            // We should only adjust the test suite if the test case did not explicitly define one
             if (is_null($testCaseModel->getTestSuiteClass())) {
-                $testCaseModel->setTestSuiteClass($this->defaultTestSuite);
+                // Before we assign the default test suite we need to check if any test suites have an attach namespace
+                // defined that matches the given test case namespace.
+                $testCaseTestSuite = null;
+                $testCaseNamespace = $testCaseModel->getNamespace();
+                foreach (array_keys($this->testSuiteModels) as $testSuiteClass) {
+                    $testSuiteAttachNamespaces = $testSuiteClass::getNamespacesToAttach();
+                    foreach ($testSuiteAttachNamespaces as $testSuiteAttachNamespace) {
+                        if (preg_match('#' . $testSuiteAttachNamespace . '#', $testCaseNamespace) === 1) {
+                            $testCaseTestSuite = $testSuiteClass;
+                        }
+                    }
+                }
+                $testCaseModel->setTestSuiteClass($testCaseTestSuite ?? $this->defaultTestSuite);
             }
 
             $testSuiteModel = $this->testSuiteModels[$testCaseModel->getTestSuiteClass()];
