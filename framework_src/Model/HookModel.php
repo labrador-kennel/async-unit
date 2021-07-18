@@ -18,10 +18,17 @@ final class HookModel {
     }
 
     private HookType $type;
+    private int $priority;
 
-    public function __construct(string $class, string $classMethod, HookType $type) {
+    public function __construct(
+        string $class,
+        string $classMethod,
+        HookType $type,
+        int $priority = 0
+    ) {
         $this->setClassAndMethod($class, $classMethod);
         $this->type = $type;
+        $this->priority = $priority;
     }
 
     /**
@@ -33,6 +40,10 @@ final class HookModel {
      */
     public function getType() : HookType {
         return $this->type;
+    }
+
+    public function getPriority() : int {
+        return $this->priority;
     }
 
 }

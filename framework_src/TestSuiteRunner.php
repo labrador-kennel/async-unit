@@ -31,6 +31,7 @@ use Cspray\Labrador\AsyncUnit\Exception\TestSetupException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteSetUpException;
 use Cspray\Labrador\AsyncUnit\Exception\TestSuiteTearDownException;
 use Cspray\Labrador\AsyncUnit\Exception\TestTearDownException;
+use Cspray\Labrador\AsyncUnit\Model\HookModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
@@ -181,7 +182,9 @@ final class TestSuiteRunner {
         array $args = []
     ) : Promise {
         return call(function() use($hookTarget, $model, $hookType, $exceptionType, $args) {
-            foreach ($model->getHooks($hookType) as $hookMethodModel) {
+            $hooks = $model->getHooks($hookType);
+            usort($hooks, fn(HookModel $one, HookModel $two) => $one->getPriority() <=> $two->getPriority());
+            foreach ($hooks as $hookMethodModel) {
                 try {
                     yield call([$hookTarget, $hookMethodModel->getMethod()], ...$args);
                 } catch (Throwable $throwable) {

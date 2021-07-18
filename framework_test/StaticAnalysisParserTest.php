@@ -3,6 +3,7 @@
 namespace Cspray\Labrador\AsyncUnit;
 
 use Amp\Loop;
+use Cspray\Labrador\AsyncUnit\Attribute\BeforeAll;
 use Cspray\Labrador\AsyncUnit\Exception\TestCompilationException;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
@@ -14,7 +15,7 @@ use Acme\DemoSuites\ExplicitTestSuite;
 use Cspray\Labrador\AsyncUnit\Parser\StaticAnalysisParser;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
-class ParserTest extends PHPUnitTestCase {
+class StaticAnalysisParserTest extends PHPUnitTestCase {
 
     use AsyncUnitAssertions;
     use UsesAcmeSrc;
@@ -26,7 +27,6 @@ class ParserTest extends PHPUnitTestCase {
         $this->acmeSrcDir = dirname(__DIR__) . '/acme_src';
         $this->subject = new StaticAnalysisParser();
     }
-
 
     public function testErrorConditionsNoTestsTestCase() {
         Loop::run(function() {
@@ -586,6 +586,78 @@ class ParserTest extends PHPUnitTestCase {
 
             $this->assertSame(125, $testSuite->getTestCaseModels()[0]->getTestModels()[0]->getTimeout());
             $this->assertSame(125, $testSuite->getTestCaseModels()[1]->getTestModels()[0]->getTimeout());
+        });
+    }
+
+    public function hookPriorityProvider() : array {
+        return [
+            [HookType::BeforeAll(), 'beforeAll'],
+            [HookType::AfterAll(), 'afterAll'],
+            [HookType::BeforeEach(), 'beforeEach'],
+            [HookType::AfterEach(), 'afterEach']
+        ];
+    }
+
+    /**
+     * @dataProvider hookPriorityProvider
+     */
+    public function testImplicitDefaultTestSuiteTestCaseHooksPriorityBeforeAll(HookType $hookType, string $typePrefix) : void {
+        Loop::run(function() use($hookType, $typePrefix) {
+            $results = yield $this->subject->parse($this->implicitDefaultTestSuitePath('TestCaseHooksPriority'));
+
+            $testCase = $this->fetchTestCaseModel(
+                $results->getTestSuiteModels()[0],
+                ImplicitDefaultTestSuite\TestCaseHooksPriority\MyTestCase::class
+            );
+
+            $expected = [
+                $typePrefix . 'One' => 1,
+                $typePrefix . 'Two' => 2,
+                $typePrefix . 'Three' => 3
+            ];
+            $hooks = $testCase->getHooks($hookType);
+
+            $actual = [];
+            foreach ($hooks as $hook) {
+                $actual[$hook->getMethod()] = $hook->getPriority();
+            }
+
+            $this->assertEquals($expected, $actual);
+        });
+    }
+
+    public function suiteHookPriorityProvider() : array {
+        return array_merge(
+            $this->hookPriorityProvider(),
+            [
+                [HookType::BeforeEachTest(), 'beforeEachTest'],
+                [HookType::AfterEachTest(), 'afterEachTest']
+            ]
+        );
+
+    }
+
+    /**
+     * @dataProvider suiteHookPriorityProvider
+     */
+    public function testExplicitTestSuiteTestSuiteHookPriority(HookType $hookType, string $typePrefix) {
+        Loop::run(function() use($hookType, $typePrefix) {
+            $results = yield $this->subject->parse($this->explicitTestSuitePath('TestSuiteHookPriority'));
+
+            $testSuite = $this->fetchTestSuiteModel($results->getTestSuiteModels(), ExplicitTestSuite\TestSuiteHookPriority\MyTestSuite::class);
+
+            $expected = [
+                $typePrefix . 'One' => 1,
+                $typePrefix . 'Two' => 2,
+                $typePrefix . 'Three' => 3
+            ];
+            $hooks = $testSuite->getHooks($hookType);
+            $actual = [];
+            foreach ($hooks as $hook) {
+                $actual[$hook->getMethod()] = $hook->getPriority();
+            }
+
+            $this->assertEquals($expected, $actual);
         });
     }
 

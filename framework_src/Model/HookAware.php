@@ -10,6 +10,10 @@ trait HookAware {
 
     private array $hooks = [];
 
+    /**
+     * @param HookType $hookType
+     * @return HookModel[]
+     */
     public function getHooks(HookType $hookType) : array {
         return $this->hooks[$hookType->toString()] ?? [];
     }
