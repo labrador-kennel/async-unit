@@ -8,6 +8,10 @@ abstract class TestSuite {
 
     private function __construct() {}
 
+    public static function getNamespacesToAttach() : array {
+        return [];
+    }
+
     final public function getName() : string {
         return static::class;
     }
