@@ -2,11 +2,13 @@
 
 namespace Cspray\Labrador\AsyncUnit;
 
+use Cspray\Labrador\AsyncUnit\Model\DisabledDeterminator;
+
 abstract class TestSuite {
 
     private array $data = [];
 
-    private function __construct() {}
+    private function __construct(private DisabledDeterminator $disabledDeterminator) {}
 
     public static function getNamespacesToAttach() : array {
         return [];

@@ -7,6 +7,7 @@ use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
 use Cspray\Labrador\AsyncUnit\Model\TestSuiteModel;
 use Cspray\Labrador\AsyncUnit\TestResult;
 use Cspray\Labrador\AsyncUnit\TestState;
+use Cspray\Labrador\AsyncUnit\TestSuite;
 use SebastianBergmann\Timer\Duration;
 use SebastianBergmann\Timer\Timer;
 
@@ -37,16 +38,13 @@ final class ProcessedSummaryBuilder {
         $this->timer->start();
     }
 
-    public function startTestSuite(TestSuiteModel $testSuiteModel) : void {
+    public function startTestSuite(TestSuite $testSuite) : void {
         $timer = new Timer();
-        $this->testSuites[$testSuiteModel->getClass()] = [
+        $this->testSuites[$testSuite::class] = [
             'enabled' => [],
             'disabled' => [],
             'timer' => $timer
         ];
-        if ($testSuiteModel->isDisabled()) {
-            $this->disabledTestSuiteCount++;
-        }
         $timer->start();
     }
 

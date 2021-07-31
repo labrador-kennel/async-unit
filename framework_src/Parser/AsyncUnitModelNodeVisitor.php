@@ -16,6 +16,7 @@ use Cspray\Labrador\AsyncUnit\Attribute\Test;
 use Cspray\Labrador\AsyncUnit\Attribute\Timeout;
 use Cspray\Labrador\AsyncUnit\CustomAssertionPlugin;
 use Cspray\Labrador\AsyncUnit\HookType;
+use Cspray\Labrador\AsyncUnit\Model\AlwaysDisabledDeterminator;
 use Cspray\Labrador\AsyncUnit\Model\HookModel;
 use Cspray\Labrador\AsyncUnit\Model\PluginModel;
 use Cspray\Labrador\AsyncUnit\Model\TestCaseModel;
@@ -57,7 +58,8 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                         // TODO Make sure that the disabled value is a string, otherwise throw an error
                         $reason = $disabledAttribute->args[0]->value->value;
                     }
-                    $testSuiteModel->markDisabled($reason);
+                    $determinator = new AlwaysDisabledDeterminator($reason);
+                    $testSuiteModel->setDisabledDeterminator($determinator);
                 }
                 if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$node->attrGroups)) {
                     $testSuiteModel->setTimeout($timeoutAttribute->args[0]->value->value);
@@ -80,7 +82,8 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                         // TODO Make sure that the disabled value is a string, otherwise throw an error
                         $reason = $disabledAttribute->args[0]->value->value;
                     }
-                    $testCaseModel->markDisabled($reason);
+                    $determinator = new AlwaysDisabledDeterminator($reason);
+                    $testCaseModel->setDisabledDeterminator($determinator);
                 }
                 if ($timeoutAttribute = $this->findAttribute(Timeout::class, ...$node->attrGroups)) {
                     // TODO make sure we add more error checks around the presence of an argument and its value matching expected types
@@ -145,7 +148,8 @@ final class AsyncUnitModelNodeVisitor extends NodeVisitorAbstract implements Nod
                 // TODO Make sure that the disabled value is a string, otherwise throw an error
                 $reason = $disabledAttribute->args[0]->value->value;
             }
-            $testModel->markDisabled($reason);
+            $determinator = new AlwaysDisabledDeterminator($reason);
+            $testModel->setDisabledDeterminator($determinator);
         }
         $dataProviderAttribute = $this->findAttribute(DataProvider::class, ...$classMethod->attrGroups);
         if (!is_null($dataProviderAttribute)) {

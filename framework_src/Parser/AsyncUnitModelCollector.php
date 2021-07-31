@@ -106,8 +106,9 @@ final class AsyncUnitModelCollector {
             }
 
             $testSuiteModel = $this->testSuiteModels[$testCaseModel->getTestSuiteClass()];
-            if ($testSuiteModel->isDisabled()) {
-                $testCaseModel->markDisabled($testSuiteModel->getDisabledReason());
+            $testSuiteDisabledDeterminator = $testSuiteModel->getDisabledDeterminator();
+            if (!is_null($testSuiteDisabledDeterminator)) {
+                $testCaseModel->setDisabledDeterminator($testSuiteDisabledDeterminator);
             }
             if (!is_null($testSuiteModel->getTimeout())) {
                 $testCaseModel->setTimeout($testSuiteModel->getTimeout());
@@ -117,8 +118,9 @@ final class AsyncUnitModelCollector {
                 $testClass = $testModel->getClass();
                 if ($testCaseModel->getClass() === $testClass || is_subclass_of($testCaseModel->getClass(), $testClass)) {
                     $testCaseTest = $testModel->withClass($testCaseModel->getClass());
-                    if ($testCaseModel->isDisabled()) {
-                        $testCaseTest->markDisabled($testCaseModel->getDisabledReason());
+                    $testCaseDisabledDeterminator = $testCaseModel->getDisabledDeterminator();
+                    if (!is_null($testCaseDisabledDeterminator)) {
+                        $testCaseTest->setDisabledDeterminator($testCaseDisabledDeterminator);
                     }
                     $testCaseTimeout = $testCaseModel->getTimeout();
                     if (!is_null($testCaseTimeout)) {

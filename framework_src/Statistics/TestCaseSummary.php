@@ -12,5 +12,4 @@ interface TestCaseSummary {
 
     public function getTestCount() : int;
 
-    public function getDisabledTestCount() : int;
 }

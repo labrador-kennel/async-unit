@@ -14,13 +14,10 @@ final class SummaryCalculator {
     private AggregateSummary $aggregateSummary;
 
     private int $testSuiteCount = 0;
-    private int $disabledTestSuiteCount = 0;
 
     private int $testCaseCount = 0;
-    private array $disabledTestCases = [];
 
     private int $testCount = 0;
-    private array $disabledTests = [];
 
     public function __construct(private ParserResult $parserResult) {
         $this->calculateModelRelationships($this->parserResult);
@@ -30,9 +27,6 @@ final class SummaryCalculator {
         foreach ($parserResult->getTestSuiteModels() as $testSuiteModel) {
             $testSuite = $testSuiteModel->getClass();
             $this->testSuiteCount++;
-            if ($testSuiteModel->isDisabled()) {
-                $this->disabledTestSuiteCount++;
-            }
             if (!isset($this->modelRelationships[$testSuite])) {
                 $this->modelRelationships[$testSuite] = [];
             }
@@ -40,9 +34,6 @@ final class SummaryCalculator {
             foreach ($testSuiteModel->getTestCaseModels() as $testCaseModel) {
                 $testCase = $testCaseModel->getClass();
                 $this->testCaseCount++;
-                if ($testCaseModel->isDisabled()) {
-                    $this->disabledTestCases[] = $testCaseModel->getClass();
-                }
                 if (!isset($this->modelRelationships[$testSuite][$testCase])) {
                     $this->modelRelationships[$testSuite][$testCase] = [];
                 }
@@ -54,9 +45,6 @@ final class SummaryCalculator {
                         $testModel->getClass(),
                         $testModel->getMethod()
                     );
-                    if ($testModel->isDisabled()) {
-                        $this->disabledTests[] = $testName;
-                    }
                     $this->modelRelationships[$testSuite][$testCase][] = $testName;
                 }
             }
@@ -77,21 +65,15 @@ final class SummaryCalculator {
         return new class(
             $testSuiteNames,
             $this->testSuiteCount,
-            $this->disabledTestSuiteCount,
             $this->testCaseCount,
-            count($this->disabledTestCases),
             $this->testCount,
-            count($this->disabledTests)
         ) implements AggregateSummary {
 
             public function __construct(
                 private array $testSuiteNames,
                 private int $totalTestSuiteCount,
-                private int $disabledTestSuiteCount,
                 private int $totalTestCaseCount,
-                private int $disabledTestCaseCount,
                 private int $totalTestCount,
-                private int $disabledTestCount
             ) {}
 
             public function getTestSuiteNames() : array {
@@ -102,24 +84,12 @@ final class SummaryCalculator {
                 return $this->totalTestSuiteCount;
             }
 
-            public function getDisabledTestSuiteCount() : int {
-                return $this->disabledTestSuiteCount;
-            }
-
             public function getTotalTestCaseCount() : int {
                 return $this->totalTestCaseCount;
             }
 
-            public function getDisabledTestCaseCount() : int {
-                return $this->disabledTestCaseCount;
-            }
-
             public function getTotalTestCount() : int {
                 return $this->totalTestCount;
-            }
-
-            public function getDisabledTestCount() : int {
-                return $this->disabledTestCount;
             }
         };
     }
@@ -127,30 +97,24 @@ final class SummaryCalculator {
     public function getTestSuiteSummary(string $testSuite) : TestSuiteSummary {
         $testCaseNames = array_keys($this->modelRelationships[$testSuite]);
         $testCaseCount = count($testCaseNames);
-        $disabledTestCaseCount = count(array_intersect($this->disabledTestCases, $testCaseNames));
         $suiteTests = [];
         foreach ($this->modelRelationships[$testSuite] as $tests) {
             foreach ($tests as $test) {
                 $suiteTests[] = $test;
             }
         }
-        $disabledTestCount = count(array_intersect($this->disabledTests, $suiteTests));
         return new class(
             $testSuite,
             $testCaseNames,
             $testCaseCount,
-            $disabledTestCaseCount,
-            count($suiteTests),
-            $disabledTestCount
+            count($suiteTests)
         ) implements TestSuiteSummary {
 
             public function __construct(
                 private string $testSuiteName,
                 private array $testCaseNames,
                 private int $testCaseCount,
-                private int $disabledTestCaseCount,
-                private int $testCount,
-                private int $disabledTestCount
+                private int $testCount
             ) {}
 
             public function getTestSuiteName() : string {
@@ -165,16 +129,8 @@ final class SummaryCalculator {
                 return $this->testCaseCount;
             }
 
-            public function getDisabledTestCaseCount() : int {
-                return $this->disabledTestCaseCount;
-            }
-
             public function getTestCount() : int {
                 return $this->testCount;
-            }
-
-            public function getDisabledTestCount() : int {
-                return $this->disabledTestCount;
             }
         };
     }
@@ -189,22 +145,19 @@ final class SummaryCalculator {
                 break;
             }
         }
-        $disabledTestCount = count(array_intersect($this->disabledTests, $tests));
 
         return new class(
             $testSuite,
             $testCase,
             $tests,
-            count($tests),
-            $disabledTestCount
+            count($tests)
         ) implements TestCaseSummary {
 
             public function __construct(
                 private string $testSuiteName,
                 private string $testCaseName,
                 private array $testNames,
-                private int $testCount,
-                private int $disabledTestCount
+                private int $testCount
             ) {}
 
             public function getTestSuiteName() : string {
@@ -221,10 +174,6 @@ final class SummaryCalculator {
 
             public function getTestCount() : int {
                 return $this->testCount;
-            }
-
-            public function getDisabledTestCount() : int {
-                return $this->disabledTestCount;
             }
         };
     }
