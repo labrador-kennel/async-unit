@@ -17,10 +17,10 @@ jobs:
       - name: Composer 8
         uses: php-actions/composer@v5
         with:
-          php_version: 8
+          php_version: 8.2
       - name: PHP 8 tests
         uses: php-actions/phpunit@v2
         with:
           version: 9
-          php_version: 8
+          php_version: 8.2
           memory_limit: 1G
