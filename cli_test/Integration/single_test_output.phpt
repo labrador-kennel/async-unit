@@ -12,7 +12,7 @@ runTests('/acme_src/ImplicitDefaultTestSuite/SingleTest/async-unit.json');
 --EXPECTF--
 AsyncUnit v%s - %s
 
-Runtime: PHP 8.0.%d
+Runtime: PHP 8.%d.%d
 
 %s.%s
 
