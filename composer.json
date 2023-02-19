@@ -5,7 +5,7 @@
     "bin/asyncunit"
   ],
   "require": {
-    "php": "^8.0",
+    "php": "^8.2",
     "amphp/amp": "^2",
     "nikic/php-parser": "^4.10",
     "cspray/labrador-async-event": "^2.3",
@@ -19,6 +19,7 @@
     "cspray/labrador-styled-byte-stream": "^0.1.0"
   },
   "require-dev": {
+    "roave/security-advisories": "dev-latest",
     "phpunit/phpunit": "^9.5",
     "phpspec/prophecy": "^1.13",
     "mockery/mockery": "^1.4"
